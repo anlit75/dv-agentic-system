@@ -35,6 +35,14 @@ include = [
     "src/dv_agentic/profiles/_template/*.yaml"
 ]
 
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["cocotb.*"]
+ignore_missing_imports = true
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100
