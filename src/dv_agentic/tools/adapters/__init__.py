@@ -1,5 +1,7 @@
 """Simulator and coverage adapter factories for the dv-agentic-system."""
 
+from typing import cast
+
 from ..interface import CoverageTool, SimulatorTool
 
 __all__ = ["get_coverage_adapter", "get_simulator_adapter"]
@@ -17,9 +19,9 @@ _COVERAGE_REGISTRY: dict[str, str] = {
 
 def _load(dotted_path: str) -> type:
     """Import and return a class from a dotted module path."""
-    module_path, class_name = dotted_path.rsplit(".", 1)
     import importlib
 
+    module_path, class_name = dotted_path.rsplit(".", 1)
     module = importlib.import_module(module_path)
     return getattr(module, class_name)  # type: ignore[no-any-return]
 
@@ -38,7 +40,7 @@ def get_simulator_adapter(name: str) -> SimulatorTool:
     dotted = _SIMULATOR_REGISTRY.get(name.lower())
     if not dotted:
         raise ValueError(f"Unknown simulator: '{name}'.  Supported: {list(_SIMULATOR_REGISTRY)}")
-    return _load(dotted)()  # type: ignore[return-value]
+    return cast(SimulatorTool, _load(dotted)())
 
 
 def get_coverage_adapter(name: str) -> CoverageTool:
@@ -55,4 +57,4 @@ def get_coverage_adapter(name: str) -> CoverageTool:
     dotted = _COVERAGE_REGISTRY.get(name.lower())
     if not dotted:
         raise ValueError(f"Unknown coverage tool: '{name}'.  Supported: {list(_COVERAGE_REGISTRY)}")
-    return _load(dotted)()  # type: ignore[return-value]
+    return cast(CoverageTool, _load(dotted)())

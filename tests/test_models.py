@@ -17,7 +17,7 @@ class TestCompileResult:
 
     def test_invalid_status_type(self) -> None:
         # dataclass does not enforce Literal at runtime; verify field exists
-        r = CompileResult(status="pass", output="")  # type: ignore[arg-type]
+        r = CompileResult(status="pass", output="")
         assert hasattr(r, "status")
 
 
