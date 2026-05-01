@@ -10,10 +10,13 @@ _SIMULATOR_REGISTRY: dict[str, str] = {
     "xcelium": "dv_agentic.tools.adapters.xcelium.XceliumAdapter",
     "ghdl": "dv_agentic.tools.adapters.ghdl_cocotb.GHDLCocotbAdapter",
     "cocotb": "dv_agentic.tools.adapters.ghdl_cocotb.GHDLCocotbAdapter",
+    "icarus": "dv_agentic.tools.adapters.icarus.IcarusAdapter",
+    "verilator": "dv_agentic.tools.adapters.verilator.VerilatorAdapter",
 }
 
 _COVERAGE_REGISTRY: dict[str, str] = {
     "imc": "dv_agentic.tools.adapters.imc.IMCAdapter",
+    "pyuvm": "dv_agentic.tools.adapters.pyuvm.PyuvmCoverageAdapter",
 }
 
 
@@ -31,7 +34,8 @@ def get_simulator_adapter(name: str) -> SimulatorTool:
 
     Args:
         name: Simulator identifier.  Supported values: ``"xcelium"``,
-            ``"ghdl"``, ``"cocotb"`` (alias for ``"ghdl"``).
+            ``"ghdl"``, ``"cocotb"`` (alias for ``"ghdl"``),
+            ``"icarus"``, ``"verilator"``.
 
     Raises:
         ValueError: If *name* is not a recognised simulator.
@@ -48,7 +52,8 @@ def get_coverage_adapter(name: str) -> CoverageTool:
 
     Args:
         name: Coverage tool identifier.  Supported values: ``"imc"``
-            (Cadence IMC 24.06 + Verisium 25.12, internal environment).
+            (Cadence IMC 24.06 + Verisium 25.12, internal environment),
+            ``"pyuvm"`` (text-based coverage reports for external environment).
 
     Raises:
         ValueError: If *name* is not a recognised coverage tool.
