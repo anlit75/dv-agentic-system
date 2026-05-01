@@ -9,18 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `tests/test_models.py` — unit tests for `CompileResult`, `SimResult`, `CoverageDB` dataclasses
-- `tests/test_adapter_factory.py` — unit tests for `get_simulator_adapter()` / `get_coverage_adapter()` factories; GHDL/cocotb cases auto-skipped when `cocotb.runner` is unavailable (Linux-only)
+- `tests/test_models.py` — parametrized unit tests for `CompileResult` (status × 2), `SimResult` (defaults, error summary, `cov_db_path`, timeout, field preservation), `CoverageDB` (boundary percentages 0 / 50 / 87.5 / 100)
+- `tests/test_adapter_factory.py` — parametrized tests for factory case-insensitivity and unknown-name error paths (including empty string); GHDL/cocotb cases auto-skipped when `cocotb.runner` is unavailable (Linux-only)
 - `[tool.pytest.ini_options]` in `pyproject.toml`: `testpaths = ["tests"]`, `addopts = "--tb=short"`
+- `[tool.ruff.lint.per-file-ignores]` — suppress `S101` (assert) for `tests/**`
 
 ### Changed
 
-- `src/dv_agentic/tools/adapters/__init__.py` — replaced eager top-level imports with lazy `importlib.import_module()` via `_load()` helper; prevents `ModuleNotFoundError` for `cocotb.runner` on non-Linux environments at import time
+- `src/dv_agentic/tools/adapters/__init__.py` — replaced eager top-level imports with lazy `importlib.import_module()` via `_load()` helper; prevents `ModuleNotFoundError` for `cocotb.runner` on non-Linux environments at import time; factory returns use `cast()` instead of `# type: ignore`
 - `.github/workflows/ci.yml` — corrected `--cov=agents --cov=tools` to `--cov=dv_agentic` (matches the installed package name under `src/` layout)
 
 ### Fixed
 
-- Add `[tool.mypy]` config with `strict = true` and `[[tool.mypy.overrides]]` to suppress `import-not-found` for `cocotb.*`, which ships no PEP 561 stubs
+- `[tool.mypy]` config with `strict = true` and `[[tool.mypy.overrides]]` to suppress `import-not-found` for `cocotb.*`, which ships no PEP 561 stubs
+- Removed stale `# type: ignore[arg-type]` annotation in `test_models.py` (flagged as `unused-ignore` by mypy strict)
 
 ## [0.1.0] - 2026-05-01
 
