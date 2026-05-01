@@ -1,5 +1,10 @@
 # dv-agentic-system
 
+[![CI Status](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anlit75/dv-agentic-system)
+![Version](https://img.shields.io/badge/version-v0.2.0-blue?style=flat-square)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
 > AI Agentic System for UVM/pyuvm Verification
 
 `dv-agentic-system` is a multi-agent collaboration framework designed specifically for Digital IC Verification. This system aims to automate tedious tasks in the verification workflow, including SPEC analysis, test environment setup, code generation, simulation control, log debugging, and coverage analysis.
