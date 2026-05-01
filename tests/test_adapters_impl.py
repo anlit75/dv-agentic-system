@@ -4,6 +4,7 @@ import importlib.util
 import os
 import unittest.mock as mock
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -27,7 +28,7 @@ else:
 @skip_no_cocotb
 class TestIcarusAdapter:
     @mock.patch("dv_agentic.tools.adapters.icarus.get_runner")
-    def test_compile(self, mock_get_runner):
+    def test_compile(self, mock_get_runner: Any) -> None:
         mock_runner = mock.Mock()
         mock_get_runner.return_value = mock_runner
 
@@ -40,7 +41,7 @@ class TestIcarusAdapter:
         )
 
     @mock.patch("dv_agentic.tools.adapters.icarus.get_runner")
-    def test_run(self, mock_get_runner):
+    def test_run(self, mock_get_runner: Any) -> None:
         mock_runner = mock.Mock()
         mock_get_runner.return_value = mock_runner
 
@@ -55,7 +56,7 @@ class TestIcarusAdapter:
 @skip_no_cocotb
 class TestVerilatorAdapter:
     @mock.patch("dv_agentic.tools.adapters.verilator.get_runner")
-    def test_compile(self, mock_get_runner):
+    def test_compile(self, mock_get_runner: Any) -> None:
         mock_runner = mock.Mock()
         mock_get_runner.return_value = mock_runner
 
@@ -69,7 +70,7 @@ class TestVerilatorAdapter:
 
 
 class TestPyuvmCoverageAdapter:
-    def test_parse_total(self):
+    def test_parse_total(self) -> None:
         adapter = PyuvmCoverageAdapter()
         output = "Some log...\nFunctional Coverage: 85.5%\nMore logs..."
         assert adapter._parse_total(output) == 85.5
@@ -80,7 +81,7 @@ class TestPyuvmCoverageAdapter:
         output = "UVMCoverage: 77.2 %"
         assert adapter._parse_total(output) == 77.2
 
-    def test_get_coverage_job_specific(self, tmp_path):
+    def test_get_coverage_job_specific(self, tmp_path: Path) -> None:
         # Create a job-specific log file
         log_file = tmp_path / "sim_job1.log"
         log_file.write_text("Functional Coverage: 92.5%")
@@ -98,7 +99,7 @@ class TestPyuvmCoverageAdapter:
         finally:
             os.chdir(old_cwd)
 
-    def test_get_coverage_fallback(self, tmp_path):
+    def test_get_coverage_fallback(self, tmp_path: Path) -> None:
         # Create a default report file
         report_file = tmp_path / "coverage.txt"
         report_file.write_text("Total Coverage: 45.0%")
