@@ -22,6 +22,8 @@ class SimResult:
     error_summary: str | None = None
     cov_db_path: str | None = None
     """Path to the coverage DB written by the simulator (None if not collected)."""
+    wall_time_sec: int | None = None
+    """Wall-clock time in seconds that the simulation took to run."""
 
 
 @dataclass

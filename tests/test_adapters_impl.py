@@ -1,6 +1,5 @@
 """Unit tests for the new adapter implementations."""
 
-import importlib.util
 import os
 import unittest.mock as mock
 from pathlib import Path
@@ -8,26 +7,14 @@ from typing import Any
 
 import pytest
 
+from dv_agentic.tools.adapters.ghdl_cocotb import GHDLCocotbAdapter
+from dv_agentic.tools.adapters.icarus import IcarusAdapter
 from dv_agentic.tools.adapters.pyuvm import PyuvmCoverageAdapter
-
-# cocotb.runner is Linux-only
-cocotb_runner_available = importlib.util.find_spec("cocotb.runner") is not None
-skip_no_cocotb = pytest.mark.skipif(
-    not cocotb_runner_available, reason="cocotb.runner not available"
-)
-
-if cocotb_runner_available:
-    from dv_agentic.tools.adapters.icarus import IcarusAdapter
-    from dv_agentic.tools.adapters.verilator import VerilatorAdapter
-else:
-    # Placeholders for type checking or if tests are not skipped
-    IcarusAdapter = None  # type: ignore
-    VerilatorAdapter = None  # type: ignore
+from dv_agentic.tools.adapters.verilator import VerilatorAdapter
 
 
-@skip_no_cocotb
 class TestIcarusAdapter:
-    @mock.patch("dv_agentic.tools.adapters.icarus.get_runner")
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
     def test_compile(self, mock_get_runner: Any) -> None:
         mock_runner = mock.Mock()
         mock_get_runner.return_value = mock_runner
@@ -40,7 +27,7 @@ class TestIcarusAdapter:
             verilog_sources=["file.v"], hdl_toplevel="new_top", always=True
         )
 
-    @mock.patch("dv_agentic.tools.adapters.icarus.get_runner")
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
     def test_run(self, mock_get_runner: Any) -> None:
         mock_runner = mock.Mock()
         mock_get_runner.return_value = mock_runner
@@ -52,10 +39,40 @@ class TestIcarusAdapter:
         assert result.job_id == "my_test.Case_123"
         mock_runner.test.assert_called_once()
 
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
+    def test_compile_fail(self, mock_get_runner: Any) -> None:
+        mock_runner = mock.Mock()
+        mock_runner.build.side_effect = Exception("Build error")
+        mock_get_runner.return_value = mock_runner
 
-@skip_no_cocotb
+        adapter = IcarusAdapter(hdl_toplevel="top")
+        result = adapter.compile(["file.v"], top="top")
+
+        assert result.status == "fail"
+        assert "Build error" in result.output
+
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
+    def test_run_fail(self, mock_get_runner: Any) -> None:
+        mock_runner = mock.Mock()
+        mock_runner.test.side_effect = Exception("Sim error")
+        mock_get_runner.return_value = mock_runner
+
+        adapter = IcarusAdapter(hdl_toplevel="top")
+        result = adapter.run("test", seed=1, debug=False)
+
+        assert result.status == "fail"
+        assert result.error_summary is not None
+        assert "Sim error" in result.error_summary
+
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner", None)
+    def test_get_runner_missing(self) -> None:
+        adapter = IcarusAdapter()
+        with pytest.raises(ImportError, match=r"cocotb.runner is not available"):
+            adapter._get_runner()
+
+
 class TestVerilatorAdapter:
-    @mock.patch("dv_agentic.tools.adapters.verilator.get_runner")
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
     def test_compile(self, mock_get_runner: Any) -> None:
         mock_runner = mock.Mock()
         mock_get_runner.return_value = mock_runner
@@ -66,6 +83,39 @@ class TestVerilatorAdapter:
         assert result.status == "pass"
         mock_runner.build.assert_called_once_with(
             verilog_sources=["file.v"], hdl_toplevel="new_top", always=True
+        )
+
+
+class TestGHDLCocotbAdapter:
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
+    def test_compile(self, mock_get_runner: Any) -> None:
+        mock_runner = mock.Mock()
+        mock_get_runner.return_value = mock_runner
+
+        adapter = GHDLCocotbAdapter(hdl_toplevel="top")
+        result = adapter.compile(["file.vhd"], top="new_top")
+
+        assert result.status == "pass"
+        mock_runner.build.assert_called_once_with(
+            vhdl_sources=["file.vhd"], hdl_toplevel="new_top", hdl_toplevel_lang="vhdl", always=True
+        )
+
+    @mock.patch("dv_agentic.tools.adapters.cocotb_base.get_runner")
+    def test_run(self, mock_get_runner: Any) -> None:
+        mock_runner = mock.Mock()
+        mock_get_runner.return_value = mock_runner
+
+        adapter = GHDLCocotbAdapter(hdl_toplevel="top")
+        result = adapter.run("my_vhdl_test.Case", seed=456, debug=True)
+
+        assert result.status == "pass"
+        mock_runner.test.assert_called_once_with(
+            hdl_toplevel="top",
+            hdl_toplevel_lang="vhdl",
+            test_module="my_vhdl_test",
+            testcase="Case",
+            waves=True,
+            extra_env=mock.ANY,
         )
 
 

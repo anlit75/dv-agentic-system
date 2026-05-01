@@ -1,8 +1,9 @@
 [project]
 name = "dv-agentic-system"
-version = "0.1.0"
+version = "0.2.0"
 description = "Core AI Agent System for UVM/pyuvm Verification"
 authors = [{name = "Ting-An Cheng"}]
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

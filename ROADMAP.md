@@ -26,17 +26,18 @@
 |------|------|------|
 | `pyproject.toml` and `uv` environment | ✅ | `requires-python >= 3.11`; `uv.lock` locked |
 | `src/dv_agentic/tools/interface.py` — `SimulatorTool` / `CoverageTool` ABC | ✅ | Fully defined, including type hints |
-| `src/dv_agentic/tools/models.py` — `SimResult` / `CompileResult` / `CoverageDB` | ✅ | `dataclass` fully implemented |
-| `src/dv_agentic/tools/adapters/xcelium.py` | ✅ | `subprocess` calls, error parsing, timeout handling |
-| `src/dv_agentic/tools/adapters/ghdl_cocotb.py` | ✅ | `cocotb` runner integration, environment isolation, consistent log naming |
-| `src/dv_agentic/tools/adapters/__init__.py` — factory `get_simulator_adapter()` | ✅ | Supports `"xcelium"` / `"ghdl"` / `"cocotb"` |
-| `src/dv_agentic/agents/base.py` — `BaseAgent` / `AgentConfig` ABC | ✅ | Run loop and budget check skeletons |
+| `src/dv_agentic/tools/models.py` — `SimResult` / `CompileResult` / `CoverageDB` | ✅ | `dataclass` fully implemented; `wall_time_sec` added |
+| `src/dv_agentic/tools/adapters/` (Lazy loading) | ✅ | cocotb lazy loading implemented for all adapters |
+| `src/dv_agentic/prompts/loader.py` — `PromptLoader` | ✅ | Level 0-2 injection, type-safe context mapping |
+| `src/dv_agentic/prompts/context.py` — Context Schemas | ✅ | `ProjectContext`, `SimulatorConfig`, `VCSConfig` dataclasses |
+| `src/dv_agentic/prompts/*.md` — Standalone templates | ✅ | `code_generator`, `log_analyzer` follow standalone rules |
+| `src/dv_agentic/agents/base.py` — `BaseAgent` / `AgentConfig` ABC | ✅ | `Literal["internal", "external"]` environment alignment |
 | pre-commit / ruff / mypy static analysis and hooks | ✅ | 0 errors, 0 type issues, bound to git hooks |
 | `sample/sample-project/.agent/project.yaml` | ✅ | Complete `project.yaml` example |
 | `sample/sample-org-dv-profiles/teams/` | 🔨 | Directory created, pending `sample_team/` contents |
-| `src/dv_agentic/profiles/_template/` | 🔨 | Directory created, pending schema YAMLs |
+| `src/dv_agentic/profiles/_template/` | 📋 | Directory created, pending schema YAMLs |
 
-## Phase 1 — Adapter Matrix Completion ✅
+## Phase 1 — Adapter Matrix Completion ✅ (Completed)
 
 **Objective**: Complete the remaining simulator and coverage adapters, covering official internal tools and lightweight external CI tools.
 
@@ -71,63 +72,34 @@
 
 | Item | Status | Description |
 |------|------|------|
+| `src/dv_agentic/tools/llm/interface.py` — `BaseLLMClient` ABC | 📋 | Unified interface for all LLM clients |
 | `src/dv_agentic/tools/llm/api.py` — External client (Claude / GPT) | 📋 | OpenAI-compatible interface |
 | `src/dv_agentic/tools/llm/opencode.py` — Internal OpenCode client | 📋 | Internal endpoint, same interface as the external client |
-| LLM `BaseLLMClient` ABC definition | 📋 | Ensure consistent adapter pattern |
 
-## Phase 3 — Core Agent Implementation 🔒 (Depends on Phase 1, 2)
+## Phase 3a — Non-LLM Agent Implementation 📋
 
-**Objective**: Step-by-step implementation of 8 specialized Agents based on `BaseAgent`.
-
-### Recommended Execution Order
-
-```
-OrchestratorAgent (Requires other agents for complete handoffs, can do routing logic first)
-    ↓
-SimControllerAgent ← Depends on adapter matrix (Phase 1)
-    ↓
-SpecAnalystAgent   ← Depends on LLM client (Phase 2)
-CodeGeneratorAgent ← Depends on LLM client (Phase 2)
-    ↓
-LogAnalyzerAgent   ← Depends on SimController output
-WaveAnalyzerAgent  ← Depends on SimController output (Optional, later stage)
-    ↓
-CoverageAnalystAgent ← Depends on coverage adapter (Phase 1)
-BugClassifierAgent   ← Depends on LogAnalyzer output + LLM
-    ↓
-ReporterAgent      ← Aggregates outputs from all agents
-```
+**Objective**: Implementation of specialized Agents that do not require LLM access, enabling parallel development with Phase 2.
 
 | Agent | Status | Description |
 |-------|------|------|
-| `src/dv_agentic/agents/orchestrator.py` | 📋 | Task routing, handoff coordination |
 | `src/dv_agentic/agents/sim_controller.py` | 📋 | Call adapters, branch management, feedback loop |
-| `src/dv_agentic/agents/spec_analyst.py` | 📋 | Parse spec docs, generate `vplan.yaml` |
-| `src/dv_agentic/agents/code_generator.py` | 📋 | Generate / modify SV / pyuvm code, commit in branch |
-| `src/dv_agentic/agents/log_analyzer.py` | 📋 | Parse sim logs, classify errors, trigger `bug_classifier` |
-| `src/dv_agentic/agents/wave_analyzer.py` | 📋 | Parse VCD / FSDB, provide feedback to `code_generator` |
-| `src/dv_agentic/agents/coverage_analyst.py` | 📋 | Analyze coverage DB, suggest test scenarios |
-| `src/dv_agentic/agents/bug_classifier.py` | 📋 | Classify DUT vs. TB bugs, confidence threshold gatekeeping |
-| `src/dv_agentic/agents/reporter.py` | 📋 | Aggregate session results, output markdown / YAML |
+| `src/dv_agentic/agents/log_analyzer.py` | 📋 | Parse sim logs, classify errors, regex-based parsing |
+| `src/dv_agentic/agents/coverage_analyst.py` | 📋 | Analyze coverage DB, suggest test scenarios based on stats |
+| Base prompt templates (`prompts/*.md`) | 📋 | Minimal prompts for non-LLM logic if needed |
 
-## Phase 4 — Prompt System 🔒 (Depends on Phase 2)
+## Phase 3b — LLM-Powered Agent Implementation 🔒 (Depends on Phase 2, 3a)
 
-**Objective**: Establish base prompt templates and a profile patch mechanism, realizing a portable "environment-agnostic" design.
+**Objective**: Implementation of Agents that leverage LLM reasoning and code generation. Prompt development is integrated into this phase.
 
-| Item | Status | Description |
-|------|------|------|
-| `src/dv_agentic/prompts/orchestrator.md` | 📋 | — |
-| `src/dv_agentic/prompts/spec_analyst.md` | 📋 | — |
-| `src/dv_agentic/prompts/code_generator.md` | 📋 | — |
-| `src/dv_agentic/prompts/sim_controller.md` | 📋 | — |
-| `src/dv_agentic/prompts/log_analyzer.md` | 📋 | — |
-| `src/dv_agentic/prompts/wave_analyzer.md` | 📋 | — |
-| `src/dv_agentic/prompts/coverage_analyst.md` | 📋 | — |
-| `src/dv_agentic/prompts/bug_classifier.md` | 📋 | — |
-| `src/dv_agentic/prompts/reporter.md` | 📋 | — |
-| Prompt composition logic (base + team patch + ip_type rules) | 📋 | Implemented in `orchestrator` or a standalone loader |
+| Agent | Status | Description |
+|-------|------|------|
+| `src/dv_agentic/agents/spec_analyst.py` | 📋 | Parse spec docs, generate `vplan.yaml` + `prompts/spec_analyst.md` |
+| `src/dv_agentic/agents/code_generator.py` | 📋 | Generate / modify code + `prompts/code_generator.md` |
+| `src/dv_agentic/agents/bug_classifier.py` | 📋 | Classify DUT vs. TB bugs + `prompts/bug_classifier.md` |
+| `src/dv_agentic/agents/orchestrator.py` | 📋 | Task routing, handoff coordination + `prompts/orchestrator.md` |
+| `src/dv_agentic/agents/reporter.py` | 📋 | Aggregate session results + `prompts/reporter.md` |
 
-## Phase 5 — Profile and Project Configuration System 🔒 (Depends on Phase 3, 4)
+## Phase 4 — Profile and Project Configuration System 🔒 (Depends on Phase 3b)
 
 **Objective**: Complete the three-layer configuration loading (`project.yaml` → team profile → ip_type rules), allowing different DV teams to use this system without changing the agent core.
 
@@ -177,8 +149,8 @@ ReporterAgent      ← Aggregates outputs from all agents
 ```
 Layer 1 (Shared Package)
   src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters (Xcelium, GHDL, Icarus, Verilator) completed
-  src/dv_agentic/agents/        ██░░░░░░░░   15%  base.py skeleton, remaining 8 agents pending
-  src/dv_agentic/prompts/       ░░░░░░░░░░    0%  Directory exists, pending contents
+  src/dv_agentic/agents/        ██░░░░░░░░   20%  base.py completed with budget management; iteration tracking implemented
+  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection fully implemented and tested
   src/dv_agentic/profiles/      █░░░░░░░░░   10%  _template/ directory exists, schemas pending
 
 Layer 2 (Profile Repo)
