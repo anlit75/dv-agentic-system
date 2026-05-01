@@ -11,7 +11,7 @@ on:
 
 jobs:
   quality-check:
-    name: Code Quality & SonarQube Analysis
+    name: Code Quality Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -43,4 +43,4 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv run pytest --cov=agents --cov=tools --cov-report=xml --cov-report=term
+          uv run pytest --cov=dv_agentic --cov-report=xml --cov-report=term

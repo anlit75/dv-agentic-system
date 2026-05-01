@@ -35,6 +35,10 @@ include = [
     "src/dv_agentic/profiles/_template/*.yaml"
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--tb=short"
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
@@ -70,6 +74,9 @@ ignore = [
     "D100", # Missing docstring in public module
     "D104", # Missing docstring in public package
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert is expected in pytest
 
 [tool.ruff.lint.isort]
 known-first-party = ["dv_agentic"]

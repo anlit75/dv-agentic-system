@@ -1,11 +1,29 @@
 """Simulator and coverage adapter factories for the dv-agentic-system."""
 
+from typing import cast
+
 from ..interface import CoverageTool, SimulatorTool
-from .ghdl_cocotb import GHDLCocotbAdapter
-from .imc import IMCAdapter
-from .xcelium import XceliumAdapter
 
 __all__ = ["get_coverage_adapter", "get_simulator_adapter"]
+
+_SIMULATOR_REGISTRY: dict[str, str] = {
+    "xcelium": "dv_agentic.tools.adapters.xcelium.XceliumAdapter",
+    "ghdl": "dv_agentic.tools.adapters.ghdl_cocotb.GHDLCocotbAdapter",
+    "cocotb": "dv_agentic.tools.adapters.ghdl_cocotb.GHDLCocotbAdapter",
+}
+
+_COVERAGE_REGISTRY: dict[str, str] = {
+    "imc": "dv_agentic.tools.adapters.imc.IMCAdapter",
+}
+
+
+def _load(dotted_path: str) -> type:
+    """Import and return a class from a dotted module path."""
+    import importlib
+
+    module_path, class_name = dotted_path.rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, class_name)  # type: ignore[no-any-return]
 
 
 def get_simulator_adapter(name: str) -> SimulatorTool:
@@ -19,17 +37,10 @@ def get_simulator_adapter(name: str) -> SimulatorTool:
         ValueError: If *name* is not a recognised simulator.
 
     """
-    mapping: dict[str, type[SimulatorTool]] = {
-        "xcelium": XceliumAdapter,
-        "ghdl": GHDLCocotbAdapter,
-        "cocotb": GHDLCocotbAdapter,  # Alias
-    }
-
-    adapter_class = mapping.get(name.lower())
-    if not adapter_class:
-        raise ValueError(f"Unknown simulator: '{name}'.  Supported: {list(mapping)}")
-
-    return adapter_class()
+    dotted = _SIMULATOR_REGISTRY.get(name.lower())
+    if not dotted:
+        raise ValueError(f"Unknown simulator: '{name}'.  Supported: {list(_SIMULATOR_REGISTRY)}")
+    return cast(SimulatorTool, _load(dotted)())
 
 
 def get_coverage_adapter(name: str) -> CoverageTool:
@@ -43,12 +54,7 @@ def get_coverage_adapter(name: str) -> CoverageTool:
         ValueError: If *name* is not a recognised coverage tool.
 
     """
-    mapping: dict[str, type[CoverageTool]] = {
-        "imc": IMCAdapter,
-    }
-
-    adapter_class = mapping.get(name.lower())
-    if not adapter_class:
-        raise ValueError(f"Unknown coverage tool: '{name}'.  Supported: {list(mapping)}")
-
-    return adapter_class()
+    dotted = _COVERAGE_REGISTRY.get(name.lower())
+    if not dotted:
+        raise ValueError(f"Unknown coverage tool: '{name}'.  Supported: {list(_COVERAGE_REGISTRY)}")
+    return cast(CoverageTool, _load(dotted)())
