@@ -1,5 +1,6 @@
 import abc
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass
@@ -8,7 +9,7 @@ class AgentConfig:
 
     name: str
     budget: int = 10
-    environment: str = "internal"
+    environment: Literal["internal", "external"] = "internal"
 
 
 class BaseAgent(abc.ABC):
@@ -31,5 +32,20 @@ class BaseAgent(abc.ABC):
         """
 
     def check_budget(self) -> bool:
-        """Check if the agent still has remaining budget to continue iterations."""
+        """Check if the agent still has remaining budget to continue iterations.
+
+        Note: Subclasses should prefer calling ``step()`` which both checks
+        the budget and increments the iteration counter.
+        """
         return self.iteration < self.config.budget
+
+    def step(self) -> bool:
+        """Check budget and increment iteration counter if budget remains.
+
+        Returns:
+            True if budget remains and iteration was incremented, False otherwise.
+        """
+        if self.check_budget():
+            self.iteration += 1
+            return True
+        return False
