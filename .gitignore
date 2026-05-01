@@ -1,0 +1,47 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+wheels/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Tool Caches (Static Analysis & Linting)
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Testing & Coverage
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# EDA Tools & Simulation Artifacts
+*.log
+sim_*.log
+cov_work/
+cov_merged/
+*.vcd
+*.fsdb
+*.shm/
+*.trn
+*.dsn
+xcelium.d/
+
+# Agentic System Local States
+memory.db
+
+# IDEs and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

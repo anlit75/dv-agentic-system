@@ -1,0 +1,8 @@
+team:
+  name: "sample_team"
+  simulator: "questa"
+  license_server: "1234@license.internal"
+  coding_rules:
+    - "Use UVM 1.2"
+    - "Indent with 2 spaces"
+    - "Use camelCase for variables"

@@ -1,0 +1,13 @@
+project:
+  name: "sample_verify_project"
+  environment: internal
+
+composition:
+  team: sample_team
+  ip_types: [axi]
+  simulator: questa
+  coverage: ucdb
+
+budget:
+  max_sim_runs: 10
+  max_fix_iterations: 5

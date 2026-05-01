@@ -1,0 +1,7 @@
+protocol:
+  name: "AXI4"
+  rules:
+    - "AWVALID must stay high until AWREADY is high"
+    - "WVALID must stay high until WREADY is high"
+  state_machine:
+    - "IDLE -> ADDR -> DATA -> RESP"
