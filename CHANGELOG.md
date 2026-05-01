@@ -11,13 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `tests/test_models.py` — parametrized unit tests for `CompileResult` (status × 2), `SimResult` (defaults, error summary, `cov_db_path`, timeout, field preservation), `CoverageDB` (boundary percentages 0 / 50 / 87.5 / 100)
 - `tests/test_adapter_factory.py` — parametrized tests for factory case-insensitivity and unknown-name error paths (including empty string); GHDL/cocotb cases auto-skipped when `cocotb.runner` is unavailable (Linux-only)
+- `tests/test_adapters_impl.py` — unit tests for the new Phase 1 adapters with mock-based validation and file-discovery checks
 - `[tool.pytest.ini_options]` in `pyproject.toml`: `testpaths = ["tests"]`, `addopts = "--tb=short"`
 - `[tool.ruff.lint.per-file-ignores]` — suppress `S101` (assert) for `tests/**`
+- `src/dv_agentic/tools/adapters/icarus.py` — new adapter for Icarus Verilog simulator using `cocotb.runner`
+- `src/dv_agentic/tools/adapters/verilator.py` — new adapter for Verilator simulator using `cocotb.runner`
+- `src/dv_agentic/tools/adapters/pyuvm.py` — new adapter for pyuvm functional coverage parsing from text logs
 
 ### Changed
 
-- `src/dv_agentic/tools/adapters/__init__.py` — replaced eager top-level imports with lazy `importlib.import_module()` via `_load()` helper; prevents `ModuleNotFoundError` for `cocotb.runner` on non-Linux environments at import time; factory returns use `cast()` instead of `# type: ignore`
+- `src/dv_agentic/tools/adapters/__init__.py` — replaced eager top-level imports with lazy `importlib.import_module()` via `_load()` helper; registered `icarus`, `verilator`, and `pyuvm` in the factory registries
 - `.github/workflows/ci.yml` — corrected `--cov=agents --cov=tools` to `--cov=dv_agentic` (matches the installed package name under `src/` layout)
+- `ROADMAP.md` — marked Phase 1 (Adapter Matrix Completion) as completed
 
 ### Fixed
 

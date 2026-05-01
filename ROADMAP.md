@@ -36,7 +36,7 @@
 | `sample/sample-org-dv-profiles/teams/` | 🔨 | Directory created, pending `sample_team/` contents |
 | `src/dv_agentic/profiles/_template/` | 🔨 | Directory created, pending schema YAMLs |
 
-## Phase 1 — Adapter Matrix Completion 🔨
+## Phase 1 — Adapter Matrix Completion ✅
 
 **Objective**: Complete the remaining simulator and coverage adapters, covering official internal tools and lightweight external CI tools.
 
@@ -52,7 +52,7 @@
 | Adapter | Status | Description |
 |---------|------|------|
 | `src/dv_agentic/tools/adapters/ghdl_cocotb.py` | ✅ | GHDL LLVM/MCO backend; `cocotb` runner; environment isolation; consistent log naming |
-| pyuvm coverage report parser | 📋 | Parse pyuvm `UVMCoverage` output, map to `CoverageDB` model; add `get_coverage_adapter("pyuvm")` |
+| pyuvm coverage report parser | ✅ | Parse pyuvm `UVMCoverage` output, map to `CoverageDB` model; add `get_coverage_adapter("pyuvm")` |
 
 ### External CI Lightweight Simulators (Planned)
 
@@ -60,8 +60,8 @@
 
 | Adapter | Status | Description |
 |---------|------|------|
-| `src/dv_agentic/tools/adapters/icarus.py` | 📋 | Icarus Verilog (`iverilog` / `vvp`); pure Verilog / SystemVerilog compile + run |
-| `src/dv_agentic/tools/adapters/verilator.py` | 📋 | Verilator; C++ model generation, `make` execution; can be combined with `lcov` for line coverage |
+| `src/dv_agentic/tools/adapters/icarus.py` | ✅ | Icarus Verilog (`iverilog` / `vvp`); pure Verilog / SystemVerilog compile + run |
+| `src/dv_agentic/tools/adapters/verilator.py` | ✅ | Verilator; C++ model generation, `make` execution; can be combined with `lcov` for line coverage |
 
 **Acceptance Criteria**: All ✅ items must pass `mypy`; 📋 items must pass `mypy` upon completion, and update the factory mapping.
 
@@ -176,7 +176,7 @@ ReporterAgent      ← Aggregates outputs from all agents
 
 ```
 Layer 1 (Shared Package)
-  src/dv_agentic/tools/         ██████████  100%  Interfaces + Xcelium + GHDL completed
+  src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters (Xcelium, GHDL, Icarus, Verilator) completed
   src/dv_agentic/agents/        ██░░░░░░░░   15%  base.py skeleton, remaining 8 agents pending
   src/dv_agentic/prompts/       ░░░░░░░░░░    0%  Directory exists, pending contents
   src/dv_agentic/profiles/      █░░░░░░░░░   10%  _template/ directory exists, schemas pending

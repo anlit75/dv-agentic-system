@@ -31,11 +31,20 @@ class TestGetSimulatorAdapter:
         assert isinstance(adapter, SimulatorTool)
 
     @skip_no_cocotb
-    def test_cocotb_alias_resolves_to_ghdl(self) -> None:
-        from dv_agentic.tools.adapters.ghdl_cocotb import GHDLCocotbAdapter
+    def test_icarus_returns_correct_type(self) -> None:
+        from dv_agentic.tools.adapters.icarus import IcarusAdapter
 
-        adapter = get_simulator_adapter("cocotb")
-        assert isinstance(adapter, GHDLCocotbAdapter)
+        adapter = get_simulator_adapter("icarus")
+        assert isinstance(adapter, IcarusAdapter)
+        assert isinstance(adapter, SimulatorTool)
+
+    @skip_no_cocotb
+    def test_verilator_returns_correct_type(self) -> None:
+        from dv_agentic.tools.adapters.verilator import VerilatorAdapter
+
+        adapter = get_simulator_adapter("verilator")
+        assert isinstance(adapter, VerilatorAdapter)
+        assert isinstance(adapter, SimulatorTool)
 
     @pytest.mark.parametrize("name", ["Xcelium", "XCELIUM", "xCeLiUm"])
     def test_case_insensitive(self, name: str) -> None:
@@ -51,6 +60,13 @@ class TestGetCoverageAdapter:
     def test_imc_returns_correct_type(self) -> None:
         adapter = get_coverage_adapter("imc")
         assert isinstance(adapter, IMCAdapter)
+        assert isinstance(adapter, CoverageTool)
+
+    def test_pyuvm_returns_correct_type(self) -> None:
+        from dv_agentic.tools.adapters.pyuvm import PyuvmCoverageAdapter
+
+        adapter = get_coverage_adapter("pyuvm")
+        assert isinstance(adapter, PyuvmCoverageAdapter)
         assert isinstance(adapter, CoverageTool)
 
     @pytest.mark.parametrize("name", ["IMC", "Imc", "iMc"])
