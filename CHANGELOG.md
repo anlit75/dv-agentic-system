@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `tests/test_models.py` — unit tests for `CompileResult`, `SimResult`, `CoverageDB` dataclasses
+- `tests/test_adapter_factory.py` — unit tests for `get_simulator_adapter()` / `get_coverage_adapter()` factories; GHDL/cocotb cases auto-skipped when `cocotb.runner` is unavailable (Linux-only)
+- `[tool.pytest.ini_options]` in `pyproject.toml`: `testpaths = ["tests"]`, `addopts = "--tb=short"`
+
+### Changed
+
+- `src/dv_agentic/tools/adapters/__init__.py` — replaced eager top-level imports with lazy `importlib.import_module()` via `_load()` helper; prevents `ModuleNotFoundError` for `cocotb.runner` on non-Linux environments at import time
+- `.github/workflows/ci.yml` — corrected `--cov=agents --cov=tools` to `--cov=dv_agentic` (matches the installed package name under `src/` layout)
+
 ### Fixed
 
 - Add `[tool.mypy]` config with `strict = true` and `[[tool.mypy.overrides]]` to suppress `import-not-found` for `cocotb.*`, which ships no PEP 561 stubs
