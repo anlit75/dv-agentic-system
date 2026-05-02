@@ -25,6 +25,7 @@
 | Item | Status | Description |
 |------|------|------|
 | `pyproject.toml` and `uv` environment | ✅ | `requires-python >= 3.11`; `uv.lock` locked |
+| `.env.example` and secret management | ✅ | Added `.env` to `.gitignore` and provided template |
 | `src/dv_agentic/tools/interface.py` — `SimulatorTool` / `CoverageTool` ABC | ✅ | Fully defined, including type hints |
 | `src/dv_agentic/tools/models.py` — `SimResult` / `CompileResult` / `CoverageDB` | ✅ | `dataclass` fully implemented; `wall_time_sec` added |
 | `src/dv_agentic/tools/adapters/` (Lazy loading) | ✅ | cocotb lazy loading implemented for all adapters |
@@ -66,26 +67,26 @@
 
 **Acceptance Criteria**: All ✅ items must pass `mypy`; 📋 items must pass `mypy` upon completion, and update the factory mapping.
 
-## Phase 2 — LLM Client Layer 📋
+## Phase 2 — LLM Client Layer ✅ (Completed)
 
 **Objective**: Establish an abstract LLM client, allowing Agents to switch models between internal and external environments.
 
 | Item | Status | Description |
 |------|------|------|
-| `src/dv_agentic/tools/llm/interface.py` — `BaseLLMClient` ABC | 📋 | Unified interface for all LLM clients |
-| `src/dv_agentic/tools/llm/api.py` — External client (Claude / GPT) | 📋 | OpenAI-compatible interface |
-| `src/dv_agentic/tools/llm/opencode.py` — Internal OpenCode client | 📋 | Internal endpoint, same interface as the external client |
+| `src/dv_agentic/tools/llm/interface.py` — `BaseLLMClient` ABC | ✅ | Unified interface for all LLM clients |
+| `src/dv_agentic/tools/llm/api.py` — External client (Claude / GPT) | ✅ | OpenAI-compatible interface |
+| `src/dv_agentic/tools/llm/local.py` — Internal/Local LLM client | ✅ | Internal endpoint, same interface as the external client |
 
-## Phase 3a — Non-LLM Agent Implementation 📋
+## Phase 3a — Non-LLM Agent Implementation ✅ (Completed)
 
 **Objective**: Implementation of specialized Agents that do not require LLM access, enabling parallel development with Phase 2.
 
 | Agent | Status | Description |
 |-------|------|------|
-| `src/dv_agentic/agents/sim_controller.py` | 📋 | Call adapters, branch management, feedback loop |
-| `src/dv_agentic/agents/log_analyzer.py` | 📋 | Parse sim logs, classify errors, regex-based parsing |
-| `src/dv_agentic/agents/coverage_analyst.py` | 📋 | Analyze coverage DB, suggest test scenarios based on stats |
-| Base prompt templates (`prompts/*.md`) | 📋 | Minimal prompts for non-LLM logic if needed |
+| `src/dv_agentic/agents/sim_controller.py` | ✅ | Call adapters, branch management, feedback loop |
+| `src/dv_agentic/agents/log_analyzer.py` | ✅ | Parse sim logs, classify errors, regex-based parsing |
+| `src/dv_agentic/agents/coverage_analyst.py` | ✅ | Analyze coverage DB, suggest test scenarios based on stats |
+| Base prompt templates (`prompts/*.md`) | ✅ | Minimal prompts for non-LLM logic if needed |
 
 ## Phase 3b — LLM-Powered Agent Implementation 🔒 (Depends on Phase 2, 3a)
 
@@ -144,12 +145,12 @@
 | `pip install` publish workflow | CI/CD configuration, PyPI or internal package registry |
 | External CI integration (GitHub Actions) | Run full verification loop using GHDL + cocotb + lcov adapters |
 
-## Current Progress Snapshot (2026-05-01)
+## Current Progress Snapshot (2026-05-02)
 
 ```
 Layer 1 (Shared Package)
   src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters (Xcelium, GHDL, Icarus, Verilator) completed
-  src/dv_agentic/agents/        ██░░░░░░░░   20%  base.py completed with budget management; iteration tracking implemented
+  src/dv_agentic/agents/        █████░░░░░   50%  Base, LogAnalyzer, SimController, and CoverageAnalyst completed
   src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection fully implemented and tested
   src/dv_agentic/profiles/      █░░░░░░░░░   10%  _template/ directory exists, schemas pending
 
@@ -162,4 +163,4 @@ Layer 3 (Project Implant)
                                                   subagents/, memory.db, tasks/ pending
 ```
 
-**Next Milestone**: Enter Phase 2, implement the abstract LLM Client layer (`src/dv_agentic/tools/llm/api.py` and `src/dv_agentic/tools/llm/opencode.py`), providing model access capabilities for the core Agents.
+**Next Milestone**: Enter Phase 3b, implement LLM-powered agents (`spec_analyst`, `code_generator`, `bug_classifier`, `orchestrator`) leveraging the abstract LLM Client layer.
