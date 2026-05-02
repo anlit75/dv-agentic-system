@@ -40,7 +40,7 @@ dv-agentic-system/
 │       │   │   ├── icarus.py              # Icarus Verilog (External CI, Planned)
 │       │   │   └── verilator.py           # Verilator (External CI, Planned)
 │       │   └── llm/
-│       │       ├── opencode.py            # Internal OpenCode client
+│       │       ├── local.py               # Internal/Local LLM client
 │       │       └── api.py                 # External API client (Claude / GPT)
 │       │
 │       ├── prompts/                       # Base prompt templates (plain text, no environment knowledge)

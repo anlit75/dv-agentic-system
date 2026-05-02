@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `src/dv_agentic/tools/llm/api.py`: External LLM client (OpenAI-compatible) for Claude/GPT integration.
+- `src/dv_agentic/tools/llm/local.py`: Internal/Local LLM client for on-premise model endpoints.
+- `src/dv_agentic/agents/log_analyzer.py`: Regex-based simulation log analysis agent (Phase 3a).
+- `src/dv_agentic/agents/sim_controller.py`: Agent for managing simulation execution loops and adapter coordination.
+- Refactored `SimControllerAgent`, `LogAnalyzerAgent`, and `CoverageAnalystAgent` to offload blocking I/O and subprocess operations to separate threads using `asyncio.to_thread`.
+- `src/dv_agentic/agents/coverage_analyst.py`: Agent for analyzing coverage results and suggesting test scenarios.
+- `src/dv_agentic/tools/models.py`: Added `SimTask` dataclass for structured simulation task definitions.
+- `tests/test_llm_clients.py`: Unit tests for local and API-based LLM clients.
+- `tests/test_log_analyzer.py`: Comprehensive test suite for log failure classification patterns.
+- `tests/test_sim_controller.py`: Unit tests for simulation controller task handling.
+- `tests/test_coverage_analyst.py`: Unit tests for coverage analysis logic.
+- `.env.example`: Template for required environment variables (LLM keys, base URLs).
+- `pyproject.toml`: Added `pytest-asyncio` as a development dependency.
+
+### Changed
+
+- `AGENTS.md`: Added detailed behavioral guidelines (Think Before Coding, Simplicity First, Surgical Changes, Goal-Driven Execution).
+- `ROADMAP.md`: Updated Phase 2 and Phase 3a status to reflect completion of LLM clients and non-LLM agents.
+- `docs/agentic-system-structure.md`: Updated architecture diagram to include `local.py` LLM client.
+- `docs/agentic-system.md`: Refined LLM access terminology for internal environments.
+- `src/dv_agentic/agents/__init__.py`: Exported `LogAnalyzerAgent`, `SimControllerAgent`, and `CoverageAnalystAgent`.
+- `src/dv_agentic/tools/llm/__init__.py`: Exported `LocalLLMClient` and `LLMAPIClient`.
+- `.gitignore`: Added `.env` to ignore list.
+
 ## [0.2.0] - 2026-05-01
 
 ### Added

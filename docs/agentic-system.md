@@ -260,7 +260,7 @@ Not everything is automatically completed by agents. Force pause at these points
 
 | Aspect | Internal | External |
 |---|---|---|
-| LLM Access | OpenCode (Local/Internal) | External APIs (Claude/GPT) |
+| LLM Access | Local LLM (Internal/Local) | External APIs (Claude/GPT) |
 | SPEC Retrieval | Internal file system | PDF upload / URL |
 | Simulator | VCS / Questa (CLI) | Icarus / Verilator / GHDL |
 | Coverage DB | UCDB (Questa) / VDB (VCS) | cocotb coverage XML / LCOV |

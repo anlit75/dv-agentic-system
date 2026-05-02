@@ -39,6 +39,7 @@ xcelium.d/
 
 # Agentic System Local States
 memory.db
+.env
 
 # IDEs and OS
 .vscode/
