@@ -7,6 +7,7 @@ Manages the full lifecycle of a simulation task:
   4. Commit the final state and report results.
 """
 
+import asyncio
 import json
 import logging
 import re
@@ -90,10 +91,10 @@ class SimControllerAgent(BaseAgent):
         safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", task.task_id)
         branch = f"agent/{safe_id}"
 
-        self._git_checkout_new_branch(branch)
+        await asyncio.to_thread(self._git_checkout_new_branch, branch)
 
         # Fail-fast compile
-        compile_result = self.sim.compile(task.file_list, task.top)
+        compile_result = await asyncio.to_thread(self.sim.compile, task.file_list, task.top)
         if compile_result.status == "fail":
             logger.error("Compile failed for task '%s'", task.task_id)
             return (
@@ -110,7 +111,7 @@ class SimControllerAgent(BaseAgent):
         # Sim loop — self.step() checks budget AND increments self.iteration
         results: list[SimResult] = []
         while self.step():
-            sim_result = self.sim.run(task.test, task.seed, task.debug)
+            sim_result = await asyncio.to_thread(self.sim.run, task.test, task.seed, task.debug)
             results.append(sim_result)
             logger.info(
                 "Sim iter=%d status=%s job_id=%s",
@@ -118,8 +119,9 @@ class SimControllerAgent(BaseAgent):
                 sim_result.status,
                 sim_result.job_id,
             )
-            self._git_commit(
-                f"[agent] sim iter={self.iteration} · task:{task.task_id} · iter:{self.iteration}"
+            await asyncio.to_thread(
+                self._git_commit,
+                f"[agent] sim iter={self.iteration} · task:{task.task_id} · iter:{self.iteration}",
             )
             if sim_result.status == "pass":
                 return SimReport(
@@ -132,7 +134,9 @@ class SimControllerAgent(BaseAgent):
                 ).to_str()
 
         # Budget exhausted
-        self._git_commit(f"[agent] budget exhausted · task:{task.task_id} · INCOMPLETE")
+        await asyncio.to_thread(
+            self._git_commit, f"[agent] budget exhausted · task:{task.task_id} · INCOMPLETE"
+        )
         last = results[-1] if results else None
         return SimReport(
             task_id=task.task_id,

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/dv_agentic/tools/llm/local.py`: Internal/Local LLM client for on-premise model endpoints.
 - `src/dv_agentic/agents/log_analyzer.py`: Regex-based simulation log analysis agent (Phase 3a).
 - `src/dv_agentic/agents/sim_controller.py`: Agent for managing simulation execution loops and adapter coordination.
+- Refactored `SimControllerAgent`, `LogAnalyzerAgent`, and `CoverageAnalystAgent` to offload blocking I/O and subprocess operations to separate threads using `asyncio.to_thread`.
 - `src/dv_agentic/agents/coverage_analyst.py`: Agent for analyzing coverage results and suggesting test scenarios.
 - `src/dv_agentic/tools/models.py`: Added `SimTask` dataclass for structured simulation task definitions.
 - `tests/test_llm_clients.py`: Unit tests for local and API-based LLM clients.

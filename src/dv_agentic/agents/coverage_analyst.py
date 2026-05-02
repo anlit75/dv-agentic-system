@@ -7,6 +7,7 @@ Hole classification (actionable / protocol_blocked / design_excluded) and
 priority ranking are LLM-powered features deferred to Phase 3b.
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 
@@ -82,7 +83,7 @@ class CoverageAnalystAgent(BaseAgent):
         Returns:
             A formatted :class:`CoverageSummary` string.
         """
-        summary = self.get_summary(task_input)
+        summary = await asyncio.to_thread(self.get_summary, task_input)
         return summary.to_str()
 
     # ------------------------------------------------------------------

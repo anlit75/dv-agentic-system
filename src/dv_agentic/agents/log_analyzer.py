@@ -9,6 +9,7 @@ Unknown-class handling deliberately defers to Phase 3b (LLM-powered
 analysis) — this agent never speculates on root cause.
 """
 
+import asyncio
 import logging
 import re
 from collections.abc import Iterator
@@ -108,7 +109,7 @@ class LogAnalyzerAgent(BaseAgent):
         Returns:
             A formatted :class:`FailureSummary` string.
         """
-        summary = self._analyze(self._get_lines(task_input))
+        summary = await asyncio.to_thread(self.analyze, task_input)
         return summary.to_str()
 
     # ------------------------------------------------------------------
