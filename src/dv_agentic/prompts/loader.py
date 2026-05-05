@@ -28,7 +28,6 @@ class PromptLoader:
             session: Optional session state object for Level 2 injection.
         """
         if prompts_dir is None:
-            # Default to the sibling prompts/ directory
             self.prompts_dir = Path(__file__).parent
             if self.prompts_dir.name != "prompts":
                 msg = f"PromptLoader default path assumption broken: {self.prompts_dir}"

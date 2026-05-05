@@ -129,7 +129,7 @@ class TestGitCalls:
 
         # checkout -b agent/{task_id} must appear somewhere in the calls
         all_calls = [c.args for c in git_mock.call_args_list]
-        assert any(args == ("checkout", "-b", f"agent/{task.task_id}") for args in all_calls)
+        assert any(args == ("checkout", "-B", f"agent/{task.task_id}") for args in all_calls)
 
     def test_commit_called_after_run(self, task: SimTask) -> None:
         with patch.object(SimControllerAgent, "_git") as git_mock:

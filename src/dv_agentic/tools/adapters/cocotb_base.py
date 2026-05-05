@@ -42,13 +42,21 @@ class CocotbBaseAdapter(SimulatorTool):
         return get_runner(self.simulator)
 
     def compile(self, file_list: list[str], top: str) -> CompileResult:
-        """Compile source files using the cocotb runner."""
+        """Compile HDL source files using the cocotb runner.
+
+        Args:
+            file_list: List of paths to Verilog/SystemVerilog or VHDL source files.
+            top: Name of the HDL top-level module to build.
+
+        Returns:
+            A :class:`CompileResult` indicating success or failure with logs.
+        """
         self.hdl_toplevel = top
         runner = self._get_runner()
         try:
-            # Most cocotb runners support verilog_sources and vhdl_sources.
-            # We determine which to use based on file extensions or subclass choice.
-            # For simplicity in the base class, we can try to guess or use specific kwargs.
+            # Runners are selected based on the 'simulator' attribute.
+            # Sources are divided into verilog_sources and vhdl_sources by extension.
+            # Subclasses can override hdl_toplevel_lang to force a specific mode.
             build_kwargs: dict[str, Any] = {
                 "hdl_toplevel": top,
                 "always": True,
@@ -75,7 +83,16 @@ class CocotbBaseAdapter(SimulatorTool):
             return CompileResult(status="fail", output=str(e))
 
     def run(self, test: str, seed: int, debug: bool) -> SimResult:
-        """Run cocotb simulation."""
+        """Run a cocotb simulation test case.
+
+        Args:
+            test: Test case identifier, either "module" or "module.testcase".
+            seed: Random seed for the simulation.
+            debug: If True, enable waveform dumping (if supported by the simulator).
+
+        Returns:
+            A :class:`SimResult` containing the status and path to the simulation log.
+        """
         env = os.environ.copy()
         env.update(
             {
