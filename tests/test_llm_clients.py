@@ -85,7 +85,7 @@ class TestLLMAPIClient:
         body = {"content": [{"type": "text", "text": "ok"}]}
         captured: list[Any] = []
 
-        def fake_urlopen(req: Any, timeout: Any = None) -> MagicMock:  # noqa: ARG001
+        def fake_urlopen(req: Any, timeout: Any = None) -> MagicMock:
             captured.append(req)
             return _mock_response(body)
 
@@ -133,7 +133,7 @@ class TestLocalLLMClient:
         body = {"choices": [{"message": {"content": "ok"}}]}
         sent_payloads: list[dict[str, Any]] = []
 
-        def fake_urlopen(req: Any, timeout: Any = None) -> MagicMock:  # noqa: ARG001
+        def fake_urlopen(req: Any, timeout: Any = None) -> MagicMock:
             sent_payloads.append(json.loads(req.data))
             return _mock_response(body)
 
