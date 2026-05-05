@@ -1,0 +1,15 @@
+# Standardize line endings to LF for cross-platform compatibility
+# (Important for hardware verification tools running on Linux)
+
+* text=auto eol=lf
+
+# Explicitly set eol for key file types
+*.py text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+*.v text eol=lf
+*.sv text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf

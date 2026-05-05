@@ -1,10 +1,10 @@
-"""Coverage analysis agent (Phase 3a — no LLM required).
+"""Coverage analysis agent.
 
-Phase 3a scope: retrieve a coverage DB for a given job ID, compare the
+The agent retrieves a coverage DB for a given job ID, compares the
 overall percentage against a threshold, and return a structured summary.
 
 Hole classification (actionable / protocol_blocked / design_excluded) and
-priority ranking are LLM-powered features deferred to Phase 3b.
+priority ranking are LLM-powered features intended for future extension.
 """
 
 import asyncio
@@ -50,8 +50,8 @@ class CoverageSummary:
 class CoverageAnalystAgent(BaseAgent):
     """Retrieves coverage for a job and reports whether it meets the threshold.
 
-    Does not require LLM access.  In Phase 3b this agent will be extended
-    to classify holes and generate targeted sequence recommendations.
+    Does not require LLM access. This agent can be extended
+    to support LLM-based analysis.
 
     Args:
         config: Agent configuration.
@@ -83,6 +83,13 @@ class CoverageAnalystAgent(BaseAgent):
         Returns:
             A formatted :class:`CoverageSummary` string.
         """
+        if not task_input or not isinstance(task_input, str):
+            raise ValueError("task_input must be a non-empty string")
+
+        if self.iteration != 0:
+            raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
+
+        await self.step()  # Deterministic agent
         summary = await asyncio.to_thread(self.get_summary, task_input)
         return summary.to_str()
 
@@ -96,7 +103,14 @@ class CoverageAnalystAgent(BaseAgent):
         Args:
             job_id: Simulation job identifier.
         """
+        if not job_id or not isinstance(job_id, str):
+            raise ValueError("job_id must be a non-empty string")
+
         db: CoverageDB = self.cov.get_coverage(job_id)
+
+        if db.overall_percentage < 0:
+            raise ValueError(f"Coverage percentage cannot be negative: {db.overall_percentage}")
+
         logger.info(
             "Coverage for job '%s': %.2f%% (threshold=%.2f%%)",
             job_id,

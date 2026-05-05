@@ -1,4 +1,4 @@
-"""Simulation execution agent (Phase 3a — no LLM required).
+"""Simulation execution agent.
 
 Manages the full lifecycle of a simulation task:
   1. Create ``agent/{task_id}`` git branch.
@@ -87,7 +87,16 @@ class SimControllerAgent(BaseAgent):
         Returns:
             A human-readable report string (see :class:`SimReport`).
         """
+        if not task_input:
+            raise ValueError("task_input must not be empty")
+
         task = self._parse_task(task_input)
+
+        if not task.task_id:
+            raise ValueError("SimTask must have a task_id")
+        if self.iteration != 0:
+            raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
+
         safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", task.task_id)
         branch = f"agent/{safe_id}"
 
@@ -110,7 +119,7 @@ class SimControllerAgent(BaseAgent):
 
         # Sim loop — self.step() checks budget AND increments self.iteration
         results: list[SimResult] = []
-        while self.step():
+        while await self.step():
             sim_result = await asyncio.to_thread(self.sim.run, task.test, task.seed, task.debug)
             results.append(sim_result)
             logger.info(
@@ -169,13 +178,14 @@ class SimControllerAgent(BaseAgent):
         try:
             self._git("checkout", self.base_branch)
             self._git("pull", "--ff-only")
-            self._git("checkout", "-b", branch)
+            self._git("checkout", "-B", branch)
         except subprocess.CalledProcessError as exc:
             logger.warning("git branch setup failed (may be expected in CI): %s", exc)
 
     def _git_commit(self, message: str) -> None:
         try:
-            self._git("add", "-A")
+            # Add only tracked files and newly created files that are NOT in .gitignore
+            self._git("add", ".")
             self._git("commit", "-m", message)
         except subprocess.CalledProcessError:
             logger.debug("Nothing to commit for message: %s", message)

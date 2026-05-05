@@ -1,11 +1,11 @@
-"""Simulation log analysis agent (Phase 3a — no LLM required).
+"""Simulation log analysis agent.
 
 Classifies simulation failures by matching known error patterns with
 regular expressions.  Falls back to ``unknown`` when no pattern matches
 and sets ``debug_required = True`` so the Orchestrator can request a
 debug-mode re-run.
 
-Unknown-class handling deliberately defers to Phase 3b (LLM-powered
+Unknown-class handling can be handled by an LLM-powered agent.
 analysis) — this agent never speculates on root cause.
 """
 
@@ -84,7 +84,7 @@ class LogAnalyzerAgent(BaseAgent):
     """Parses simulation logs and returns a structured :class:`FailureSummary`.
 
     Does not require LLM access.  Analysis is purely regex-based.
-    Phase 3b will add LLM reasoning for ``unknown`` class failures.
+    An LLM agent can provide reasoning for ``unknown`` class failures.
 
     Args:
         config: Agent configuration (budget is not consumed by this agent,
@@ -109,6 +109,13 @@ class LogAnalyzerAgent(BaseAgent):
         Returns:
             A formatted :class:`FailureSummary` string.
         """
+        if not task_input or not isinstance(task_input, str):
+            raise ValueError("task_input must be a non-empty string")
+
+        if self.iteration != 0:
+            raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
+
+        await self.step()  # Deterministic agent, one iteration per run
         summary = await asyncio.to_thread(self.analyze, task_input)
         return summary.to_str()
 

@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-05
+
 ### Added
 
 - `src/dv_agentic/tools/llm/api.py`: External LLM client (OpenAI-compatible) for Claude/GPT integration.
 - `src/dv_agentic/tools/llm/local.py`: Internal/Local LLM client for on-premise model endpoints.
 - `src/dv_agentic/agents/log_analyzer.py`: Regex-based simulation log analysis agent (Phase 3a).
 - `src/dv_agentic/agents/sim_controller.py`: Agent for managing simulation execution loops and adapter coordination.
+- `src/dv_agentic/agents/spec_analyst.py`: LLM-powered agent for parsing specifications into structured verification plans.
+- `src/dv_agentic/agents/bug_classifier.py`: LLM-powered agent for root-cause classification (DUT vs. TB) of simulation failures.
+- `src/dv_agentic/agents/orchestrator.py`: Multi-agent coordination agent for task routing and handoff management.
+- `src/dv_agentic/agents/reporter.py`: Agent for aggregating session results into professional verification reports.
+- `src/dv_agentic/agents/code_generator.py`: LLM-powered agent for SystemVerilog/UVM code generation and modification.
 - Refactored `SimControllerAgent`, `LogAnalyzerAgent`, and `CoverageAnalystAgent` to offload blocking I/O and subprocess operations to separate threads using `asyncio.to_thread`.
 - `src/dv_agentic/agents/coverage_analyst.py`: Agent for analyzing coverage results and suggesting test scenarios.
 - `src/dv_agentic/tools/models.py`: Added `SimTask` dataclass for structured simulation task definitions.
@@ -111,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/anlit75/dv-agentic-system/releases/tag/v0.1.0

@@ -88,19 +88,19 @@
 | `src/dv_agentic/agents/coverage_analyst.py` | ✅ | Analyze coverage DB, suggest test scenarios based on stats |
 | Base prompt templates (`prompts/*.md`) | ✅ | Minimal prompts for non-LLM logic if needed |
 
-## Phase 3b — LLM-Powered Agent Implementation 🔒 (Depends on Phase 2, 3a)
+## Phase 3b — LLM-Powered Agent Implementation ✅ (Completed)
 
 **Objective**: Implementation of Agents that leverage LLM reasoning and code generation. Prompt development is integrated into this phase.
 
 | Agent | Status | Description |
 |-------|------|------|
-| `src/dv_agentic/agents/spec_analyst.py` | 📋 | Parse spec docs, generate `vplan.yaml` + `prompts/spec_analyst.md` |
-| `src/dv_agentic/agents/code_generator.py` | 📋 | Generate / modify code + `prompts/code_generator.md` |
-| `src/dv_agentic/agents/bug_classifier.py` | 📋 | Classify DUT vs. TB bugs + `prompts/bug_classifier.md` |
-| `src/dv_agentic/agents/orchestrator.py` | 📋 | Task routing, handoff coordination + `prompts/orchestrator.md` |
-| `src/dv_agentic/agents/reporter.py` | 📋 | Aggregate session results + `prompts/reporter.md` |
+| `src/dv_agentic/agents/spec_analyst.py` | ✅ | Parse spec docs, generate `vplan.yaml` + `prompts/spec_analyst.md` |
+| `src/dv_agentic/agents/bug_classifier.py` | ✅ | Classify DUT vs. TB bugs + `prompts/bug_classifier.md` |
+| `src/dv_agentic/agents/orchestrator.py` | ✅ | Task routing, handoff coordination + `prompts/orchestrator.md` |
+| `src/dv_agentic/agents/reporter.py` | ✅ | Aggregate session results + `prompts/reporter.md` |
+| `src/dv_agentic/agents/code_generator.py` | ✅ | Generate / modify code + `prompts/code_generator.md` |
 
-## Phase 4 — Profile and Project Configuration System 🔒 (Depends on Phase 3b)
+## Phase 4 — Profile and Project Configuration System 📋 (Planned)
 
 **Objective**: Complete the three-layer configuration loading (`project.yaml` → team profile → ip_type rules), allowing different DV teams to use this system without changing the agent core.
 
@@ -145,12 +145,12 @@
 | `pip install` publish workflow | CI/CD configuration, PyPI or internal package registry |
 | External CI integration (GitHub Actions) | Run full verification loop using GHDL + cocotb + lcov adapters |
 
-## Current Progress Snapshot (2026-05-02)
+## Progress Snapshot (2026-05-05)
 
 ```
 Layer 1 (Shared Package)
-  src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters (Xcelium, GHDL, Icarus, Verilator) completed
-  src/dv_agentic/agents/        █████░░░░░   50%  Base, LogAnalyzer, SimController, and CoverageAnalyst completed
+  src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters completed
+  src/dv_agentic/agents/        ██████████  100%  All 8 agents (LogAnalyzer, SimController, CoverageAnalyst, SpecAnalyst, BugClassifier, Orchestrator, Reporter, CodeGenerator) completed
   src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection fully implemented and tested
   src/dv_agentic/profiles/      █░░░░░░░░░   10%  _template/ directory exists, schemas pending
 
@@ -163,4 +163,4 @@ Layer 3 (Project Implant)
                                                   subagents/, memory.db, tasks/ pending
 ```
 
-**Next Milestone**: Enter Phase 3b, implement LLM-powered agents (`spec_analyst`, `code_generator`, `bug_classifier`, `orchestrator`) leveraging the abstract LLM Client layer.
+**Next Milestone**: Enter Phase 4, finalize the three-layer configuration loading system and provide full sample profiles for teams and IP protocols.

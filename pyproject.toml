@@ -1,6 +1,6 @@
 [project]
 name = "dv-agentic-system"
-version = "0.2.0"
+version = "0.3.0"
 description = "Core AI Agent System for UVM/pyuvm Verification"
 authors = [{name = "Ting-An Cheng"}]
 license = "MIT"
@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 dv-agentic = "dv_agentic.main:main"
+dv-docs = "dv_agentic.docs:build"
 
 [build-system]
 requires = ["hatchling"]
@@ -28,6 +29,8 @@ dev = [
     "pre-commit>=4.6.0",
     "pytest-cov>=7.1.0",
     "pytest-asyncio>=0.23.0",
+    "sphinx>=9.0.4",
+    "sphinx-rtd-theme>=3.1.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -75,6 +78,8 @@ select = [
 ignore = [
     "D100", # Missing docstring in public module
     "D104", # Missing docstring in public package
+    "S101", # Use of assert (Mandatory for Power of Ten compliance)
+    "ARG",  # Unused arguments (common in agent interfaces/mocks)
 ]
 
 [tool.ruff.lint.per-file-ignores]
