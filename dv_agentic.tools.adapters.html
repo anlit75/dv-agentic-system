@@ -1,0 +1,360 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dv_agentic.tools.adapters package &mdash; dv-agentic-system 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="dv_agentic.tools.llm package" href="dv_agentic.tools.llm.html" />
+    <link rel="prev" title="dv_agentic.tools package" href="dv_agentic.tools.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dv-agentic-system
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">dv_agentic</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dv_agentic.html">dv_agentic package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="dv_agentic.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html">dv_agentic.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html">dv_agentic.prompts package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="dv_agentic.tools.html">dv_agentic.tools package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#module-dv_agentic.docs">dv_agentic.docs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#module-dv_agentic.main">dv_agentic.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#module-dv_agentic">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dv-agentic-system</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dv_agentic</a></li>
+          <li class="breadcrumb-item"><a href="dv_agentic.html">dv_agentic package</a></li>
+          <li class="breadcrumb-item"><a href="dv_agentic.tools.html">dv_agentic.tools package</a></li>
+      <li class="breadcrumb-item active">dv_agentic.tools.adapters package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/dv_agentic.tools.adapters.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dv-agentic-tools-adapters-package">
+<h1>dv_agentic.tools.adapters package<a class="headerlink" href="#dv-agentic-tools-adapters-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-dv_agentic.tools.adapters.cocotb_base">
+<span id="dv-agentic-tools-adapters-cocotb-base-module"></span><h2>dv_agentic.tools.adapters.cocotb_base module<a class="headerlink" href="#module-dv_agentic.tools.adapters.cocotb_base" title="Link to this heading"></a></h2>
+<p>Base class for cocotb.runner based simulator adapters.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.cocotb_base.</span></span><span class="sig-name descname"><span class="pre">CocotbBaseAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">simulator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdl_toplevel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'top'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdl_toplevel_lang</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/cocotb_base.html#CocotbBaseAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.SimulatorTool" title="dv_agentic.tools.interface.SimulatorTool"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorTool</span></code></a></p>
+<p>Base class for simulators using cocotb.runner infrastructure.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter.compile">
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CompileResult" title="dv_agentic.tools.models.CompileResult"><span class="pre">CompileResult</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/cocotb_base.html#CocotbBaseAdapter.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter.compile" title="Link to this definition"></a></dt>
+<dd><p>Compile HDL source files using the cocotb runner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_list</strong> – List of paths to Verilog/SystemVerilog or VHDL source files.</p></li>
+<li><p><strong>top</strong> – Name of the HDL top-level module to build.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">CompileResult</span></code> indicating success or failure with logs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult" title="dv_agentic.tools.models.SimResult"><span class="pre">SimResult</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/cocotb_base.html#CocotbBaseAdapter.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter.run" title="Link to this definition"></a></dt>
+<dd><p>Run a cocotb simulation test case.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>test</strong> – Test case identifier, either “module” or “module.testcase”.</p></li>
+<li><p><strong>seed</strong> – Random seed for the simulation.</p></li>
+<li><p><strong>debug</strong> – If True, enable waveform dumping (if supported by the simulator).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">SimResult</span></code> containing the status and path to the simulation log.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters.ghdl_cocotb">
+<span id="dv-agentic-tools-adapters-ghdl-cocotb-module"></span><h2>dv_agentic.tools.adapters.ghdl_cocotb module<a class="headerlink" href="#module-dv_agentic.tools.adapters.ghdl_cocotb" title="Link to this heading"></a></h2>
+<p>Adapter for GHDL + cocotb + pyuvm (External/Open-source environment).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.ghdl_cocotb.GHDLCocotbAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.ghdl_cocotb.</span></span><span class="sig-name descname"><span class="pre">GHDLCocotbAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hdl_toplevel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'top'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hdl_toplevel_lang</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'vhdl'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/ghdl_cocotb.html#GHDLCocotbAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.ghdl_cocotb.GHDLCocotbAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter" title="dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CocotbBaseAdapter</span></code></a></p>
+<p>Adapter for GHDL + cocotb + pyuvm (External Environment).</p>
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters.icarus">
+<span id="dv-agentic-tools-adapters-icarus-module"></span><h2>dv_agentic.tools.adapters.icarus module<a class="headerlink" href="#module-dv_agentic.tools.adapters.icarus" title="Link to this heading"></a></h2>
+<p>Adapter for Icarus Verilog simulator (External/Open-source environment).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.icarus.IcarusAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.icarus.</span></span><span class="sig-name descname"><span class="pre">IcarusAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hdl_toplevel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'top'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/icarus.html#IcarusAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.icarus.IcarusAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter" title="dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CocotbBaseAdapter</span></code></a></p>
+<p>Adapter for Icarus Verilog simulator (External Environment).</p>
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters.imc">
+<span id="dv-agentic-tools-adapters-imc-module"></span><h2>dv_agentic.tools.adapters.imc module<a class="headerlink" href="#module-dv_agentic.tools.adapters.imc" title="Link to this heading"></a></h2>
+<p>Adapter for Cadence IMC 24.06 + Verisium 25.12 coverage tools (Internal environment).</p>
+<section id="workflow">
+<h3>Workflow<a class="headerlink" href="#workflow" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">XceliumAdapter.run()</span></code> writes a per-job coverage DB to
+<code class="docutils literal notranslate"><span class="pre">{cov_work_dir}/{job_id}/</span></code> (one directory per simulation run).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IMCAdapter.get_coverage(job_id)</span></code> loads that directory and returns a
+<code class="docutils literal notranslate"><span class="pre">CoverageDB</span></code> summary.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IMCAdapter.merge(job_ids)</span></code> merges multiple runs into a single aggregated
+DB, then optionally invokes Verisium <code class="docutils literal notranslate"><span class="pre">vsif</span></code> for enterprise-level
+aggregation reports.</p></li>
+</ol>
+</section>
+<section id="assumed-tool-versions">
+<h3>Assumed tool versions<a class="headerlink" href="#assumed-tool-versions" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>IMC      : 24.06.a001</p></li>
+<li><p>Verisium : 25.12.081</p></li>
+<li><p>OS       : RHEL 8.4</p></li>
+</ul>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.imc.IMCAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.imc.</span></span><span class="sig-name descname"><span class="pre">IMCAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imc_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'imc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vsif_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'vsif'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_work_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cov_work'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/imc.html#IMCAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.imc.IMCAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.CoverageTool" title="dv_agentic.tools.interface.CoverageTool"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoverageTool</span></code></a></p>
+<p>Coverage adapter for IMC 24.06 + Verisium 25.12 (Internal environment).</p>
+<p>Paired with <code class="docutils literal notranslate"><span class="pre">XceliumAdapter</span></code> — both must share the same <code class="docutils literal notranslate"><span class="pre">cov_work_dir</span></code>
+so that job IDs resolve to the same filesystem paths.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.imc.IMCAdapter.get_coverage">
+<span class="sig-name descname"><span class="pre">get_coverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CoverageDB" title="dv_agentic.tools.models.CoverageDB"><span class="pre">CoverageDB</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/imc.html#IMCAdapter.get_coverage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.imc.IMCAdapter.get_coverage" title="Link to this definition"></a></dt>
+<dd><p>Load a single run’s coverage DB and return a summary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>job_id</strong> – Simulation job identifier produced by <code class="docutils literal notranslate"><span class="pre">XceliumAdapter</span></code>,
+e.g. <code class="docutils literal notranslate"><span class="pre">&quot;my_test_42&quot;</span></code>.  The coverage DB is expected at
+<code class="docutils literal notranslate"><span class="pre">{cov_work_dir}/{job_id}/</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.imc.IMCAdapter.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cov_merged'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_verisium</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CoverageDB" title="dv_agentic.tools.models.CoverageDB"><span class="pre">CoverageDB</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/imc.html#IMCAdapter.merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.imc.IMCAdapter.merge" title="Link to this definition"></a></dt>
+<dd><p>Merge coverage from multiple simulation runs into one aggregated DB.</p>
+<p>Runs <code class="docutils literal notranslate"><span class="pre">imc</span> <span class="pre">-load</span> <span class="pre">&lt;dir1&gt;</span> <span class="pre">&lt;dir2&gt;</span> <span class="pre">...</span> <span class="pre">-merge</span> <span class="pre">&lt;merged_dir&gt;</span> <span class="pre">-exit</span></code> to
+aggregate per-job coverage DBs, then optionally invokes Verisium
+<code class="docutils literal notranslate"><span class="pre">vsif</span></code> for cross-session enterprise-level reporting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_ids</strong> – Job IDs whose coverage DBs will be merged.</p></li>
+<li><p><strong>merged_dir</strong> – Destination directory for the aggregated DB.</p></li>
+<li><p><strong>use_verisium</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, run <code class="docutils literal notranslate"><span class="pre">vsif</span> <span class="pre">run</span> <span class="pre">&lt;merged_dir&gt;/merge.vsif</span></code>
+after the IMC merge step.  The <code class="docutils literal notranslate"><span class="pre">.vsif</span></code> file must already
+exist in <code class="docutils literal notranslate"><span class="pre">merged_dir</span></code> (typically hand-authored or generated
+by a prior Verisium session).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters.pyuvm">
+<span id="dv-agentic-tools-adapters-pyuvm-module"></span><h2>dv_agentic.tools.adapters.pyuvm module<a class="headerlink" href="#module-dv_agentic.tools.adapters.pyuvm" title="Link to this heading"></a></h2>
+<p>Adapter for pyuvm functional coverage (External/Open-source environment).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.pyuvm.PyuvmCoverageAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.pyuvm.</span></span><span class="sig-name descname"><span class="pre">PyuvmCoverageAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_report_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'coverage.txt'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/pyuvm.html#PyuvmCoverageAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.pyuvm.PyuvmCoverageAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.CoverageTool" title="dv_agentic.tools.interface.CoverageTool"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoverageTool</span></code></a></p>
+<p>Coverage adapter for pyuvm (External environment).</p>
+<p>Parses text-based coverage reports or logs generated by pyuvm testbenches
+using tools like cocotb-coverage or custom UVMCoverage subscribers.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.pyuvm.PyuvmCoverageAdapter.get_coverage">
+<span class="sig-name descname"><span class="pre">get_coverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">job_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CoverageDB" title="dv_agentic.tools.models.CoverageDB"><span class="pre">CoverageDB</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/pyuvm.html#PyuvmCoverageAdapter.get_coverage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.pyuvm.PyuvmCoverageAdapter.get_coverage" title="Link to this definition"></a></dt>
+<dd><p>Retrieve coverage results for a specific pyuvm job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>job_id</strong> – The ID of the simulation job.  Looks for a log or report
+file named <code class="docutils literal notranslate"><span class="pre">sim_{job_id}.log</span></code> or the default report path.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters.verilator">
+<span id="dv-agentic-tools-adapters-verilator-module"></span><h2>dv_agentic.tools.adapters.verilator module<a class="headerlink" href="#module-dv_agentic.tools.adapters.verilator" title="Link to this heading"></a></h2>
+<p>Adapter for Verilator simulator (External/Open-source environment).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.verilator.VerilatorAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.verilator.</span></span><span class="sig-name descname"><span class="pre">VerilatorAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hdl_toplevel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'top'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/verilator.html#VerilatorAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.verilator.VerilatorAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter" title="dv_agentic.tools.adapters.cocotb_base.CocotbBaseAdapter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CocotbBaseAdapter</span></code></a></p>
+<p>Adapter for Verilator simulator (External Environment).</p>
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters.xcelium">
+<span id="dv-agentic-tools-adapters-xcelium-module"></span><h2>dv_agentic.tools.adapters.xcelium module<a class="headerlink" href="#module-dv_agentic.tools.adapters.xcelium" title="Link to this heading"></a></h2>
+<p>Adapter for Cadence Xcelium simulator (Internal environment).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.xcelium.XceliumAdapter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.xcelium.</span></span><span class="sig-name descname"><span class="pre">XceliumAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xrun_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'xrun'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collect_coverage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov_work_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'cov_work'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/xcelium.html#XceliumAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.xcelium.XceliumAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.SimulatorTool" title="dv_agentic.tools.interface.SimulatorTool"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorTool</span></code></a></p>
+<p>Adapter for Cadence Xcelium simulator (Internal Environment).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.xcelium.XceliumAdapter.compile">
+<span class="sig-name descname"><span class="pre">compile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CompileResult" title="dv_agentic.tools.models.CompileResult"><span class="pre">CompileResult</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/xcelium.html#XceliumAdapter.compile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.xcelium.XceliumAdapter.compile" title="Link to this definition"></a></dt>
+<dd><p>Compile the source files using xrun -compile.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.xcelium.XceliumAdapter.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">test</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult" title="dv_agentic.tools.models.SimResult"><span class="pre">SimResult</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters/xcelium.html#XceliumAdapter.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.xcelium.XceliumAdapter.run" title="Link to this definition"></a></dt>
+<dd><p>Run a simulation using xrun -run.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.adapters">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dv_agentic.tools.adapters" title="Link to this heading"></a></h2>
+<p>Simulator and coverage adapter factories for the dv-agentic-system.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.get_coverage_adapter">
+<span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.</span></span><span class="sig-name descname"><span class="pre">get_coverage_adapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.CoverageTool" title="dv_agentic.tools.interface.CoverageTool"><span class="pre">CoverageTool</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters.html#get_coverage_adapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.get_coverage_adapter" title="Link to this definition"></a></dt>
+<dd><p>Return a CoverageTool instance for the given coverage tool name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – Coverage tool identifier.  Supported values: <code class="docutils literal notranslate"><span class="pre">&quot;imc&quot;</span></code>
+(Cadence IMC 24.06 + Verisium 25.12, internal environment),
+<code class="docutils literal notranslate"><span class="pre">&quot;pyuvm&quot;</span></code> (text-based coverage reports for external environment).</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <em>name</em> is not a recognised coverage tool.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dv_agentic.tools.adapters.get_simulator_adapter">
+<span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.adapters.</span></span><span class="sig-name descname"><span class="pre">get_simulator_adapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.SimulatorTool" title="dv_agentic.tools.interface.SimulatorTool"><span class="pre">SimulatorTool</span></a></span></span><a class="reference internal" href="_modules/dv_agentic/tools/adapters.html#get_simulator_adapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.adapters.get_simulator_adapter" title="Link to this definition"></a></dt>
+<dd><p>Return a SimulatorTool instance for the given simulator name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – Simulator identifier.  Supported values: <code class="docutils literal notranslate"><span class="pre">&quot;xcelium&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;ghdl&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;cocotb&quot;</span></code> (alias for <code class="docutils literal notranslate"><span class="pre">&quot;ghdl&quot;</span></code>),
+<code class="docutils literal notranslate"><span class="pre">&quot;icarus&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;verilator&quot;</span></code>.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If <em>name</em> is not a recognised simulator.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dv_agentic.tools.html" class="btn btn-neutral float-left" title="dv_agentic.tools package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dv_agentic.tools.llm.html" class="btn btn-neutral float-right" title="dv_agentic.tools.llm package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Ting-An Cheng.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

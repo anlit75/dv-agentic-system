@@ -1,0 +1,656 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dv_agentic package &mdash; dv-agentic-system 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="dv_agentic.agents package" href="dv_agentic.agents.html" />
+    <link rel="prev" title="dv_agentic" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dv-agentic-system
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">dv_agentic</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">dv_agentic package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html">dv_agentic.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html">dv_agentic.prompts package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html">dv_agentic.tools package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-dv_agentic.docs">dv_agentic.docs module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dv_agentic.docs.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-dv_agentic.main">dv_agentic.main module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dv_agentic.main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-dv_agentic">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dv-agentic-system</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dv_agentic</a></li>
+      <li class="breadcrumb-item active">dv_agentic package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/dv_agentic.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dv-agentic-package">
+<h1>dv_agentic package<a class="headerlink" href="#dv-agentic-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dv_agentic.agents.html">dv_agentic.agents package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.base">dv_agentic.agents.base module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.AgentConfig"><code class="docutils literal notranslate"><span class="pre">AgentConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.AgentConfig.name"><code class="docutils literal notranslate"><span class="pre">AgentConfig.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.AgentConfig.budget"><code class="docutils literal notranslate"><span class="pre">AgentConfig.budget</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.AgentConfig.environment"><code class="docutils literal notranslate"><span class="pre">AgentConfig.environment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id0"><code class="docutils literal notranslate"><span class="pre">AgentConfig.budget</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id1"><code class="docutils literal notranslate"><span class="pre">AgentConfig.environment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id2"><code class="docutils literal notranslate"><span class="pre">AgentConfig.name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.BaseAgent"><code class="docutils literal notranslate"><span class="pre">BaseAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.BaseAgent.check_budget"><code class="docutils literal notranslate"><span class="pre">BaseAgent.check_budget()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.BaseAgent.run"><code class="docutils literal notranslate"><span class="pre">BaseAgent.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.base.BaseAgent.step"><code class="docutils literal notranslate"><span class="pre">BaseAgent.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.bug_classifier">dv_agentic.agents.bug_classifier module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#workflow">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.BugClassifierAgent"><code class="docutils literal notranslate"><span class="pre">BugClassifierAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.BugClassifierAgent.run"><code class="docutils literal notranslate"><span class="pre">BugClassifierAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult"><code class="docutils literal notranslate"><span class="pre">ClassificationResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.bug_type"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.bug_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.confidence"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.evidence"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.evidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.human_review_reason"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.human_review_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.iterations"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.requires_human_review"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.requires_human_review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.summary"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.bug_classifier.ClassificationResult.to_str"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.to_str()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.code_generator">dv_agentic.agents.code_generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#id3">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent.PASS_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.PASS_CONFIDENCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent.run"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport"><code class="docutils literal notranslate"><span class="pre">CodeReport</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.task_id"><code class="docutils literal notranslate"><span class="pre">CodeReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.final_status"><code class="docutils literal notranslate"><span class="pre">CodeReport.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.iterations"><code class="docutils literal notranslate"><span class="pre">CodeReport.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.files_written"><code class="docutils literal notranslate"><span class="pre">CodeReport.files_written</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.confidence"><code class="docutils literal notranslate"><span class="pre">CodeReport.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.summary"><code class="docutils literal notranslate"><span class="pre">CodeReport.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.open_questions"><code class="docutils literal notranslate"><span class="pre">CodeReport.open_questions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id4"><code class="docutils literal notranslate"><span class="pre">CodeReport.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id5"><code class="docutils literal notranslate"><span class="pre">CodeReport.files_written</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id6"><code class="docutils literal notranslate"><span class="pre">CodeReport.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id7"><code class="docutils literal notranslate"><span class="pre">CodeReport.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id8"><code class="docutils literal notranslate"><span class="pre">CodeReport.open_questions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id9"><code class="docutils literal notranslate"><span class="pre">CodeReport.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id10"><code class="docutils literal notranslate"><span class="pre">CodeReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.to_str"><code class="docutils literal notranslate"><span class="pre">CodeReport.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeTask"><code class="docutils literal notranslate"><span class="pre">CodeTask</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeTask.task_id"><code class="docutils literal notranslate"><span class="pre">CodeTask.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeTask.description"><code class="docutils literal notranslate"><span class="pre">CodeTask.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id11"><code class="docutils literal notranslate"><span class="pre">CodeTask.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id12"><code class="docutils literal notranslate"><span class="pre">CodeTask.task_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec"><code class="docutils literal notranslate"><span class="pre">FileSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec.path"><code class="docutils literal notranslate"><span class="pre">FileSpec.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec.content"><code class="docutils literal notranslate"><span class="pre">FileSpec.content</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id13"><code class="docutils literal notranslate"><span class="pre">FileSpec.content</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id14"><code class="docutils literal notranslate"><span class="pre">FileSpec.path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse"><code class="docutils literal notranslate"><span class="pre">ParsedResponse</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.summary"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.changed_file_paths"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.changed_file_paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.file_specs"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.file_specs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.open_questions"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.open_questions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.confidence"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.confidence_reason"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.confidence_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse.raw"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.raw</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id15"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.changed_file_paths</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id16"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id17"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.confidence_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id18"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.file_specs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id19"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.open_questions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id20"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.raw</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id21"><code class="docutils literal notranslate"><span class="pre">ParsedResponse.summary</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.coverage_analyst">dv_agentic.agents.coverage_analyst module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageAnalystAgent"><code class="docutils literal notranslate"><span class="pre">CoverageAnalystAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageAnalystAgent.get_summary"><code class="docutils literal notranslate"><span class="pre">CoverageAnalystAgent.get_summary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageAnalystAgent.run"><code class="docutils literal notranslate"><span class="pre">CoverageAnalystAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary"><code class="docutils literal notranslate"><span class="pre">CoverageSummary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary.below_threshold"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.below_threshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary.db_path"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.db_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary.job_id"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.job_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary.overall_pct"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.overall_pct</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary.threshold_pct"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.threshold_pct</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.coverage_analyst.CoverageSummary.to_str"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.to_str()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.log_analyzer">dv_agentic.agents.log_analyzer module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary"><code class="docutils literal notranslate"><span class="pre">FailureSummary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.context_lines"><code class="docutils literal notranslate"><span class="pre">FailureSummary.context_lines</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.debug_required"><code class="docutils literal notranslate"><span class="pre">FailureSummary.debug_required</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.error_class"><code class="docutils literal notranslate"><span class="pre">FailureSummary.error_class</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.first_occurrence"><code class="docutils literal notranslate"><span class="pre">FailureSummary.first_occurrence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.message"><code class="docutils literal notranslate"><span class="pre">FailureSummary.message</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.next_step"><code class="docutils literal notranslate"><span class="pre">FailureSummary.next_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary.to_str"><code class="docutils literal notranslate"><span class="pre">FailureSummary.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.LogAnalyzerAgent"><code class="docutils literal notranslate"><span class="pre">LogAnalyzerAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.LogAnalyzerAgent.analyze"><code class="docutils literal notranslate"><span class="pre">LogAnalyzerAgent.analyze()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.log_analyzer.LogAnalyzerAgent.run"><code class="docutils literal notranslate"><span class="pre">LogAnalyzerAgent.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.orchestrator">dv_agentic.agents.orchestrator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#workflow-model">Workflow model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#valid-actions">Valid actions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorAgent"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorAgent.VALID_ACTIONS"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent.VALID_ACTIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorAgent.run"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.task_id"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.workflow"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.workflow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.final_status"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.steps"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.requires_human_review"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.requires_human_review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.human_review_reason"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.human_review_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id22"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id23"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.human_review_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id24"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.requires_human_review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id25"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id26"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.to_str"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.to_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id27"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.workflow</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.reporter">dv_agentic.agents.reporter module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.ReporterAgent"><code class="docutils literal notranslate"><span class="pre">ReporterAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.ReporterAgent.run"><code class="docutils literal notranslate"><span class="pre">ReporterAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.SessionReport"><code class="docutils literal notranslate"><span class="pre">SessionReport</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.SessionReport.markdown"><code class="docutils literal notranslate"><span class="pre">SessionReport.markdown</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.SessionReport.output_path"><code class="docutils literal notranslate"><span class="pre">SessionReport.output_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.SessionReport.task_id"><code class="docutils literal notranslate"><span class="pre">SessionReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.reporter.SessionReport.to_str"><code class="docutils literal notranslate"><span class="pre">SessionReport.to_str()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.sim_controller">dv_agentic.agents.sim_controller module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimControllerAgent"><code class="docutils literal notranslate"><span class="pre">SimControllerAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimControllerAgent.run"><code class="docutils literal notranslate"><span class="pre">SimControllerAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport"><code class="docutils literal notranslate"><span class="pre">SimReport</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.branch"><code class="docutils literal notranslate"><span class="pre">SimReport.branch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.final_status"><code class="docutils literal notranslate"><span class="pre">SimReport.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.last_result"><code class="docutils literal notranslate"><span class="pre">SimReport.last_result</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.ready_for_pr"><code class="docutils literal notranslate"><span class="pre">SimReport.ready_for_pr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.runs_total"><code class="docutils literal notranslate"><span class="pre">SimReport.runs_total</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.task_id"><code class="docutils literal notranslate"><span class="pre">SimReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.sim_controller.SimReport.to_str"><code class="docutils literal notranslate"><span class="pre">SimReport.to_str()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.spec_analyst">dv_agentic.agents.spec_analyst module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#id28">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.SpecAnalystAgent"><code class="docutils literal notranslate"><span class="pre">SpecAnalystAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.SpecAnalystAgent.run"><code class="docutils literal notranslate"><span class="pre">SpecAnalystAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult"><code class="docutils literal notranslate"><span class="pre">VplanResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult.feature_count"><code class="docutils literal notranslate"><span class="pre">VplanResult.feature_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult.iterations"><code class="docutils literal notranslate"><span class="pre">VplanResult.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult.output_path"><code class="docutils literal notranslate"><span class="pre">VplanResult.output_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult.summary"><code class="docutils literal notranslate"><span class="pre">VplanResult.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult.to_str"><code class="docutils literal notranslate"><span class="pre">VplanResult.to_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.spec_analyst.VplanResult.vplan_yaml"><code class="docutils literal notranslate"><span class="pre">VplanResult.vplan_yaml</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.BugClassifierAgent"><code class="docutils literal notranslate"><span class="pre">BugClassifierAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.BugClassifierAgent.run"><code class="docutils literal notranslate"><span class="pre">BugClassifierAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult"><code class="docutils literal notranslate"><span class="pre">ClassificationResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.bug_type"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.bug_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.confidence"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.evidence"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.evidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.human_review_reason"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.human_review_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.iterations"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.requires_human_review"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.requires_human_review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.summary"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ClassificationResult.to_str"><code class="docutils literal notranslate"><span class="pre">ClassificationResult.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent.PASS_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.PASS_CONFIDENCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent.run"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport"><code class="docutils literal notranslate"><span class="pre">CodeReport</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.task_id"><code class="docutils literal notranslate"><span class="pre">CodeReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.final_status"><code class="docutils literal notranslate"><span class="pre">CodeReport.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.iterations"><code class="docutils literal notranslate"><span class="pre">CodeReport.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.files_written"><code class="docutils literal notranslate"><span class="pre">CodeReport.files_written</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.confidence"><code class="docutils literal notranslate"><span class="pre">CodeReport.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.summary"><code class="docutils literal notranslate"><span class="pre">CodeReport.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.open_questions"><code class="docutils literal notranslate"><span class="pre">CodeReport.open_questions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id29"><code class="docutils literal notranslate"><span class="pre">CodeReport.confidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id30"><code class="docutils literal notranslate"><span class="pre">CodeReport.files_written</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id31"><code class="docutils literal notranslate"><span class="pre">CodeReport.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id32"><code class="docutils literal notranslate"><span class="pre">CodeReport.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id33"><code class="docutils literal notranslate"><span class="pre">CodeReport.open_questions</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id34"><code class="docutils literal notranslate"><span class="pre">CodeReport.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id35"><code class="docutils literal notranslate"><span class="pre">CodeReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeReport.to_str"><code class="docutils literal notranslate"><span class="pre">CodeReport.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeTask"><code class="docutils literal notranslate"><span class="pre">CodeTask</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeTask.task_id"><code class="docutils literal notranslate"><span class="pre">CodeTask.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeTask.description"><code class="docutils literal notranslate"><span class="pre">CodeTask.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id36"><code class="docutils literal notranslate"><span class="pre">CodeTask.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id37"><code class="docutils literal notranslate"><span class="pre">CodeTask.task_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageAnalystAgent"><code class="docutils literal notranslate"><span class="pre">CoverageAnalystAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageAnalystAgent.get_summary"><code class="docutils literal notranslate"><span class="pre">CoverageAnalystAgent.get_summary()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageAnalystAgent.run"><code class="docutils literal notranslate"><span class="pre">CoverageAnalystAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary"><code class="docutils literal notranslate"><span class="pre">CoverageSummary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary.below_threshold"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.below_threshold</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary.db_path"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.db_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary.job_id"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.job_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary.overall_pct"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.overall_pct</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary.threshold_pct"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.threshold_pct</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CoverageSummary.to_str"><code class="docutils literal notranslate"><span class="pre">CoverageSummary.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary"><code class="docutils literal notranslate"><span class="pre">FailureSummary</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.context_lines"><code class="docutils literal notranslate"><span class="pre">FailureSummary.context_lines</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.debug_required"><code class="docutils literal notranslate"><span class="pre">FailureSummary.debug_required</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.error_class"><code class="docutils literal notranslate"><span class="pre">FailureSummary.error_class</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.first_occurrence"><code class="docutils literal notranslate"><span class="pre">FailureSummary.first_occurrence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.message"><code class="docutils literal notranslate"><span class="pre">FailureSummary.message</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.next_step"><code class="docutils literal notranslate"><span class="pre">FailureSummary.next_step</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FailureSummary.to_str"><code class="docutils literal notranslate"><span class="pre">FailureSummary.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FileSpec"><code class="docutils literal notranslate"><span class="pre">FileSpec</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FileSpec.path"><code class="docutils literal notranslate"><span class="pre">FileSpec.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.FileSpec.content"><code class="docutils literal notranslate"><span class="pre">FileSpec.content</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id38"><code class="docutils literal notranslate"><span class="pre">FileSpec.content</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id39"><code class="docutils literal notranslate"><span class="pre">FileSpec.path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.LogAnalyzerAgent"><code class="docutils literal notranslate"><span class="pre">LogAnalyzerAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.LogAnalyzerAgent.analyze"><code class="docutils literal notranslate"><span class="pre">LogAnalyzerAgent.analyze()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.LogAnalyzerAgent.run"><code class="docutils literal notranslate"><span class="pre">LogAnalyzerAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorAgent"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorAgent.VALID_ACTIONS"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent.VALID_ACTIONS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorAgent.run"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorAgent.sub_agents"><code class="docutils literal notranslate"><span class="pre">OrchestratorAgent.sub_agents</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.task_id"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.workflow"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.workflow</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.final_status"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.steps"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.requires_human_review"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.requires_human_review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.human_review_reason"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.human_review_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id40"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id41"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.human_review_reason</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id42"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.requires_human_review</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id43"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.steps</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id44"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.OrchestratorResult.to_str"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.to_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id45"><code class="docutils literal notranslate"><span class="pre">OrchestratorResult.workflow</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ReporterAgent"><code class="docutils literal notranslate"><span class="pre">ReporterAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.ReporterAgent.run"><code class="docutils literal notranslate"><span class="pre">ReporterAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SessionReport"><code class="docutils literal notranslate"><span class="pre">SessionReport</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SessionReport.markdown"><code class="docutils literal notranslate"><span class="pre">SessionReport.markdown</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SessionReport.output_path"><code class="docutils literal notranslate"><span class="pre">SessionReport.output_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SessionReport.task_id"><code class="docutils literal notranslate"><span class="pre">SessionReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SessionReport.to_str"><code class="docutils literal notranslate"><span class="pre">SessionReport.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimControllerAgent"><code class="docutils literal notranslate"><span class="pre">SimControllerAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimControllerAgent.run"><code class="docutils literal notranslate"><span class="pre">SimControllerAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport"><code class="docutils literal notranslate"><span class="pre">SimReport</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.branch"><code class="docutils literal notranslate"><span class="pre">SimReport.branch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.final_status"><code class="docutils literal notranslate"><span class="pre">SimReport.final_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.last_result"><code class="docutils literal notranslate"><span class="pre">SimReport.last_result</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.ready_for_pr"><code class="docutils literal notranslate"><span class="pre">SimReport.ready_for_pr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.runs_total"><code class="docutils literal notranslate"><span class="pre">SimReport.runs_total</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.task_id"><code class="docutils literal notranslate"><span class="pre">SimReport.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SimReport.to_str"><code class="docutils literal notranslate"><span class="pre">SimReport.to_str()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SpecAnalystAgent"><code class="docutils literal notranslate"><span class="pre">SpecAnalystAgent</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.SpecAnalystAgent.run"><code class="docutils literal notranslate"><span class="pre">SpecAnalystAgent.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult"><code class="docutils literal notranslate"><span class="pre">VplanResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult.feature_count"><code class="docutils literal notranslate"><span class="pre">VplanResult.feature_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult.iterations"><code class="docutils literal notranslate"><span class="pre">VplanResult.iterations</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult.output_path"><code class="docutils literal notranslate"><span class="pre">VplanResult.output_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult.summary"><code class="docutils literal notranslate"><span class="pre">VplanResult.summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult.to_str"><code class="docutils literal notranslate"><span class="pre">VplanResult.to_str()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.VplanResult.vplan_yaml"><code class="docutils literal notranslate"><span class="pre">VplanResult.vplan_yaml</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dv_agentic.prompts.html">dv_agentic.prompts package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.prompts.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.prompts.html#module-dv_agentic.prompts.context">dv_agentic.prompts.context module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext"><code class="docutils literal notranslate"><span class="pre">ProjectContext</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.ip_type_rules"><code class="docutils literal notranslate"><span class="pre">ProjectContext.ip_type_rules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.known_error_patterns"><code class="docutils literal notranslate"><span class="pre">ProjectContext.known_error_patterns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.known_rtl_bugs"><code class="docutils literal notranslate"><span class="pre">ProjectContext.known_rtl_bugs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.scheduler_config"><code class="docutils literal notranslate"><span class="pre">ProjectContext.scheduler_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.simulator_config"><code class="docutils literal notranslate"><span class="pre">ProjectContext.simulator_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.team_rules"><code class="docutils literal notranslate"><span class="pre">ProjectContext.team_rules</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.vcs_config"><code class="docutils literal notranslate"><span class="pre">ProjectContext.vcs_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.vip_index"><code class="docutils literal notranslate"><span class="pre">ProjectContext.vip_index</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.ProjectContext.vplan_summary"><code class="docutils literal notranslate"><span class="pre">ProjectContext.vplan_summary</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SchedulerConfig"><code class="docutils literal notranslate"><span class="pre">SchedulerConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SchedulerConfig.backend"><code class="docutils literal notranslate"><span class="pre">SchedulerConfig.backend</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SchedulerConfig.default_wall_time_sec"><code class="docutils literal notranslate"><span class="pre">SchedulerConfig.default_wall_time_sec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SchedulerConfig.poll_interval_sec"><code class="docutils literal notranslate"><span class="pre">SchedulerConfig.poll_interval_sec</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SchedulerConfig.queue"><code class="docutils literal notranslate"><span class="pre">SchedulerConfig.queue</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SchedulerConfig.resource_flags"><code class="docutils literal notranslate"><span class="pre">SchedulerConfig.resource_flags</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SessionState"><code class="docutils literal notranslate"><span class="pre">SessionState</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SessionState.budget_remaining"><code class="docutils literal notranslate"><span class="pre">SessionState.budget_remaining</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SessionState.iteration"><code class="docutils literal notranslate"><span class="pre">SessionState.iteration</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SessionState.task_id"><code class="docutils literal notranslate"><span class="pre">SessionState.task_id</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig.binary_path"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig.binary_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig.collect_coverage"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig.collect_coverage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig.cov_work_dir"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig.cov_work_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig.extra_compile_flags"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig.extra_compile_flags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig.extra_run_flags"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig.extra_run_flags</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.SimulatorConfig.name"><code class="docutils literal notranslate"><span class="pre">SimulatorConfig.name</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.VCSConfig"><code class="docutils literal notranslate"><span class="pre">VCSConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.VCSConfig.author_email"><code class="docutils literal notranslate"><span class="pre">VCSConfig.author_email</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.VCSConfig.author_name"><code class="docutils literal notranslate"><span class="pre">VCSConfig.author_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.VCSConfig.backend"><code class="docutils literal notranslate"><span class="pre">VCSConfig.backend</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.VCSConfig.base_branch"><code class="docutils literal notranslate"><span class="pre">VCSConfig.base_branch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.context.VCSConfig.remote"><code class="docutils literal notranslate"><span class="pre">VCSConfig.remote</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.prompts.html#module-dv_agentic.prompts.loader">dv_agentic.prompts.loader module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader"><code class="docutils literal notranslate"><span class="pre">PromptLoader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader.load"><code class="docutils literal notranslate"><span class="pre">PromptLoader.load()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.prompts.html#module-dv_agentic.prompts">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.PromptLoader"><code class="docutils literal notranslate"><span class="pre">PromptLoader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.PromptLoader.load"><code class="docutils literal notranslate"><span class="pre">PromptLoader.load()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dv_agentic.tools.html">dv_agentic.tools package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.tools.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.adapters.html">dv_agentic.tools.adapters package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.cocotb_base">dv_agentic.tools.adapters.cocotb_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.ghdl_cocotb">dv_agentic.tools.adapters.ghdl_cocotb module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.icarus">dv_agentic.tools.adapters.icarus module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.imc">dv_agentic.tools.adapters.imc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.pyuvm">dv_agentic.tools.adapters.pyuvm module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.verilator">dv_agentic.tools.adapters.verilator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters.xcelium">dv_agentic.tools.adapters.xcelium module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.adapters.html#module-dv_agentic.tools.adapters">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.llm.html">dv_agentic.tools.llm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.llm.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.llm.html#module-dv_agentic.tools.llm.api">dv_agentic.tools.llm.api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.llm.html#module-dv_agentic.tools.llm.interface">dv_agentic.tools.llm.interface module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.llm.html#module-dv_agentic.tools.llm.local">dv_agentic.tools.llm.local module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.llm.html#module-dv_agentic.tools.llm">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.tools.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.tools.html#module-dv_agentic.tools.interface">dv_agentic.tools.interface module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.CoverageTool"><code class="docutils literal notranslate"><span class="pre">CoverageTool</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.CoverageTool.get_coverage"><code class="docutils literal notranslate"><span class="pre">CoverageTool.get_coverage()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.SimulatorTool"><code class="docutils literal notranslate"><span class="pre">SimulatorTool</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.SimulatorTool.compile"><code class="docutils literal notranslate"><span class="pre">SimulatorTool.compile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.interface.SimulatorTool.run"><code class="docutils literal notranslate"><span class="pre">SimulatorTool.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.tools.html#module-dv_agentic.tools.models">dv_agentic.tools.models module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CompileResult"><code class="docutils literal notranslate"><span class="pre">CompileResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CompileResult.output"><code class="docutils literal notranslate"><span class="pre">CompileResult.output</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CompileResult.status"><code class="docutils literal notranslate"><span class="pre">CompileResult.status</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CoverageDB"><code class="docutils literal notranslate"><span class="pre">CoverageDB</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CoverageDB.overall_percentage"><code class="docutils literal notranslate"><span class="pre">CoverageDB.overall_percentage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.CoverageDB.path"><code class="docutils literal notranslate"><span class="pre">CoverageDB.path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult"><code class="docutils literal notranslate"><span class="pre">SimResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult.cov_db_path"><code class="docutils literal notranslate"><span class="pre">SimResult.cov_db_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult.error_summary"><code class="docutils literal notranslate"><span class="pre">SimResult.error_summary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult.job_id"><code class="docutils literal notranslate"><span class="pre">SimResult.job_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult.log_path"><code class="docutils literal notranslate"><span class="pre">SimResult.log_path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult.status"><code class="docutils literal notranslate"><span class="pre">SimResult.status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimResult.wall_time_sec"><code class="docutils literal notranslate"><span class="pre">SimResult.wall_time_sec</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask"><code class="docutils literal notranslate"><span class="pre">SimTask</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask.task_id"><code class="docutils literal notranslate"><span class="pre">SimTask.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask.test"><code class="docutils literal notranslate"><span class="pre">SimTask.test</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask.seed"><code class="docutils literal notranslate"><span class="pre">SimTask.seed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask.file_list"><code class="docutils literal notranslate"><span class="pre">SimTask.file_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask.top"><code class="docutils literal notranslate"><span class="pre">SimTask.top</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#dv_agentic.tools.models.SimTask.debug"><code class="docutils literal notranslate"><span class="pre">SimTask.debug</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#id0"><code class="docutils literal notranslate"><span class="pre">SimTask.debug</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#id1"><code class="docutils literal notranslate"><span class="pre">SimTask.file_list</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#id2"><code class="docutils literal notranslate"><span class="pre">SimTask.seed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#id3"><code class="docutils literal notranslate"><span class="pre">SimTask.task_id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#id4"><code class="docutils literal notranslate"><span class="pre">SimTask.test</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.tools.html#id5"><code class="docutils literal notranslate"><span class="pre">SimTask.top</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.tools.html#module-dv_agentic.tools">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-dv_agentic.docs">
+<span id="dv-agentic-docs-module"></span><h2>dv_agentic.docs module<a class="headerlink" href="#module-dv_agentic.docs" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="dv_agentic.docs.build">
+<span class="sig-prename descclassname"><span class="pre">dv_agentic.docs.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/dv_agentic/docs.html#build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.docs.build" title="Link to this definition"></a></dt>
+<dd><p>Build the Sphinx documentation.</p>
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.main">
+<span id="dv-agentic-main-module"></span><h2>dv_agentic.main module<a class="headerlink" href="#module-dv_agentic.main" title="Link to this heading"></a></h2>
+<p>Entry point for the dv-agentic-system.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="dv_agentic.main.main">
+<span class="sig-prename descclassname"><span class="pre">dv_agentic.main.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/dv_agentic/main.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.main.main" title="Link to this definition"></a></dt>
+<dd><p>Run the agentic system.</p>
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dv_agentic" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="dv_agentic" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dv_agentic.agents.html" class="btn btn-neutral float-right" title="dv_agentic.agents package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Ting-An Cheng.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

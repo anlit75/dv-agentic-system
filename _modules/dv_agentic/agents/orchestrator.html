@@ -1,0 +1,486 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dv_agentic.agents.orchestrator &mdash; dv-agentic-system 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            dv-agentic-system
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">dv_agentic</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">dv-agentic-system</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dv_agentic.agents.orchestrator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dv_agentic.agents.orchestrator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Orchestrator agent.</span>
+
+<span class="sd">Routes tasks to the appropriate workflow and coordinates sub-agent handoffs.</span>
+
+<span class="sd">Workflow model</span>
+<span class="sd">--------------</span>
+<span class="sd">The LLM acts as the decision maker; Python executes the decisions.</span>
+
+<span class="sd">Each turn:</span>
+<span class="sd">  1. LLM receives the accumulated history and returns a structured decision.</span>
+<span class="sd">  2. Python parses: WORKFLOW, ACTION, INPUT, HUMAN_REVIEW.</span>
+<span class="sd">  3. Python dispatches the action to the appropriate sub-agent.</span>
+<span class="sd">  4. Sub-agent result is appended to history as a new user message.</span>
+<span class="sd">  5. Repeat until ACTION is ``done`` / ``escalate``, or budget is exhausted.</span>
+
+<span class="sd">Valid actions</span>
+<span class="sd">-------------</span>
+<span class="sd">``run_code_generator``, ``run_sim_controller``, ``run_log_analyzer``,</span>
+<span class="sd">``run_coverage_analyst``, ``run_bug_classifier``, ``run_spec_analyst``,</span>
+<span class="sd">``run_reporter``, ``done``, ``escalate``</span>
+
+<span class="sd">Expected LLM response format::</span>
+
+<span class="sd">    ### Decision</span>
+<span class="sd">    WORKFLOW: 1</span>
+<span class="sd">    ACTION: run_code_generator</span>
+<span class="sd">    INPUT: Generate a targeted sequence for axi_burst bin</span>
+
+<span class="sd">    ### Human Review Required</span>
+<span class="sd">    NO</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectContext</span><span class="p">,</span> <span class="n">SessionState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..tools.llm.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseLLMClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span><span class="p">,</span> <span class="n">BaseAgent</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Data structures</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Decision</span><span class="p">:</span>
+    <span class="n">workflow</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;1&quot; | &quot;2&quot; | &quot;3&quot; | &quot;unknown&quot;</span>
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># one of VALID_ACTIONS</span>
+    <span class="n">input_text</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># text to pass to the sub-agent</span>
+    <span class="n">human_review</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">human_review_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="OrchestratorResult">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrchestratorResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured output from :class:`OrchestratorAgent`.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task_id: Unique identifier for the orchestrated task.</span>
+<span class="sd">        workflow: The detected workflow category (&quot;1&quot;, &quot;2&quot;, or &quot;3&quot;).</span>
+<span class="sd">        final_status: Termination state (&quot;done&quot;, &quot;escalated&quot;, or &quot;budget_exhausted&quot;).</span>
+<span class="sd">        steps: List of summary strings for each sub-agent dispatch.</span>
+<span class="sd">        requires_human_review: True if the process stopped for manual intervention.</span>
+<span class="sd">        human_review_reason: Explanation for why review is required.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">workflow</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">final_status</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;done&quot; | &quot;escalated&quot; | &quot;budget_exhausted&quot;</span>
+    <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">requires_human_review</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">human_review_reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+<div class="viewcode-block" id="OrchestratorResult.to_str">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorResult.to_str">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;### Orchestrator Result&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;task_id      : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;workflow     : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">workflow</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;final_status : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">final_status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;steps_taken  : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;human_review : </span><span class="si">{</span><span class="s1">&#39;YES&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">requires_human_review</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;NO&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">human_review_reason</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;review_reason: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">human_review_reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;steps        :&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Agent</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="OrchestratorAgent">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorAgent">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrchestratorAgent</span><span class="p">(</span><span class="n">BaseAgent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Routes tasks and coordinates sub-agents across Workflows 1, 2, and 3.</span>
+
+<span class="sd">    Each budget unit corresponds to one LLM routing call + one sub-agent</span>
+<span class="sd">    dispatch.  Sub-agents consume their own budgets independently.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: Agent configuration.  ``budget`` caps orchestration cycles.</span>
+<span class="sd">        llm: LLM client used for routing decisions.</span>
+<span class="sd">        sub_agents: Mapping from agent key to agent instance, e.g.</span>
+<span class="sd">            ``{&quot;code_generator&quot;: CodeGeneratorAgent(...), ...}``.</span>
+<span class="sd">            Missing keys are handled gracefully.</span>
+<span class="sd">        project_config: Optional context for PromptLoader enrichment.</span>
+<span class="sd">        session: Optional session state.</span>
+<span class="sd">        prompts_dir: Directory containing ``orchestrator.md``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">VALID_ACTIONS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;run_code_generator&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;run_sim_controller&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;run_log_analyzer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;run_coverage_analyst&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;run_bug_classifier&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;run_spec_analyst&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;run_reporter&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;done&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;escalate&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+    <span class="n">_AGENT_KEY</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;run_code_generator&quot;</span><span class="p">:</span> <span class="s2">&quot;code_generator&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;run_sim_controller&quot;</span><span class="p">:</span> <span class="s2">&quot;sim_controller&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;run_log_analyzer&quot;</span><span class="p">:</span> <span class="s2">&quot;log_analyzer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;run_coverage_analyst&quot;</span><span class="p">:</span> <span class="s2">&quot;coverage_analyst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;run_bug_classifier&quot;</span><span class="p">:</span> <span class="s2">&quot;bug_classifier&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;run_spec_analyst&quot;</span><span class="p">:</span> <span class="s2">&quot;spec_analyst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;run_reporter&quot;</span><span class="p">:</span> <span class="s2">&quot;reporter&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">_WORKFLOW_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;WORKFLOW\s*[:\-]?\s*([123])&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="n">_ACTION_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;ACTION\s*:\s*(&quot;</span> <span class="o">+</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">VALID_ACTIONS</span><span class="p">)</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;)&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="n">_INPUT_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;INPUT\s*:(.*?)(?=\n[A-Z_]+\s*:|\n###|\Z)&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+    <span class="n">_HUMAN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;Human\s+Review\s+Required\s*\n(YES|NO)(.*?)(?=\n###|\Z)&quot;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">AgentConfig</span><span class="p">,</span>
+        <span class="n">llm</span><span class="p">:</span> <span class="n">BaseLLMClient</span><span class="p">,</span>
+        <span class="n">sub_agents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseAgent</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">project_config</span><span class="p">:</span> <span class="n">ProjectContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">session</span><span class="p">:</span> <span class="n">SessionState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prompts_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">llm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sub_agents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BaseAgent</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub_agents</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_config</span> <span class="o">=</span> <span class="n">project_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span> <span class="o">=</span> <span class="n">prompts_dir</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># BaseAgent ABC</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="OrchestratorAgent.run">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.orchestrator.OrchestratorAgent.run">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_input</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the full agentic verification flow.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_input: Natural language description of the verification task.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A human-readable final summary report.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">task_input</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;task_input must be a non-empty string&quot;</span><span class="p">)</span>
+
+        <span class="n">task_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_task_id</span><span class="p">(</span><span class="n">task_input</span><span class="p">)</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_system_prompt</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">system_prompt</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;System prompt must not be empty&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Agent must start at iteration 0 (current: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">task_input</span><span class="p">}]</span>
+
+        <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
+        <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">,</span> <span class="n">history</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">response</span><span class="p">})</span>
+
+            <span class="n">decision</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_decision</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">workflow</span> <span class="o">!=</span> <span class="s2">&quot;unknown&quot;</span><span class="p">:</span>
+                <span class="n">workflow</span> <span class="o">=</span> <span class="n">decision</span><span class="o">.</span><span class="n">workflow</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Orchestrator iter=</span><span class="si">%d</span><span class="s2"> action=</span><span class="si">%s</span><span class="s2"> workflow=</span><span class="si">%s</span><span class="s2"> human_review=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span>
+                <span class="n">decision</span><span class="o">.</span><span class="n">action</span><span class="p">,</span>
+                <span class="n">workflow</span><span class="p">,</span>
+                <span class="n">decision</span><span class="o">.</span><span class="n">human_review</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">human_review</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">OrchestratorResult</span><span class="p">(</span>
+                    <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+                    <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;escalated&quot;</span><span class="p">,</span>
+                    <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+                    <span class="n">requires_human_review</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">human_review_reason</span><span class="o">=</span><span class="n">decision</span><span class="o">.</span><span class="n">human_review_reason</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">&quot;done&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">OrchestratorResult</span><span class="p">(</span>
+                    <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+                    <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;done&quot;</span><span class="p">,</span>
+                    <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">&quot;escalate&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">OrchestratorResult</span><span class="p">(</span>
+                    <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+                    <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;escalated&quot;</span><span class="p">,</span>
+                    <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+                    <span class="n">requires_human_review</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">human_review_reason</span><span class="o">=</span><span class="s2">&quot;LLM requested escalation.&quot;</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span>
+
+            <span class="c1"># Dispatch to sub-agent</span>
+            <span class="n">sub_result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dispatch</span><span class="p">(</span><span class="n">decision</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">decision</span><span class="o">.</span><span class="n">input_text</span><span class="p">)</span>
+            <span class="n">step_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">sub_result</span><span class="p">[:</span><span class="mi">120</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step_label</span><span class="p">)</span>
+
+            <span class="c1"># Feed result back to LLM for the next routing decision</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Result of </span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">sub_result</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Based on this result, what is the next action?&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">OrchestratorResult</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+            <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+            <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;budget_exhausted&quot;</span><span class="p">,</span>
+            <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+            <span class="n">requires_human_review</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">human_review_reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Budget exhausted after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="si">}</span><span class="s2"> iterations.&quot;</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — dispatch</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">input_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Call the sub-agent associated with *action*.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            action: One of ``VALID_ACTIONS`` (excluding ``done``/``escalate``).</span>
+<span class="sd">            input_text: Input forwarded to the sub-agent&#39;s ``run()`` method.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The sub-agent&#39;s output string, or an informative error message</span>
+<span class="sd">            if the agent is not configured.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;action must be a non-empty string&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_text</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;input_text must be a string&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">action</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_ACTIONS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Action &#39;</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&#39; is not valid&quot;</span><span class="p">)</span>
+
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_AGENT_KEY</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;No sub-agent mapping for action &#39;</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+
+        <span class="n">agent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_agents</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">agent</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Sub-agent &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; is not configured in this orchestrator. Skipping.&quot;</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Orchestrator dispatching to &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">input_text</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="c1"># Catch all sub-agent exceptions to prevent the orchestrator from crashing.</span>
+            <span class="c1"># Errors are logged and returned as a string for LLM feedback.</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Sub-agent &#39;</span><span class="si">%s</span><span class="s2">&#39; raised an exception&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Sub-agent &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; failed: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — parsing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_decision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_Decision</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;LLM response must be a non-empty string&quot;</span><span class="p">)</span>
+
+        <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_WORKFLOW_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">workflow</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;escalate&quot;</span>  <span class="c1"># safe default</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ACTION_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="n">input_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_INPUT_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">input_text</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="n">human_review</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">human_review_reason</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_HUMAN_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">human_review</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;YES&quot;</span>
+            <span class="n">human_review_reason</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="n">decision</span> <span class="o">=</span> <span class="n">_Decision</span><span class="p">(</span>
+            <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="n">action</span><span class="p">,</span>
+            <span class="n">input_text</span><span class="o">=</span><span class="n">input_text</span><span class="p">,</span>
+            <span class="n">human_review</span><span class="o">=</span><span class="n">human_review</span><span class="p">,</span>
+            <span class="n">human_review_reason</span><span class="o">=</span><span class="n">human_review_reason</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Rule 5: Post-condition assertions</span>
+        <span class="k">assert</span> <span class="n">decision</span><span class="o">.</span><span class="n">workflow</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">decision</span><span class="o">.</span><span class="n">action</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_ACTIONS</span>
+        <span class="k">return</span> <span class="n">decision</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_system_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">loader</span> <span class="o">=</span> <span class="n">PromptLoader</span><span class="p">(</span>
+                <span class="n">prompts_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span><span class="p">,</span>
+                <span class="n">project_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project_config</span><span class="p">,</span>
+                <span class="n">session</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;orchestrator&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;PromptLoader unavailable (</span><span class="si">%s</span><span class="s2">); using fallback.&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s2">&quot;You are an orchestration agent for hardware verification. &quot;</span>
+                <span class="s2">&quot;Given a task, determine the workflow (1, 2, or 3) and the next action.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;Always respond in this format:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;### Decision</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;WORKFLOW: 1</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;ACTION: run_code_generator</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;INPUT: &lt;what to pass to the agent&gt;</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;### Human Review Required</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;NO</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_task_id</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;task[_\s]id\s*[:\s]+([a-zA-Z0-9_\-]+)&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="s2">&quot;orchestrator_task&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Ting-An Cheng.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

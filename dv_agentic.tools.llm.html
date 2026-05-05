@@ -1,0 +1,337 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dv_agentic.tools.llm package &mdash; dv-agentic-system 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="dv_agentic.tools.adapters package" href="dv_agentic.tools.adapters.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dv-agentic-system
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">dv_agentic</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dv_agentic.html">dv_agentic package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="dv_agentic.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html">dv_agentic.agents package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html">dv_agentic.prompts package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="dv_agentic.tools.html">dv_agentic.tools package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#module-dv_agentic.docs">dv_agentic.docs module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#module-dv_agentic.main">dv_agentic.main module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.html#module-dv_agentic">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dv-agentic-system</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">dv_agentic</a></li>
+          <li class="breadcrumb-item"><a href="dv_agentic.html">dv_agentic package</a></li>
+          <li class="breadcrumb-item"><a href="dv_agentic.tools.html">dv_agentic.tools package</a></li>
+      <li class="breadcrumb-item active">dv_agentic.tools.llm package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/dv_agentic.tools.llm.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dv-agentic-tools-llm-package">
+<h1>dv_agentic.tools.llm package<a class="headerlink" href="#dv-agentic-tools-llm-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-dv_agentic.tools.llm.api">
+<span id="dv-agentic-tools-llm-api-module"></span><h2>dv_agentic.tools.llm.api module<a class="headerlink" href="#module-dv_agentic.tools.llm.api" title="Link to this heading"></a></h2>
+<p>External LLM client for the LLM Messages API.</p>
+<p>Uses only Python stdlib (urllib) — no third-party SDK required.
+Set LLM_API_KEY in the environment or pass it explicitly.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.api.LLMAPIClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.llm.api.</span></span><span class="sig-name descname"><span class="pre">LLMAPIClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'claude-3-5-sonnet-latest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'https://api.anthropic.com/v1/messages'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/llm/api.html#LLMAPIClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.api.LLMAPIClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.llm.interface.BaseLLMClient" title="dv_agentic.tools.llm.interface.BaseLLMClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLLMClient</span></code></a></p>
+<p>Calls the LLM /v1/messages endpoint over raw HTTP.</p>
+<p>All network I/O runs in a thread-pool executor so the async caller
+is never blocked.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.api.LLMAPIClient.DEFAULT_URL">
+<span class="sig-name descname"><span class="pre">DEFAULT_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://api.anthropic.com/v1/messages'</span></span><a class="headerlink" href="#dv_agentic.tools.llm.api.LLMAPIClient.DEFAULT_URL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.api.LLMAPIClient.LLM_VERSION">
+<span class="sig-name descname"><span class="pre">LLM_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2023-06-01'</span></span><a class="headerlink" href="#dv_agentic.tools.llm.api.LLMAPIClient.LLM_VERSION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.api.LLMAPIClient.complete">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">messages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/api.html#LLMAPIClient.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.api.LLMAPIClient.complete" title="Link to this definition"></a></dt>
+<dd><p>Send a request to the LLM API and return the assistant reply.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – System prompt string.</p></li>
+<li><p><strong>messages</strong> – Conversation turns in <code class="docutils literal notranslate"><span class="pre">[{&quot;role&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;content&quot;:</span> <span class="pre">...}]</span></code> form.</p></li>
+<li><p><strong>max_tokens</strong> – Maximum tokens to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The text content of the first content block in the response.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – On non-2xx HTTP response.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.llm.interface">
+<span id="dv-agentic-tools-llm-interface-module"></span><h2>dv_agentic.tools.llm.interface module<a class="headerlink" href="#module-dv_agentic.tools.llm.interface" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.interface.BaseLLMClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.llm.interface.</span></span><span class="sig-name descname"><span class="pre">BaseLLMClient</span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/interface.html#BaseLLMClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.interface.BaseLLMClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for LLM clients.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.interface.BaseLLMClient.complete">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">messages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/interface.html#BaseLLMClient.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.interface.BaseLLMClient.complete" title="Link to this definition"></a></dt>
+<dd><p>Complete the given conversation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – The system prompt.</p></li>
+<li><p><strong>messages</strong> – A list of message dictionaries (e.g., {“role”: “user”, “content”: “…”}).</p></li>
+<li><p><strong>max_tokens</strong> – The maximum number of tokens to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The generated response string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.llm.local">
+<span id="dv-agentic-tools-llm-local-module"></span><h2>dv_agentic.tools.llm.local module<a class="headerlink" href="#module-dv_agentic.tools.llm.local" title="Link to this heading"></a></h2>
+<p>Internal LLM client for the local/internal endpoint (OpenAI-compatible).</p>
+<p>Reads LOCAL_LLM_BASE_URL and LOCAL_LLM_API_KEY from the environment,
+or accept them explicitly.  The endpoint is assumed to follow the
+OpenAI Chat Completions API shape (<code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/v1/chat/completions</span></code>).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.local.LocalLLMClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.llm.local.</span></span><span class="sig-name descname"><span class="pre">LocalLLMClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/llm/local.html#LocalLLMClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.local.LocalLLMClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.llm.interface.BaseLLMClient" title="dv_agentic.tools.llm.interface.BaseLLMClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLLMClient</span></code></a></p>
+<p>Calls an internal LLM endpoint that speaks OpenAI Chat Completions.</p>
+<p>All network I/O runs in a thread-pool executor so the async caller
+is never blocked.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.local.LocalLLMClient.complete">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">messages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/local.html#LocalLLMClient.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.local.LocalLLMClient.complete" title="Link to this definition"></a></dt>
+<dd><p>Send a chat-completion request to the local LLM endpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – System prompt string (prepended as a <code class="docutils literal notranslate"><span class="pre">&quot;system&quot;</span></code> role message).</p></li>
+<li><p><strong>messages</strong> – Conversation turns in <code class="docutils literal notranslate"><span class="pre">[{&quot;role&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;content&quot;:</span> <span class="pre">...}]</span></code> form.</p></li>
+<li><p><strong>max_tokens</strong> – Maximum tokens to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The assistant’s reply text.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – On non-2xx HTTP response or connection failure.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-dv_agentic.tools.llm">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-dv_agentic.tools.llm" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.BaseLLMClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.llm.</span></span><span class="sig-name descname"><span class="pre">BaseLLMClient</span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/interface.html#BaseLLMClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.BaseLLMClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Abstract base class for LLM clients.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.BaseLLMClient.complete">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">messages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/interface.html#BaseLLMClient.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.BaseLLMClient.complete" title="Link to this definition"></a></dt>
+<dd><p>Complete the given conversation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – The system prompt.</p></li>
+<li><p><strong>messages</strong> – A list of message dictionaries (e.g., {“role”: “user”, “content”: “…”}).</p></li>
+<li><p><strong>max_tokens</strong> – The maximum number of tokens to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The generated response string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.LLMAPIClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.llm.</span></span><span class="sig-name descname"><span class="pre">LLMAPIClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'claude-3-5-sonnet-latest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'https://api.anthropic.com/v1/messages'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/llm/api.html#LLMAPIClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.LLMAPIClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.llm.interface.BaseLLMClient" title="dv_agentic.tools.llm.interface.BaseLLMClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLLMClient</span></code></a></p>
+<p>Calls the LLM /v1/messages endpoint over raw HTTP.</p>
+<p>All network I/O runs in a thread-pool executor so the async caller
+is never blocked.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.LLMAPIClient.DEFAULT_URL">
+<span class="sig-name descname"><span class="pre">DEFAULT_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://api.anthropic.com/v1/messages'</span></span><a class="headerlink" href="#dv_agentic.tools.llm.LLMAPIClient.DEFAULT_URL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.LLMAPIClient.LLM_VERSION">
+<span class="sig-name descname"><span class="pre">LLM_VERSION</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'2023-06-01'</span></span><a class="headerlink" href="#dv_agentic.tools.llm.LLMAPIClient.LLM_VERSION" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.LLMAPIClient.complete">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">messages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/api.html#LLMAPIClient.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.LLMAPIClient.complete" title="Link to this definition"></a></dt>
+<dd><p>Send a request to the LLM API and return the assistant reply.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – System prompt string.</p></li>
+<li><p><strong>messages</strong> – Conversation turns in <code class="docutils literal notranslate"><span class="pre">[{&quot;role&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;content&quot;:</span> <span class="pre">...}]</span></code> form.</p></li>
+<li><p><strong>max_tokens</strong> – Maximum tokens to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The text content of the first content block in the response.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – On non-2xx HTTP response.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.LocalLLMClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dv_agentic.tools.llm.</span></span><span class="sig-name descname"><span class="pre">LocalLLMClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dv_agentic/tools/llm/local.html#LocalLLMClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.LocalLLMClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dv_agentic.tools.llm.interface.BaseLLMClient" title="dv_agentic.tools.llm.interface.BaseLLMClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLLMClient</span></code></a></p>
+<p>Calls an internal LLM endpoint that speaks OpenAI Chat Completions.</p>
+<p>All network I/O runs in a thread-pool executor so the async caller
+is never blocked.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dv_agentic.tools.llm.LocalLLMClient.complete">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">messages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/dv_agentic/tools/llm/local.html#LocalLLMClient.complete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dv_agentic.tools.llm.LocalLLMClient.complete" title="Link to this definition"></a></dt>
+<dd><p>Send a chat-completion request to the local LLM endpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>system</strong> – System prompt string (prepended as a <code class="docutils literal notranslate"><span class="pre">&quot;system&quot;</span></code> role message).</p></li>
+<li><p><strong>messages</strong> – Conversation turns in <code class="docutils literal notranslate"><span class="pre">[{&quot;role&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;content&quot;:</span> <span class="pre">...}]</span></code> form.</p></li>
+<li><p><strong>max_tokens</strong> – Maximum tokens to generate.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The assistant’s reply text.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – On non-2xx HTTP response or connection failure.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dv_agentic.tools.adapters.html" class="btn btn-neutral float-left" title="dv_agentic.tools.adapters package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Ting-An Cheng.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

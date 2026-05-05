@@ -1,0 +1,549 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>dv_agentic.agents.code_generator &mdash; dv-agentic-system 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            dv-agentic-system
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">dv_agentic</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">dv-agentic-system</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">dv_agentic.agents.code_generator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for dv_agentic.agents.code_generator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;SV/UVM code generation agent.</span>
+
+
+<span class="sd">Workflow</span>
+<span class="sd">--------</span>
+<span class="sd">1. Load the enriched ``code_generator`` system prompt via ``PromptLoader``.</span>
+<span class="sd">2. Send the task description as the first user message.</span>
+<span class="sd">3. Parse the LLM response for ``### Compile Confidence``.</span>
+<span class="sd">4. **HIGH or MEDIUM** -&gt; extract code, write files, return report.</span>
+<span class="sd">5. **LOW or UNKNOWN** -&gt; append open questions as a follow-up user message,</span>
+<span class="sd">   repeat from step 3.</span>
+<span class="sd">6. Stop when confidence passes or ``AgentConfig.budget`` is exhausted.</span>
+
+<span class="sd">Git branch management is the caller&#39;s responsibility (Orchestrator or</span>
+<span class="sd">SimControllerAgent).  This agent only reads and writes files under</span>
+<span class="sd">``workspace_dir``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectContext</span><span class="p">,</span> <span class="n">SessionState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..tools.llm.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseLLMClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span><span class="p">,</span> <span class="n">BaseAgent</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Data structures</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="FileSpec">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FileSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A file path and its full content, ready to write to disk.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        path: Relative or absolute destination path for the file.</span>
+<span class="sd">        content: Full text content of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">content</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="ParsedResponse">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.ParsedResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParsedResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured fields extracted from one LLM response.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        summary: Executive summary of the changes made by the LLM.</span>
+<span class="sd">        changed_file_paths: List of paths identified in the &#39;Changed Files&#39; section.</span>
+<span class="sd">        file_specs: List of :class:`FileSpec` objects ready to be written to disk.</span>
+<span class="sd">        open_questions: Feedback or questions from the LLM if confidence is low.</span>
+<span class="sd">        confidence: Self-reported compile confidence (&quot;HIGH&quot;, &quot;MEDIUM&quot;, &quot;LOW&quot;).</span>
+<span class="sd">        confidence_reason: Detailed justification for the confidence rating.</span>
+<span class="sd">        raw: The original raw string response from the LLM.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">changed_file_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># paths from ### Changed Files</span>
+    <span class="n">file_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileSpec</span><span class="p">]</span>  <span class="c1"># paths + content ready to write</span>
+    <span class="n">open_questions</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;HIGH&quot; | &quot;MEDIUM&quot; | &quot;LOW&quot; | &quot;UNKNOWN&quot;</span>
+    <span class="n">confidence_reason</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">raw</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="CodeTask">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeTask">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CodeTask</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Input specification for a single CodeGeneratorAgent run.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task_id: Unique identifier used in log messages and reports.</span>
+<span class="sd">        description: Natural-language task for the LLM, e.g.</span>
+<span class="sd">            ``&quot;Generate a sequence targeting the back-pressure bin in</span>
+<span class="sd">            axi_write_cov.hit_max_outstanding&quot;``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="CodeReport">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CodeReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured output from a completed :class:`CodeGeneratorAgent` run.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task_id: Unique identifier for the code generation task.</span>
+<span class="sd">        final_status: Termination state (&quot;pass&quot; or &quot;budget_exhausted&quot;).</span>
+<span class="sd">        iterations: Total number of LLM calls made.</span>
+<span class="sd">        files_written: List of absolute paths to the files written to disk.</span>
+<span class="sd">        confidence: Final self-reported confidence from the LLM.</span>
+<span class="sd">        summary: Final summary of the changes implemented.</span>
+<span class="sd">        open_questions: Remaining questions or issues if status is not &quot;pass&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">final_status</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;pass&quot; | &quot;budget_exhausted&quot;</span>
+    <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">files_written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;UNKNOWN&quot;</span>
+    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">open_questions</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+<div class="viewcode-block" id="CodeReport.to_str">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeReport.to_str">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">status_note</span> <span class="o">=</span> <span class="s2">&quot;✓&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_status</span> <span class="o">==</span> <span class="s2">&quot;pass&quot;</span> <span class="k">else</span> <span class="s2">&quot;⚠ budget exhausted&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;### Code Generation Report&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;task_id      : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;final_status : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">final_status</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="n">status_note</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;iterations   : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;confidence   : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">files_written</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;files_written :&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files_written</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;### Summary&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_questions</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;### Open Questions&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">open_questions</span><span class="p">]</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Agent</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="CodeGeneratorAgent">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CodeGeneratorAgent</span><span class="p">(</span><span class="n">BaseAgent</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates and modifies SV/UVM code through multi-turn LLM dialogue.</span>
+
+<span class="sd">    Terminates when the LLM reports HIGH or MEDIUM compile confidence</span>
+<span class="sd">    (self-review pass) or when ``AgentConfig.budget`` iterations are</span>
+<span class="sd">    exhausted.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config: Agent configuration.  ``budget`` caps the LLM call count.</span>
+<span class="sd">        llm: Any :class:`BaseLLMClient` (``AnthropicAPIClient``,</span>
+<span class="sd">            ``LocalLLMClient``, or a test double).</span>
+<span class="sd">        project_config: Optional project context for PromptLoader enrichment</span>
+<span class="sd">            (team rules, VIP index, vplan summary …).</span>
+<span class="sd">        session: Optional session state injected into the system prompt.</span>
+<span class="sd">        prompts_dir: Directory containing ``code_generator.md``.</span>
+<span class="sd">            ``None`` → use the package-default location.</span>
+<span class="sd">        workspace_dir: Root directory where generated files are written.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: Confidence levels that signal a passing self-review.</span>
+    <span class="n">PASS_CONFIDENCE</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;HIGH&quot;</span><span class="p">,</span> <span class="s2">&quot;MEDIUM&quot;</span><span class="p">})</span>
+
+    <span class="n">_SECTION_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^###\s+(.+)$&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
+    <span class="n">_CODE_BLOCK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;```(?:\w+)?\n(.*?)```&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+    <span class="n">_CONFIDENCE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\b(HIGH|MEDIUM|LOW)\b&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+    <span class="n">_FILE_PATH_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;`([^`]+\.[a-zA-Z]+)`&quot;</span><span class="p">)</span>
+    <span class="c1"># Matches: `// file: path/to/file.sv`  or  `// === path/to/file.sv ===`</span>
+    <span class="n">_FILE_MARKER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;^(?://|#)\s*(?:file:|===)\s*(.+?)(?:\s*===)?\s*$&quot;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">AgentConfig</span><span class="p">,</span>
+        <span class="n">llm</span><span class="p">:</span> <span class="n">BaseLLMClient</span><span class="p">,</span>
+        <span class="n">project_config</span><span class="p">:</span> <span class="n">ProjectContext</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">session</span><span class="p">:</span> <span class="n">SessionState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prompts_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">workspace_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">llm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project_config</span> <span class="o">=</span> <span class="n">project_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">prompts_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">prompts_dir</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workspace_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># BaseAgent ABC</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="CodeGeneratorAgent.run">
+<a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent.run">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_input</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">CodeTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run the code generation loop.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_input: A :class:`CodeTask` or a plain string description.</span>
+<span class="sd">                When a plain string is given, ``task_id`` defaults to</span>
+<span class="sd">                ``&quot;codegen_task&quot;``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A formatted :class:`CodeReport` string.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">task_input</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task_input</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">CodeTask</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;task_input must be a non-empty string or CodeTask&quot;</span><span class="p">)</span>
+
+        <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_task</span><span class="p">(</span><span class="n">task_input</span><span class="p">)</span>
+        <span class="n">system_prompt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_system_prompt</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">system_prompt</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;System prompt must not be empty&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Agent must start at iteration 0 (current: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+        <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">description</span><span class="p">}]</span>
+        <span class="n">files_written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">last_parsed</span><span class="p">:</span> <span class="n">ParsedResponse</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CodeGenerator iter=</span><span class="si">%d</span><span class="s2"> task_id=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span> <span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">,</span> <span class="n">history</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">response</span><span class="p">})</span>
+
+            <span class="n">last_parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_response</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Confidence=</span><span class="si">%s</span><span class="s2"> iter=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">last_parsed</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">last_parsed</span><span class="o">.</span><span class="n">confidence</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">PASS_CONFIDENCE</span><span class="p">:</span>
+                <span class="n">written</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_files</span><span class="p">(</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">file_specs</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workspace_dir</span><span class="p">))</span>
+                <span class="n">files_written</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">written</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">CodeReport</span><span class="p">(</span>
+                    <span class="n">task_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;pass&quot;</span><span class="p">,</span>
+                    <span class="n">iterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span>
+                    <span class="n">files_written</span><span class="o">=</span><span class="n">files_written</span><span class="p">,</span>
+                    <span class="n">confidence</span><span class="o">=</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">summary</span><span class="p">,</span>
+                    <span class="n">open_questions</span><span class="o">=</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">open_questions</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span>
+
+            <span class="c1"># LOW / UNKNOWN: feed open questions back as a follow-up</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_follow_up</span><span class="p">(</span><span class="n">last_parsed</span><span class="p">)})</span>
+
+        <span class="c1"># Budget exhausted — persist whatever the last iteration produced</span>
+        <span class="k">if</span> <span class="n">last_parsed</span> <span class="ow">and</span> <span class="n">last_parsed</span><span class="o">.</span><span class="n">file_specs</span><span class="p">:</span>
+            <span class="n">written</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write_files</span><span class="p">(</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">file_specs</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">workspace_dir</span><span class="p">))</span>
+            <span class="n">files_written</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">written</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">CodeReport</span><span class="p">(</span>
+            <span class="n">task_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
+            <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;budget_exhausted&quot;</span><span class="p">,</span>
+            <span class="n">iterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">files_written</span><span class="o">=</span><span class="n">files_written</span><span class="p">,</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">confidence</span> <span class="k">if</span> <span class="n">last_parsed</span> <span class="k">else</span> <span class="s2">&quot;UNKNOWN&quot;</span><span class="p">,</span>
+            <span class="n">summary</span><span class="o">=</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">summary</span> <span class="k">if</span> <span class="n">last_parsed</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">open_questions</span><span class="o">=</span><span class="n">last_parsed</span><span class="o">.</span><span class="n">open_questions</span> <span class="k">if</span> <span class="n">last_parsed</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — task parsing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_task</span><span class="p">(</span><span class="n">task_input</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">CodeTask</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CodeTask</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task_input</span><span class="p">,</span> <span class="n">CodeTask</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">task_input</span>
+        <span class="k">return</span> <span class="n">CodeTask</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;codegen_task&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">task_input</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — system prompt</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_system_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and enrich the code_generator prompt; fall back if unavailable.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">loader</span> <span class="o">=</span> <span class="n">PromptLoader</span><span class="p">(</span>
+                <span class="n">prompts_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span><span class="p">,</span>
+                <span class="n">project_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">project_config</span><span class="p">,</span>
+                <span class="n">session</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;code_generator&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;PromptLoader unavailable (</span><span class="si">%s</span><span class="s2">); using minimal fallback prompt.&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s2">&quot;You are a SystemVerilog / UVM code generation specialist. &quot;</span>
+                <span class="s2">&quot;Generate correct, simulation-ready SV/UVM code. &quot;</span>
+                <span class="s2">&quot;Always end your response with:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;### Compile Confidence</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;HIGH | MEDIUM | LOW — brief justification.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — response parsing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parse_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParsedResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract structured fields from one LLM response.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;LLM response must be a non-empty string&quot;</span><span class="p">)</span>
+
+        <span class="n">sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_sections</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Summary&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">changed_files_text</span> <span class="o">=</span> <span class="n">sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Changed Files&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">code_text</span> <span class="o">=</span> <span class="n">sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Code&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">open_questions</span> <span class="o">=</span> <span class="n">sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Open Questions&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">confidence_text</span> <span class="o">=</span> <span class="n">sections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Compile Confidence&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_CONFIDENCE_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">confidence_text</span><span class="p">)</span>
+        <span class="n">confidence</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="s2">&quot;UNKNOWN&quot;</span>
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FILE_PATH_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">changed_files_text</span><span class="p">)</span>
+        <span class="n">file_specs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_file_specs</span><span class="p">(</span><span class="n">code_text</span><span class="p">,</span> <span class="n">file_paths</span><span class="p">)</span>
+
+        <span class="n">parsed</span> <span class="o">=</span> <span class="n">ParsedResponse</span><span class="p">(</span>
+            <span class="n">summary</span><span class="o">=</span><span class="n">summary</span><span class="p">,</span>
+            <span class="n">changed_file_paths</span><span class="o">=</span><span class="n">file_paths</span><span class="p">,</span>
+            <span class="n">file_specs</span><span class="o">=</span><span class="n">file_specs</span><span class="p">,</span>
+            <span class="n">open_questions</span><span class="o">=</span><span class="n">open_questions</span><span class="p">,</span>
+            <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+            <span class="n">confidence_reason</span><span class="o">=</span><span class="n">confidence_text</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+            <span class="n">raw</span><span class="o">=</span><span class="n">response</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">confidence</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;HIGH&quot;</span><span class="p">,</span> <span class="s2">&quot;MEDIUM&quot;</span><span class="p">,</span> <span class="s2">&quot;LOW&quot;</span><span class="p">,</span> <span class="s2">&quot;UNKNOWN&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid confidence level extracted: </span><span class="si">{</span><span class="n">parsed</span><span class="o">.</span><span class="n">confidence</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parsed</span><span class="o">.</span><span class="n">file_specs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;file_specs must be a list&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parsed</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_split_sections</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Split a response string by ``### `` headers.&quot;&quot;&quot;</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_SECTION_RE</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">match</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">matches</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_file_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileSpec</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Map code blocks to :class:`FileSpec` objects.</span>
+
+<span class="sd">        Tries three strategies in order:</span>
+
+<span class="sd">        1. **N blocks : N paths** — one code block per changed file path.</span>
+<span class="sd">        2. **File markers** — single block with ``// file: path`` markers.</span>
+<span class="sd">        3. **Fallback** — single block assigned to the first changed file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">code_blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_CODE_BLOCK_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">code_text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">code_blocks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Strategy 1: one block per path</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">code_blocks</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">file_paths</span><span class="p">)</span> <span class="ow">and</span> <span class="n">file_paths</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">file_paths</span><span class="p">,</span> <span class="n">code_blocks</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">]</span>
+
+        <span class="c1"># Strategy 2: file markers inside a single block</span>
+        <span class="n">specs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_by_markers</span><span class="p">(</span><span class="n">code_blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">specs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">specs</span>
+
+        <span class="c1"># Strategy 3: fallback</span>
+        <span class="k">if</span> <span class="n">file_paths</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">file_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">content</span><span class="o">=</span><span class="n">code_blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())]</span>
+
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_split_by_markers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileSpec</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Split *code* on ``// file: path`` or ``// === path ===`` markers.&quot;&quot;&quot;</span>
+        <span class="c1"># re.split with a capturing group → [pre, path, content, path, content, ...]</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FILE_MARKER_RE</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># no marker found</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
+                <span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FileSpec</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">content</span><span class="o">=</span><span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">specs</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — follow-up message + file writing</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_follow_up</span><span class="p">(</span><span class="n">parsed</span><span class="p">:</span> <span class="n">ParsedResponse</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;Your compile confidence was LOW or could not be determined. &quot;</span>
+            <span class="s2">&quot;Please revise the code to address the following issues:&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="n">parsed</span><span class="o">.</span><span class="n">open_questions</span>
+            <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">open_questions</span>
+            <span class="k">else</span> <span class="p">(</span>
+                <span class="s2">&quot;Review against the self-review checklist in the system prompt &quot;</span>
+                <span class="s2">&quot;and fix any outstanding issues.&quot;</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Provide the complete revised code with the same output format &quot;</span>
+            <span class="s2">&quot;and a new ### Compile Confidence assessment.&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_write_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileSpec</span><span class="p">],</span> <span class="n">workspace_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write *file_specs* under *workspace_dir*; return written paths.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">workspace_dir</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;workspace_dir must not be empty&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_specs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;file_specs must be a list&quot;</span><span class="p">)</span>
+
+        <span class="n">base</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">base</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Workspace directory </span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2"> must exist&quot;</span><span class="p">)</span>
+
+        <span class="n">written</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">file_specs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;File spec must have a path&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File spec </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> must have content&quot;</span><span class="p">)</span>
+
+            <span class="n">target</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">path</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Wrote </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> chars)&quot;</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">content</span><span class="p">))</span>
+            <span class="n">written</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">written</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">file_specs</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;File write mismatch: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">written</span><span class="p">)</span><span class="si">}</span><span class="s2"> written, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">file_specs</span><span class="p">)</span><span class="si">}</span><span class="s2"> expected&quot;</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">written</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Ting-An Cheng.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
