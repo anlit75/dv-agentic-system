@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `src/dv_agentic/cli/`: Fully implemented CLI entrypoints for all 8 Agents (`bug_classifier`, `code_generator`, `coverage_analyst`, `log_analyzer`, `orchestrator`, `reporter`, `sim_controller`, `spec_analyst`).
+- `src/dv_agentic/cli/__init__.py`: Package-level initializer with Google-style/Sphinx module documentation enabling autodoc discovery.
+- `src/dv_agentic/cli/_factory.py` & `_helpers.py`: Private CLI factory for dynamic LLM backend selection and CLI stream/error helper utilities.
+- `src/dv_agentic/prompts/`: Standardized standalone prompt markdown templates for `bug_classifier.md`, `orchestrator.md`, `reporter.md`, and `spec_analyst.md`.
+- `tests/test_cli.py`: Comprehensive CLI unit testing suite for all entrypoints and helper utilities, lifting global repository test coverage to **90%**.
+- `.opencode/tools/`: TypeScript wrapper scripts matching each CLI tool for cross-platform integration in OpenCode/VSCode.
+- `tests/test_ts_wrappers.test.ts`: Bun-based TypeScript test suite for wrapper scripts validation.
+
+### Changed
+
+- `.github/workflows/ci.yml`: Expanded CI pipeline to execute Pytest with coverage reports, pre-commit quality checks (Ruff, Mypy), and TypeScript Bun test execution.
+
 ## [0.3.0] - 2026-05-05
 
 ### Added

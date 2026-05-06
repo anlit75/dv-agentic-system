@@ -34,6 +34,8 @@
 | `src/dv_agentic/prompts/*.md` — Standalone templates | ✅ | `code_generator`, `log_analyzer` follow standalone rules |
 | `src/dv_agentic/agents/base.py` — `BaseAgent` / `AgentConfig` ABC | ✅ | `Literal["internal", "external"]` environment alignment |
 | pre-commit / ruff / mypy static analysis and hooks | ✅ | 0 errors, 0 type issues, bound to git hooks |
+| Sphinx documentation compilation and autodiscovery | ✅ | Complete `docs/` build scripts and full autodiscovery of the `cli/` subpackage |
+| CLI test suite and coverage reinforcement | ✅ | Comprehensive unit/integration testing, raising global coverage to 90% |
 | `sample/sample-project/.agent/project.yaml` | ✅ | Complete `project.yaml` example |
 | `sample/sample-org-dv-profiles/teams/` | 🔨 | Directory created, pending `sample_team/` contents |
 | `src/dv_agentic/profiles/_template/` | 📋 | Directory created, pending schema YAMLs |
@@ -145,13 +147,14 @@
 | `pip install` publish workflow | CI/CD configuration, PyPI or internal package registry |
 | External CI integration (GitHub Actions) | Run full verification loop using GHDL + cocotb + lcov adapters |
 
-## Progress Snapshot (2026-05-05)
+## Progress Snapshot (2026-05-06)
 
 ```
 Layer 1 (Shared Package)
   src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters completed
-  src/dv_agentic/agents/        ██████████  100%  All 8 agents (LogAnalyzer, SimController, CoverageAnalyst, SpecAnalyst, BugClassifier, Orchestrator, Reporter, CodeGenerator) completed
-  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection fully implemented and tested
+  src/dv_agentic/agents/        ██████████  100%  All 8 agents completed and fully verified
+  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection completed
+  src/dv_agentic/cli/           ██████████  100%  All CLI entrypoints fully tested (90% global coverage) & fully documented
   src/dv_agentic/profiles/      █░░░░░░░░░   10%  _template/ directory exists, schemas pending
 
 Layer 2 (Profile Repo)
