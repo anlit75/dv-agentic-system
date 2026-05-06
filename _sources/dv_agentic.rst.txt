@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    dv_agentic.agents
+   dv_agentic.cli
    dv_agentic.prompts
    dv_agentic.tools
 
