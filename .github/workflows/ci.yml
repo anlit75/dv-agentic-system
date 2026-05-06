@@ -44,3 +44,12 @@ jobs:
       - name: Run tests with coverage
         run: |
           uv run pytest --cov=dv_agentic --cov-report=xml --cov-report=term
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run TypeScript Wrapper Tests
+        run: |
+          bun test tests/test_ts_wrappers.test.ts
