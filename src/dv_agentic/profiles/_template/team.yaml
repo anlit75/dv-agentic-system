@@ -1,0 +1,50 @@
+# profiles/_template/team.yaml
+#
+# Schema for a team profile. Copy this file to:
+#   {org}-dv-profiles/teams/{team_name}/team.yaml
+# and fill in the fields for your team.
+#
+# All fields are optional. Missing fields use the adapter defaults.
+# -------------------------------------------------------------------
+
+# Simulator adapter settings.
+# These values extend (not replace) the composition.simulator setting
+# in project.yaml. Use to override binary paths or add team-specific flags.
+simulator:
+  # Full path to the simulator binary. null = use whatever is on PATH.
+  binary_path: null               # e.g. /tools/cadence/xcelium/25.03/bin/xrun
+
+  # Flags appended to every compile invocation.
+  extra_compile_flags: null       # e.g. "-v200 -licqueue"
+
+  # Flags appended to every simulation run invocation.
+  extra_run_flags: null           # e.g. "+UVM_VERBOSITY=UVM_MEDIUM"
+
+  # Whether to instrument the simulation for coverage collection.
+  collect_coverage: true
+
+  # Root directory where per-job coverage DBs are written.
+  cov_work_dir: cov_work          # XceliumAdapter writes {cov_work_dir}/{job_id}/
+
+# Job scheduler settings.
+# Leave backend as null to run simulations as direct subprocesses.
+scheduler:
+  backend: null                   # lsf | sge | null
+  queue: null                     # e.g. normal, short, verification
+  resource_flags: null            # e.g. "-R 'rusage[mem=4096]'" (LSF)
+  default_wall_time_sec: 3600     # wall-clock limit per job
+  poll_interval_sec: 30           # how often to poll bjobs/qstat
+
+# Version control settings.
+# Used by SimControllerAgent for branch management and commit messages.
+vcs:
+  backend: git                    # git | svn (svn reserved, not yet implemented)
+  base_branch: main               # branch to fork agent/{task_id} from
+  remote: origin
+  author_name: null               # null = use git global config
+  author_email: null
+
+# LLM backend override for this team.
+# Overrides DV_LLM_BACKEND env var when set.
+# null = defer to environment variable.
+llm_backend: null                 # anthropic | local | null

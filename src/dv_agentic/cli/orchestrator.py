@@ -4,13 +4,25 @@ Sub-agents are wired up automatically based on ``--simulator`` and
 ``--adapter`` flags.  The LLM client is selected from environment variables
 (see :mod:`~dv_agentic.cli._factory`).
 
+When ``--project-config`` is provided, the three-layer configuration system
+is activated: team profile, IP-type rules, and adapter settings are all
+loaded from ``.agent/project.yaml`` and the profiles directory, and injected
+into every agent's system prompt via :class:`~dv_agentic.prompts.loader.PromptLoader`.
+
 Examples:
     .. code-block:: shell
 
-        python3 -m dv_agentic.cli.orchestrator \
-            --input-file task.txt \
-            --simulator xcelium \
+        # Minimal: no profile injection
+        python3 -m dv_agentic.cli.orchestrator \\
+            --input-file task.txt \\
+            --simulator xcelium \\
             --adapter imc
+
+        # Full: load team + IP profiles from project.yaml
+        python3 -m dv_agentic.cli.orchestrator \\
+            --project-config .agent/project.yaml \\
+            --profiles-dir ../team-profiles \\
+            --input-file task.txt
 """
 
 import argparse
@@ -38,6 +50,29 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="Task description file, or '-' for stdin (default: stdin).",
     )
+
+    # --- Three-layer config ---
+    p.add_argument(
+        "--project-config",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Path to .agent/project.yaml.  When provided, loads team profile, "
+            "IP-type rules, and adapter settings, injecting them into all agent "
+            "prompts.  Overrides --simulator and --adapter when set."
+        ),
+    )
+    p.add_argument(
+        "--profiles-dir",
+        default=None,
+        metavar="PATH",
+        help=(
+            "Root of the org profile repository (e.g. ../team-profiles/). "
+            "Falls back to DV_PROFILES_DIR env var.  Only used with --project-config."
+        ),
+    )
+
+    # --- Direct adapter flags (used when --project-config is absent) ---
     p.add_argument(
         "--simulator",
         default="xcelium",
@@ -83,12 +118,25 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def _build_sub_agents(args: argparse.Namespace, llm: Any) -> dict[str, Any]:
+def _build_sub_agents(
+    args: argparse.Namespace,
+    llm: Any,
+    project_ctx: Any = None,
+    project_simulator: Any = None,
+    project_coverage: Any = None,
+) -> dict[str, Any]:
     """Instantiate all sub-agents and return them keyed by agent name.
 
     Args:
         args: Parsed command-line arguments.
         llm: The LLM client to share among sub-agents.
+        project_ctx: Optional :class:`~dv_agentic.prompts.context.ProjectContext`
+            loaded from ``project.yaml``.  When provided, injected into every
+            LLM-powered agent's :class:`~dv_agentic.prompts.loader.PromptLoader`.
+        project_simulator: Optional :class:`~dv_agentic.tools.interface.SimulatorTool`
+            loaded from ``project.yaml``.  Overrides ``--simulator`` flag.
+        project_coverage: Optional :class:`~dv_agentic.tools.interface.CoverageTool`
+            loaded from ``project.yaml``.  Overrides ``--adapter`` flag.
 
     Returns:
         A dictionary mapping agent names to agent instances.
@@ -105,11 +153,13 @@ def _build_sub_agents(args: argparse.Namespace, llm: Any) -> dict[str, Any]:
 
     b = args.sub_budget
 
-    simulator = get_simulator_adapter(args.simulator)
-    coverage = get_coverage_adapter(args.adapter)
+    simulator = project_simulator or get_simulator_adapter(args.simulator)
+    coverage = project_coverage or get_coverage_adapter(args.adapter)
 
     return {
-        "log_analyzer": LogAnalyzerAgent(config=AgentConfig(name="log_analyzer", budget=b)),
+        "log_analyzer": LogAnalyzerAgent(
+            config=AgentConfig(name="log_analyzer", budget=b),
+        ),
         "coverage_analyst": CoverageAnalystAgent(
             config=AgentConfig(name="coverage_analyst", budget=b),
             coverage=coverage,
@@ -123,19 +173,23 @@ def _build_sub_agents(args: argparse.Namespace, llm: Any) -> dict[str, Any]:
             config=AgentConfig(name="code_generator", budget=b),
             llm=llm,
             workspace_dir=".",
+            project_config=project_ctx,
         ),
         "bug_classifier": BugClassifierAgent(
             config=AgentConfig(name="bug_classifier", budget=b),
             llm=llm,
             confidence_threshold=args.confidence_threshold,
+            project_config=project_ctx,
         ),
         "spec_analyst": SpecAnalystAgent(
             config=AgentConfig(name="spec_analyst", budget=b),
             llm=llm,
+            project_config=project_ctx,
         ),
         "reporter": ReporterAgent(
             config=AgentConfig(name="reporter", budget=b),
             llm=llm,
+            project_config=project_ctx,
         ),
     }
 
@@ -149,17 +203,39 @@ def main() -> None:
     except OSError as exc:
         die(str(exc))
 
+    # --- Three-layer config ---
+    project_ctx = None
+    project_simulator = None
+    project_coverage = None
+    if args.project_config:
+        try:
+            from dv_agentic.config import load_project
+
+            project_ctx, project_simulator, project_coverage = load_project(
+                project_yaml=args.project_config,
+                profiles_dir=args.profiles_dir,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            die(f"Failed to load project config: {exc}")
+
     try:
         from dv_agentic.agents.base import AgentConfig
         from dv_agentic.agents.orchestrator import OrchestratorAgent
 
         llm = make_llm(model=args.model)
-        sub_agents = _build_sub_agents(args, llm)
+        sub_agents = _build_sub_agents(
+            args,
+            llm,
+            project_ctx=project_ctx,
+            project_simulator=project_simulator,
+            project_coverage=project_coverage,
+        )
 
         agent = OrchestratorAgent(
             config=AgentConfig(name="orchestrator", budget=args.budget),
             llm=llm,
             sub_agents=sub_agents,
+            project_config=project_ctx,
         )
         result = asyncio.run(agent.run(task_input))
         print(result)  # noqa: T201

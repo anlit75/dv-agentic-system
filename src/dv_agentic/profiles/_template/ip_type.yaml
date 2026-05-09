@@ -1,0 +1,46 @@
+# profiles/_template/ip_type.yaml
+#
+# Schema for an IP-type protocol profile. Copy this file to:
+#   {org}-dv-profiles/ip-types/{protocol_name}/protocol_rules.yaml
+# and fill in the rules for your protocol.
+#
+# The `rules` field is injected verbatim into {{IP_TYPE_RULES}} in every
+# agent prompt that includes that placeholder. Write it as clear,
+# imperative prose that an LLM can act on directly.
+#
+# When multiple ip_types are listed in project.yaml, their rules blocks
+# are concatenated in order with an ## {PROTOCOL} Protocol Rules header.
+# -------------------------------------------------------------------
+
+# Short identifier for this protocol. Used only as a label in injected text.
+protocol: custom                  # axi | pcie | ddr | custom
+
+# Protocol rules injected into {{IP_TYPE_RULES}}.
+# Write as natural-language rules or a numbered checklist.
+# Keep each rule specific and actionable — vague rules waste context tokens.
+rules: |
+  Replace this block with your protocol-specific rules.
+
+  Example rules:
+  - Max burst length: 256 beats (AxLEN = 0xFF).
+  - AWSIZE must not exceed the data bus width of the target.
+  - WSTRB must be consistent with AWSIZE and the byte lane.
+  - Back-pressure: de-asserting READY is always legal on any channel.
+  - Never issue more than max_outstanding transactions without a response.
+
+# Coverage taxonomy hints for the CoverageAnalyst agent.
+# List the bin categories expected for this IP type so the agent can
+# identify gaps and classify holes correctly.
+coverage_taxonomy:
+  # Bins that must be hit before tape-out.
+  mandatory_bins:
+    - nominal_transfer
+    - boundary_condition_min
+    - boundary_condition_max
+    - error_injection
+
+  # Bins that improve confidence but are not blocking.
+  optional_bins:
+    - back_pressure
+    - max_outstanding
+    - interleaved_transactions

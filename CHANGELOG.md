@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `src/dv_agentic/config/loader.py` & `__init__.py`: Completed the Three-Layer Configuration Loading system (Project -> Team Profile -> IP Protocol rules) supporting 4 levels of profiles directory resolution and robust fallback degradation.
+- `src/dv_agentic/profiles/_template/`: Added canonical YAML and Markdown schema templates for DV team configs (`team.yaml`), IP rules (`ip_type.yaml`), and prompt patches (`prompt_patch.md`).
+- `sample/sample-org-dv-profiles/`: Created concrete, realistic sample profiles for AXI and PCIe protocol rules and custom prompt patch overrides.
+- `tests/test_config_loader.py`: Added 32 exhaustive unit tests covering environment overrides, loading behaviors, folder mapping priorities, and graceful degradation paths.
+- `src/dv_agentic/cli/install_agents.py`: Implemented a dynamic sub-agent prompt template generator and compiler that injects level-1 profiles and formats frontmatter cleanly for Claude Code and Cursor.
+- `scripts/install-agents.sh`: Implemented a cross-platform shell script wrapper supporting Windows MSYS/Git-Bash environment with auto-detection of python and virtualenv.
 - `src/dv_agentic/cli/`: Fully implemented CLI entrypoints for all 8 Agents (`bug_classifier`, `code_generator`, `coverage_analyst`, `log_analyzer`, `orchestrator`, `reporter`, `sim_controller`, `spec_analyst`).
 - `src/dv_agentic/cli/__init__.py`: Package-level initializer with Google-style/Sphinx module documentation enabling autodoc discovery.
 - `src/dv_agentic/cli/_factory.py` & `_helpers.py`: Private CLI factory for dynamic LLM backend selection and CLI stream/error helper utilities.

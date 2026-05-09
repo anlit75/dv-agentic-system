@@ -1,0 +1,38 @@
+axi_vip:
+  base_classes:
+    - name: axi_master_seq
+      extends: "uvm_sequence #(axi_seq_item)"
+      description: >
+        Base class for all AXI master sequences. Always extend this class.
+        Provides pre_body/post_body hooks for config_db lookups.
+
+    - name: axi_slave_seq
+      extends: "uvm_sequence #(axi_seq_item)"
+      description: Base class for AXI slave response sequences.
+
+  sequences:
+    - name: axi_single_write_seq
+      description: Issues a single AXI4 write burst. Configure via constraints.
+      key_fields:
+        - "rand bit [7:0] burst_len   // 0=1beat, 255=256beats"
+        - "rand bit [2:0] burst_size  // must match data bus width"
+        - "rand bit [1:0] burst_type  // FIXED=0, INCR=1, WRAP=2"
+
+    - name: axi_back_pressure_seq
+      description: >
+        Drives back-pressure by de-asserting RREADY/WREADY for a configurable
+        number of cycles. Use to hit back_pressure coverage bins.
+      key_fields:
+        - "rand int unsigned stall_cycles  // 1-32, default 1"
+
+  config_objects:
+    - name: axi_agent_config
+      description: Agent-level config. Retrieve via uvm_config_db in build_phase.
+      key_fields:
+        - "int max_outstanding     // default 8"
+        - "int max_payload_bytes   // default 256; never hardcode"
+        - "bit enable_coverage     // default 1"
+
+  forbidden_calls:
+    - "axi_vip_driver::send_raw()  // bypasses protocol checks, never use"
+    - "force / release on DUT ports // never from sequences"
