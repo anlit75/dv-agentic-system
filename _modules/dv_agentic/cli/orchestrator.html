@@ -75,13 +75,25 @@
 <span class="sd">``--adapter`` flags.  The LLM client is selected from environment variables</span>
 <span class="sd">(see :mod:`~dv_agentic.cli._factory`).</span>
 
+<span class="sd">When ``--project-config`` is provided, the three-layer configuration system</span>
+<span class="sd">is activated: team profile, IP-type rules, and adapter settings are all</span>
+<span class="sd">loaded from ``.agent/project.yaml`` and the profiles directory, and injected</span>
+<span class="sd">into every agent&#39;s system prompt via :class:`~dv_agentic.prompts.loader.PromptLoader`.</span>
+
 <span class="sd">Examples:</span>
 <span class="sd">    .. code-block:: shell</span>
 
-<span class="sd">        python3 -m dv_agentic.cli.orchestrator \</span>
-<span class="sd">            --input-file task.txt \</span>
-<span class="sd">            --simulator xcelium \</span>
+<span class="sd">        # Minimal: no profile injection</span>
+<span class="sd">        python3 -m dv_agentic.cli.orchestrator \\</span>
+<span class="sd">            --input-file task.txt \\</span>
+<span class="sd">            --simulator xcelium \\</span>
 <span class="sd">            --adapter imc</span>
+
+<span class="sd">        # Full: load team + IP profiles from project.yaml</span>
+<span class="sd">        python3 -m dv_agentic.cli.orchestrator \\</span>
+<span class="sd">            --project-config .agent/project.yaml \\</span>
+<span class="sd">            --profiles-dir ../team-profiles \\</span>
+<span class="sd">            --input-file task.txt</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
@@ -109,6 +121,29 @@
         <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Task description file, or &#39;-&#39; for stdin (default: stdin).&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="c1"># --- Three-layer config ---</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--project-config&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Path to .agent/project.yaml.  When provided, loads team profile, &quot;</span>
+            <span class="s2">&quot;IP-type rules, and adapter settings, injecting them into all agent &quot;</span>
+            <span class="s2">&quot;prompts.  Overrides --simulator and --adapter when set.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">&quot;--profiles-dir&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;PATH&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Root of the org profile repository (e.g. ../team-profiles/). &quot;</span>
+            <span class="s2">&quot;Falls back to DV_PROFILES_DIR env var.  Only used with --project-config.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># --- Direct adapter flags (used when --project-config is absent) ---</span>
     <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;--simulator&quot;</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;xcelium&quot;</span><span class="p">,</span>
@@ -154,12 +189,25 @@
     <span class="k">return</span> <span class="n">p</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_build_sub_agents</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span> <span class="n">llm</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_sub_agents</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span>
+    <span class="n">llm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">project_ctx</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">project_simulator</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">project_coverage</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Instantiate all sub-agents and return them keyed by agent name.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        args: Parsed command-line arguments.</span>
 <span class="sd">        llm: The LLM client to share among sub-agents.</span>
+<span class="sd">        project_ctx: Optional :class:`~dv_agentic.prompts.context.ProjectContext`</span>
+<span class="sd">            loaded from ``project.yaml``.  When provided, injected into every</span>
+<span class="sd">            LLM-powered agent&#39;s :class:`~dv_agentic.prompts.loader.PromptLoader`.</span>
+<span class="sd">        project_simulator: Optional :class:`~dv_agentic.tools.interface.SimulatorTool`</span>
+<span class="sd">            loaded from ``project.yaml``.  Overrides ``--simulator`` flag.</span>
+<span class="sd">        project_coverage: Optional :class:`~dv_agentic.tools.interface.CoverageTool`</span>
+<span class="sd">            loaded from ``project.yaml``.  Overrides ``--adapter`` flag.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A dictionary mapping agent names to agent instances.</span>
@@ -176,11 +224,13 @@
 
     <span class="n">b</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">sub_budget</span>
 
-    <span class="n">simulator</span> <span class="o">=</span> <span class="n">get_simulator_adapter</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
-    <span class="n">coverage</span> <span class="o">=</span> <span class="n">get_coverage_adapter</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">adapter</span><span class="p">)</span>
+    <span class="n">simulator</span> <span class="o">=</span> <span class="n">project_simulator</span> <span class="ow">or</span> <span class="n">get_simulator_adapter</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+    <span class="n">coverage</span> <span class="o">=</span> <span class="n">project_coverage</span> <span class="ow">or</span> <span class="n">get_coverage_adapter</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">adapter</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;log_analyzer&quot;</span><span class="p">:</span> <span class="n">LogAnalyzerAgent</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;log_analyzer&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">)),</span>
+        <span class="s2">&quot;log_analyzer&quot;</span><span class="p">:</span> <span class="n">LogAnalyzerAgent</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;log_analyzer&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
+        <span class="p">),</span>
         <span class="s2">&quot;coverage_analyst&quot;</span><span class="p">:</span> <span class="n">CoverageAnalystAgent</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;coverage_analyst&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
             <span class="n">coverage</span><span class="o">=</span><span class="n">coverage</span><span class="p">,</span>
@@ -194,19 +244,23 @@
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;code_generator&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
             <span class="n">workspace_dir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+            <span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;bug_classifier&quot;</span><span class="p">:</span> <span class="n">BugClassifierAgent</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bug_classifier&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
             <span class="n">confidence_threshold</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">confidence_threshold</span><span class="p">,</span>
+            <span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;spec_analyst&quot;</span><span class="p">:</span> <span class="n">SpecAnalystAgent</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;spec_analyst&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+            <span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;reporter&quot;</span><span class="p">:</span> <span class="n">ReporterAgent</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;reporter&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
+            <span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">}</span>
 
@@ -222,17 +276,39 @@
     <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="n">die</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
 
+    <span class="c1"># --- Three-layer config ---</span>
+    <span class="n">project_ctx</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">project_simulator</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">project_coverage</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">project_config</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_project</span>
+
+            <span class="n">project_ctx</span><span class="p">,</span> <span class="n">project_simulator</span><span class="p">,</span> <span class="n">project_coverage</span> <span class="o">=</span> <span class="n">load_project</span><span class="p">(</span>
+                <span class="n">project_yaml</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">project_config</span><span class="p">,</span>
+                <span class="n">profiles_dir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">die</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load project config: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.orchestrator</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrchestratorAgent</span>
 
         <span class="n">llm</span> <span class="o">=</span> <span class="n">make_llm</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">sub_agents</span> <span class="o">=</span> <span class="n">_build_sub_agents</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">llm</span><span class="p">)</span>
+        <span class="n">sub_agents</span> <span class="o">=</span> <span class="n">_build_sub_agents</span><span class="p">(</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">llm</span><span class="p">,</span>
+            <span class="n">project_ctx</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
+            <span class="n">project_simulator</span><span class="o">=</span><span class="n">project_simulator</span><span class="p">,</span>
+            <span class="n">project_coverage</span><span class="o">=</span><span class="n">project_coverage</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="n">agent</span> <span class="o">=</span> <span class="n">OrchestratorAgent</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;orchestrator&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">budget</span><span class="p">),</span>
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
             <span class="n">sub_agents</span><span class="o">=</span><span class="n">sub_agents</span><span class="p">,</span>
+            <span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">task_input</span><span class="p">))</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>

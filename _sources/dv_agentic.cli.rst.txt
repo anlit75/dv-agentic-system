@@ -28,6 +28,14 @@ dv\_agentic.cli.coverage\_analyst module
    :show-inheritance:
    :undoc-members:
 
+dv\_agentic.cli.install\_agents module
+--------------------------------------
+
+.. automodule:: dv_agentic.cli.install_agents
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 dv\_agentic.cli.log\_analyzer module
 ------------------------------------
 

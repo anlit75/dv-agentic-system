@@ -9,6 +9,7 @@ Subpackages
 
    dv_agentic.agents
    dv_agentic.cli
+   dv_agentic.config
    dv_agentic.prompts
    dv_agentic.tools
 
