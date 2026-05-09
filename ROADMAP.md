@@ -102,20 +102,20 @@
 | `src/dv_agentic/agents/reporter.py` | ✅ | Aggregate session results + `prompts/reporter.md` |
 | `src/dv_agentic/agents/code_generator.py` | ✅ | Generate / modify code + `prompts/code_generator.md` |
 
-## Phase 4 — Profile and Project Configuration System 📋 (Planned)
+## Phase 4 — Profile and Project Configuration System ✅ (Completed)
 
 **Objective**: Complete the three-layer configuration loading (`project.yaml` → team profile → ip_type rules), allowing different DV teams to use this system without changing the agent core.
 
 | Item | Status | Description |
 |------|------|------|
-| `src/dv_agentic/profiles/_template/team.yaml` schema | 🔨 | Directory exists, pending YAML contents |
-| `src/dv_agentic/profiles/_template/ip_type.yaml` schema | 📋 | — |
-| `src/dv_agentic/profiles/_template/prompt_patch.md` formatting guide | 📋 | — |
-| `project.yaml` loader (parse, validate, compose config) | 📋 | Reads `composition.*`, dynamically selects adapter |
-| `sample/sample-org-dv-profiles/teams/sample_team/` full example | 🔨 | Directory exists, pending `team.yaml` / `vip_index.yaml` / `prompt_patch.md` |
-| `sample/sample-org-dv-profiles/ip-types/` example | 📋 | `axi/`, `pcie/` protocol rules |
+| `src/dv_agentic/profiles/_template/team.yaml` schema | ✅ | Schema YAML template for DV team profiles |
+| `src/dv_agentic/profiles/_template/ip_type.yaml` schema | ✅ | Schema YAML template for IP-type protocol and coverage guidelines |
+| `src/dv_agentic/profiles/_template/prompt_patch.md` formatting guide | ✅ | Template for adding custom organization prompt overrides |
+| `project.yaml` loader (parse, validate, compose config) | ✅ | Fully implemented in config/loader.py with 4-level resolution |
+| `sample/sample-org-dv-profiles/teams/sample_team/` full example | ✅ | Realistic team.yaml, vip_index.yaml, and prompt_patch.md examples |
+| `sample/sample-org-dv-profiles/ip-types/` example | ✅ | Fully structured AXI and PCIe protocol rules |
 
-## Phase 6 — Session State and VCS Integration 🔒 (Depends on Phase 3)
+## Phase 6 — Session State and VCS Integration 📋 (Temporarily Postponed)
 
 **Objective**: Achieve persistent state for Agent tasks and a complete Git workflow.
 
@@ -127,15 +127,62 @@
 | Commit message format guardrails | 📋 | `[agent] {reason} · task:{task_id}` |
 | Safe exit flow when budget is depleted | 📋 | Ensure clean branch, leave a task trace |
 
-## Phase 7 — Subagent Installation Scripts and Tool Integration 🔒 (Depends on Phase 5)
+## Phase 7 — Subagent Installation Scripts and Tool Integration ✅ (Completed)
 
 **Objective**: Allow users to symlink subagent `.md` files to the expected paths of Claude Code / Cursor / OpenCode with one click.
 
 | Item | Status | Description |
 |------|------|------|
-| `.agent/subagents/` canonical `.md` generation logic | 📋 | Composed from base + patch by prompt loader |
-| `scripts/install-agents.sh` | 📋 | Create symlinks for `.claude/agents/`, `.cursor/rules/`, `.agent/` |
-| Post-installation verification script | 📋 | Confirm that tools can discover correct subagents |
+| `.agent/subagents/` canonical `.md` generation logic | ✅ | Composed from base + patch by prompt loader inside install_agents.py |
+| `scripts/install-agents.sh` | ✅ | Cross-platform bash script supporting Windows with auto-detection of python and virtualenvs |
+| Post-installation verification script | ✅ | Generates a run-time installation validation and checks |
+
+## Phase 8 — Research-Guided DV Agentic Optimization (NVIDIA CVDP Insights) 📋
+
+**Objective**: Optimize the core `dv_agentic` prompt patterns, self-review checklists, and execution loops based on key testbench-only failure modes identified in state-of-the-art LLMs (e.g. Claude 3.7 / GPT-4.1) within NVIDIA's CVDP (Comprehensive Verilog Design Problems) paper, while strictly forbidding any RTL reading or writing.
+
+### 🛡️ System Scope & RTL Access Prohibitions
+The `dv_agentic` system is designed strictly for testbench development (TB-only). Reading, writing, or accessing RTL design source files is strictly prohibited. The sole sources of hardware architectural and interface definitions are the SPEC and the verification plan.
+
+| Existing Violations | Core Correction Task |
+|----------------------|-----------------------|
+| **Violation 1**: `CodeGeneratorAgent._write_files()` lacks path restriction. | Add path validation in `_write_files()` using `_TB_ALLOWED_DIRS` check, raising `ValueError` on RTL paths. |
+| **Violation 2**: `code_generator.md` Core Responsibilities are vague. | Update responsibilities to specify modification of TB-only files and state RTL is completely off-limits for both reading and writing (rely solely on SPEC/vplan). |
+| **Violation 3**: Self-Review Checklist lacks RTL write-protection. | Add strict RTL read/write-protection assertions to the self-review constraints. |
+
+---
+
+### 📋 Phase 8 Optimization Tasks
+
+| Direction | Item | Status | Description |
+|-----------|------|--------|-------------|
+| **Direction 1: Path Controls** | **Strict TB Root Path Enforcement** | 📋 | Implement path validation in `CodeGeneratorAgent._write_files()` to restrict writing/reading to allowed directories (e.g., `tb`, `tests`, `env`). Refine `code_generator.md` Core Responsibilities to declare RTL completely off-limits. |
+| **Direction 2: Checklist** | **cid13 (Testbench Checker) Defenses** | 📋 | Expand `Self-Review Checklist` in `code_generator.md` to prevent CVDP's top failures in Checker Gen (22.77% pass rate), including missing timescales, unmatched blocks, and missing bounds checks. |
+| **Direction 3: Feedback Loop** | **Fine-Grained Failure Diagnostics** | 📋 | Upgrade `LogAnalyzerAgent` to output granular failure details (not just generic `error_class`). Update `OrchestratorAgent` to stop execution and escalate to human review if failure types shift across loops. |
+
+#### 🔍 Detailed Improvement Items
+
+##### 1. Immediate: Path Control & Writing Constraints
+* **`CodeGeneratorAgent._write_files()` Path Validation**: Verify file paths against `project.yaml` directories. Only allow writing to `paths.tb_root`, `paths.test_dir`, and general sub-folders under a permitted whitelist (e.g., `tb`, `tests`, `env`, `sequences`, `agents`, `scoreboards`). Explicitly block any reads or writes targeted at `paths.rtl_root` or any files in the RTL directories.
+* **`code_generator.md` Core Responsibilities Clarification**: Explicitly state: *"Modify existing testbench files (sequences, scoreboards, coverage groups, monitors, drivers, env) to fix compile errors or simulation failures. RTL source files are completely forbidden for both reading and writing — never access or open them. The sole sources for hardware architectural and interface definitions are the SPEC and the verification plan (vplan.yaml)."*
+
+##### 2. Immediate: Checklist Enhancements (cid13 Defenses)
+Introduce a specialized, rigorous **SystemVerilog Testbench checklist** into the `Self-Review Checklist` in `code_generator.md` to prevent CVDP's top failures in Checker Gen (22.77% pass rate):
+* **Timescale Declaration**: Ensure a proper ``timescale` is declared at the top of files (the largest failure cluster in CVDP `cid13`).
+* **Unmatched Blocks**: Ensure every block pair (`begin`/`end`, `fork`/`join`) is perfectly balanced.
+* **No Mixed Assignments**: Do not mix blocking (`=`) and non-blocking (`<=`) assignments, particularly inside `always` blocks.
+* **Multiple Drivers Protection**: Check that no signal/reg is driven by more than one procedural block.
+* **Initialization Guard**: All variables must be initialized before they are read.
+* **Array Bounds Check**: Explicitly check index ranges before any array or queue accesses.
+* **Cycle-Accurate Alignment**: Non-blocking assignments and delays must not cause state offsets or counter drifts.
+* **Explicit Width Handling**: Expression results of smaller widths must be explicitly padded/concatenated (e.g. `{{4'b0}, ...}`) when assigned to larger targets (preventing ALU zero-extension bugs).
+* **Coverage Verification**: Coverage bin names must match the `vplan.yaml` definitions *exactly*, and the checker must cover the full scope, including non-happy paths.
+
+##### 3. Medium-Term: Re-evaluating the "Iterative Improvement" Assumption
+* **Granular Failure Types**: `LogAnalyzerAgent` must parse compiler/simulation logs into specific categories (e.g., `syntax_error`, `timing_error`, `coverage_miss`, `interface_mismatch`).
+* **Dynamic Escalation in Orchestrator**: Instead of iterating blindly through the budget:
+  * If consecutive failures have the same failure type, let the agent continue.
+  * If failure types shift dynamically between runs (indicating a complex, shifting error state), immediately stop and escalate to the user with a detailed diagnostics report, saving token budget.
 
 ## Long-term / Optional
 
@@ -147,7 +194,7 @@
 | `pip install` publish workflow | CI/CD configuration, PyPI or internal package registry |
 | External CI integration (GitHub Actions) | Run full verification loop using GHDL + cocotb + lcov adapters |
 
-## Progress Snapshot (2026-05-06)
+## Progress Snapshot (2026-05-09)
 
 ```
 Layer 1 (Shared Package)
@@ -155,15 +202,14 @@ Layer 1 (Shared Package)
   src/dv_agentic/agents/        ██████████  100%  All 8 agents completed and fully verified
   src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection completed
   src/dv_agentic/cli/           ██████████  100%  All CLI entrypoints fully tested (90% global coverage) & fully documented
-  src/dv_agentic/profiles/      █░░░░░░░░░   10%  _template/ directory exists, schemas pending
+  src/dv_agentic/profiles/      ██████████  100%  _template/ directory and all schemas completed
 
 Layer 2 (Profile Repo)
-  sample/                       ██░░░░░░░░   20%  Directory structure created, YAMLs pending
+  sample/                       ██████████  100%  All sample team, IP-type, and VIP catalog profiles completed
 
 Layer 3 (Project Implant)
   sample/sample-project/
-    .agent/                     ███░░░░░░░   30%  project.yaml example completed;
-                                                  subagents/, memory.db, tasks/ pending
+    .agent/                     ██████████  100%  Project configuration system and subagent installer completed
 ```
 
-**Next Milestone**: Enter Phase 4, finalize the three-layer configuration loading system and provide full sample profiles for teams and IP protocols.
+**Next Milestone**: Enter Phase 8, implement research-guided optimizations for the `dv_agentic` system based on the NVIDIA CVDP paper insights. Phase 6 is temporarily postponed.

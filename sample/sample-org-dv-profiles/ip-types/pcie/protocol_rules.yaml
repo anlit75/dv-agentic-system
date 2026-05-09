@@ -1,0 +1,74 @@
+# sample-org-dv-profiles/ip-types/pcie/protocol_rules.yaml
+#
+# PCIe Gen4 TLP-level protocol rules for the dv-agentic-system.
+# Injected into {{IP_TYPE_RULES}} in agent prompts.
+# -------------------------------------------------------------------
+
+protocol: pcie
+
+rules: |
+  ## PCIe TLP Protocol Rules (Gen4, LTSSM focus excluded)
+
+  ### TLP Header Fields
+  - Fmt[2:0] and Type[4:0] together define the TLP type. Never set reserved combinations.
+  - Length field is in DWORDs (1–1024). A Length of 0 encodes 1024 DWORDs.
+  - First/Last DW byte enables must be consistent with Length and Address alignment.
+  - For single-DWORD payloads (Length=1): Last DW BE must be 4'b0000.
+
+  ### Maximum Payload Size (MPS)
+  - MPS is negotiated during enumeration and stored in Device Control Register.
+  - Memory Write TLP payload must not exceed MPS. Violating MPS is a malformed TLP.
+  - Read `cfg.mps_bytes` from the agent config — never hardcode a size.
+  - If the transfer exceeds MPS, the sequence must split it into multiple TLPs.
+
+  ### Maximum Read Request Size (MRRS)
+  - Memory Read Request length must not exceed MRRS.
+  - MRRS is also negotiated and available as `cfg.mrrs_bytes`.
+
+  ### Completion Rules
+  - Every Memory Read Request must be completed by one or more Completion TLPs.
+  - Completions must carry the same Tag as the Request.
+  - Completion Status: SC (000), UR (001), CRS (010), CA (100). Others reserved.
+  - Byte Count in the completion must equal the remaining bytes not yet returned.
+  - Completions may be split (multiple CplD for one MRd) but must arrive in order.
+
+  ### Tag Management
+  - Tags uniquely identify outstanding read requests (0–255 for 8-bit tags).
+  - A tag must not be reused until its completion is received (or a timeout occurs).
+  - Never issue more outstanding reads than `cfg.max_read_tags`.
+
+  ### Address Routing
+  - Memory TLPs: 32-bit or 64-bit address depending on Fmt[0].
+  - Use 64-bit addressing for addresses above 4 GB.
+  - Config TLPs: Bus/Device/Function + Ext Register Number. Only issued by Root Complex.
+
+  ### Flow Control
+  - Credits must be available before issuing a TLP. Never violate flow control.
+  - Header credits and data credits are tracked separately per VC per TLP type.
+  - Do not model flow-control in sequences — the VIP handles credit management.
+
+  ### Coverage Bin Requirements
+  - TLP type bins: MRd32, MRd64, MWr32, MWr64, CplD, Cpl, CfgRd0, CfgWr0.
+  - Payload size bins: 1DW, MPS/4, MPS/2, MPS (must-hit).
+  - Completion status bins: SC, UR, CA (CRS only if supported).
+  - Tag exhaustion: at-least (max_read_tags - 1) concurrent outstanding reads.
+  - Split completion: one MRd answered by ≥ 2 CplD TLPs.
+
+coverage_taxonomy:
+  mandatory_bins:
+    - mrd32_single_dw            # 32-bit MRd, Length=1
+    - mrd64_max_mrrs             # 64-bit MRd, Length=MRRS/4
+    - mwr32_single_dw            # 32-bit MWr, Length=1
+    - mwr32_max_mps              # 32-bit MWr, Length=MPS/4
+    - mwr64_max_mps              # 64-bit MWr, Length=MPS/4
+    - cpld_sc                    # Completion with data, status=SC
+    - cpl_ur                     # Completion without data, status=UR (UR on read)
+    - split_completion           # Single MRd answered by ≥ 2 CplD
+    - tag_near_exhaustion        # max_read_tags - 1 outstanding simultaneously
+
+  optional_bins:
+    - cpl_ca                     # Completer Abort
+    - cfgrd0                     # Config Read type 0
+    - cfgwr0                     # Config Write type 0
+    - mwr_unaligned              # Write to non-DWORD-aligned address (if DUT supports)
+    - payload_1dw_last_be_zero   # Single-DWORD, Last DW BE = 4'b0000 (mandatory by spec)

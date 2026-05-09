@@ -47,7 +47,27 @@ source .venv/bin/activate
 # On Windows, use: .venv\Scripts\activate
 ```
 
-### 2. Development and Static Analysis
+### 2. Config Loading and Profiles
+The system uses a **Three-Layer Configuration Loader** (`project.yaml` -> team profile -> IP protocol rules) to dynamically inject context (Level 1: team parameters and IP protocol rules; Level 2: custom prompt patches and VIP catalog indexes) into the agentic system.
+
+- Local project settings: `.agent/project.yaml`
+- Profile Repository contains custom rules under `teams/` and `ip-types/` directories.
+
+### 3. Sub-agent Installation
+You can easily generate and install the canonical prompt templates for your sub-agents (enriched with your organizational profile and IP rules) into your project.
+
+```bash
+# Generate agent prompts and install symlinks to .claude/agents/ and .cursor/rules/
+uv run python -m dv_agentic.cli.install_agents
+
+# Alternatively, on macOS/Linux, run the shell wrapper script:
+./scripts/install-agents.sh
+```
+
+> [!NOTE]
+> On Windows, creating symbolic links requires **Administrator Privileges** or enabling **Developer Mode** in Windows Settings (otherwise a warning will be displayed, but the prompt files will still be successfully written to `.agent/subagents/`).
+
+### 4. Development and Static Analysis
 The project uses `ruff` and `mypy` to ensure Python code quality, and automatically intercepts formatting issues before commits via `pre-commit`.
 
 ```bash

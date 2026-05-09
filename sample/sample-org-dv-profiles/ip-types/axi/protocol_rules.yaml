@@ -1,7 +1,73 @@
-protocol:
-  name: "AXI4"
-  rules:
-    - "AWVALID must stay high until AWREADY is high"
-    - "WVALID must stay high until WREADY is high"
-  state_machine:
-    - "IDLE -> ADDR -> DATA -> RESP"
+# sample-org-dv-profiles/ip-types/axi/protocol_rules.yaml
+#
+# AXI4 / AXI4-Lite protocol rules for the dv-agentic-system.
+# Injected into {{IP_TYPE_RULES}} in agent prompts.
+# -------------------------------------------------------------------
+
+protocol: axi
+
+rules: |
+  ## AXI4 Protocol Rules
+
+  ### Burst Parameters
+  - AxLEN:  0–255 (1–256 beats). FIXED bursts are restricted to AxLEN = 0.
+  - AxSIZE: must not exceed the data bus width (e.g. 3'b011 = 8 bytes for 64-bit bus).
+  - AxBURST: FIXED (0), INCR (1), WRAP (2). RESERVED (3) is illegal.
+  - WRAP burst length must be 2, 4, 8, or 16 beats. Any other value is a protocol error.
+
+  ### Address Alignment
+  - INCR and WRAP: starting address must be aligned to AxSIZE.
+  - FIXED: no alignment requirement, but byte enables (WSTRB) must be consistent.
+
+  ### Write Strobe (WSTRB)
+  - Must be consistent with AxSIZE and the byte lane position within the beat.
+  - All-zero WSTRB on a data beat is a write with no effect (legal but unusual).
+  - Do not assert WSTRB bits for lanes outside the transfer size boundary.
+
+  ### Handshake Rules
+  - A channel is transferred when both VALID and READY are asserted on the same rising clock edge.
+  - VALID must not depend on READY (master cannot wait for slave before asserting VALID).
+  - READY may depend on VALID (slave is permitted to wait for VALID before asserting READY).
+  - Once VALID is asserted it must remain asserted until the handshake completes.
+
+  ### Response Codes
+  - OKAY (2'b00): normal successful transfer.
+  - EXOKAY (2'b01): exclusive access successful. Only legal in response to exclusive reads/writes.
+  - SLVERR (2'b10): slave error. Legal transfer but slave signals an error condition.
+  - DECERR (2'b11): decode error. Address is not mapped to any slave.
+
+  ### Ordering
+  - Write data (W channel) may arrive before or after the write address (AW channel).
+  - Read data (R channel) must be returned in address-issued order for the same ID.
+  - Different IDs are independent and may be reordered.
+
+  ### Outstanding Transactions
+  - The number of in-flight transactions per ID is implementation-defined.
+  - Use `cfg.max_outstanding` from `axi_agent_cfg` — never hardcode a limit.
+  - Back-pressure (de-asserting READY) is always legal on any channel at any time.
+
+  ### Coverage Bin Requirements
+  - Every legal (AxBURST × AxLEN × AxSIZE) combination relevant to the DUT must have a bin.
+  - Back-pressure bins: AWREADY deasserted ≥ 1 cycle, WREADY deasserted ≥ 1 cycle,
+    RREADY deasserted ≥ 1 cycle, BREADY deasserted ≥ 1 cycle.
+  - Response code bins: one per RRESP and BRESP value.
+  - Outstanding: at-least-N bins for N = 1, max_outstanding/2, max_outstanding.
+
+coverage_taxonomy:
+  mandatory_bins:
+    - single_beat_write          # AxLEN=0, INCR
+    - max_burst_write            # AxLEN=255, INCR
+    - wrap_burst_4               # AxBURST=WRAP, AxLEN=3
+    - fixed_burst                # AxBURST=FIXED, AxLEN=0
+    - write_back_pressure_wready # WREADY deasserted mid-burst
+    - write_back_pressure_bready # BREADY deasserted after last beat
+    - read_back_pressure_rready  # RREADY deasserted mid-burst
+    - slverr_response            # BRESP or RRESP = SLVERR
+    - decerr_response            # BRESP or RRESP = DECERR
+    - max_outstanding            # N in-flight transactions simultaneously
+
+  optional_bins:
+    - narrow_transfer            # AxSIZE < bus width
+    - unaligned_address          # only legal for FIXED bursts
+    - exclusive_access           # AxLOCK=1 (if supported by DUT)
+    - interleaved_ids            # alternating writes with different AWIDs

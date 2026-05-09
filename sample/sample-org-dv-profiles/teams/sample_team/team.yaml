@@ -1,8 +1,51 @@
-team:
-  name: "sample_team"
-  simulator: "questa"
-  license_server: "1234@license.internal"
-  coding_rules:
-    - "Use UVM 1.2"
-    - "Indent with 2 spaces"
-    - "Use camelCase for variables"
+# sample-org-dv-profiles/teams/sample_team/team.yaml
+#
+# Sample team profile for the dv-agentic-system getting-started guide.
+# This team uses Xcelium + IMC for internal verification.
+# Copy and adapt this file for your own team.
+# -------------------------------------------------------------------
+
+simulator:
+  # Override the xrun binary path. null = use whatever is on PATH.
+  binary_path: null
+
+  # These flags are appended to every xrun -compile invocation.
+  extra_compile_flags: "-v200 -licqueue"
+
+  # These flags are appended to every xrun -run invocation.
+  extra_run_flags: "+UVM_VERBOSITY=UVM_MEDIUM +ntc_seed_mode=random"
+
+  # Collect functional coverage on every simulation run.
+  collect_coverage: true
+
+  # Per-job coverage DB root. Each run writes to {cov_work_dir}/{test}_{seed}/.
+  cov_work_dir: cov_work
+
+# Job scheduler — set backend: null to run as direct subprocesses (default).
+# Uncomment the LSF block below for cluster environments.
+scheduler:
+  backend: null     # null | lsf | sge
+  queue: null
+  resource_flags: null
+  default_wall_time_sec: 3600
+  poll_interval_sec: 30
+
+# LSF example (uncomment and fill in for LSF clusters):
+# scheduler:
+#   backend: lsf
+#   queue: normal
+#   resource_flags: "-R 'rusage[mem=4096]' -R 'select[rhe8]'"
+#   default_wall_time_sec: 7200
+#   poll_interval_sec: 30
+
+# Version control — agents create and commit on agent/{task_id} branches.
+vcs:
+  backend: git
+  base_branch: main
+  remote: origin
+  # null = use the global git user.name / user.email config.
+  author_name: null
+  author_email: null
+
+# LLM backend for this team. null = defer to DV_LLM_BACKEND env var.
+llm_backend: null   # anthropic | local | null
