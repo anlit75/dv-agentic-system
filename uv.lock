@@ -313,10 +313,14 @@ name = "dv-agentic-system"
 version = "0.5.1"
 source = { editable = "." }
 dependencies = [
-    { name = "cocotb" },
     { name = "pydantic" },
-    { name = "pyuvm" },
     { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+cocotb = [
+    { name = "cocotb" },
+    { name = "pyuvm" },
 ]
 
 [package.dev-dependencies]
@@ -334,11 +338,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cocotb", specifier = ">=1.8.0" },
+    { name = "cocotb", marker = "extra == 'cocotb'", specifier = ">=1.8.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pyuvm", specifier = ">=0.0.10" },
+    { name = "pyuvm", marker = "extra == 'cocotb'", specifier = ">=0.0.10" },
     { name = "pyyaml", specifier = ">=6.0.0" },
 ]
+provides-extras = ["cocotb"]
 
 [package.metadata.requires-dev]
 dev = [
