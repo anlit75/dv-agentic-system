@@ -1,7 +1,7 @@
 """Simulation execution agent.
 
 Manages the full lifecycle of a simulation task:
-  1. Create ``agent/{task_id}`` git branch.
+  1. Create ``ai-task/{task_id}`` git branch.
   2. Compile (fail-fast — never submit a broken build).
   3. Run the simulation in a loop, respecting the budget in ``AgentConfig``.
   4. Commit the final state and report results.
@@ -98,7 +98,7 @@ class SimControllerAgent(BaseAgent):
             raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
 
         safe_id = re.sub(r"[^a-zA-Z0-9_-]", "_", task.task_id)
-        branch = f"agent/{safe_id}"
+        branch = f"ai-task/{safe_id}"
 
         await asyncio.to_thread(self._git_checkout_new_branch, branch)
 

@@ -31,7 +31,7 @@
 | `src/dv_agentic/tools/adapters/` (Lazy loading) | ✅ | cocotb lazy loading implemented for all adapters |
 | `src/dv_agentic/prompts/loader.py` — `PromptLoader` | ✅ | Level 0-2 injection, type-safe context mapping |
 | `src/dv_agentic/prompts/context.py` — Context Schemas | ✅ | `ProjectContext`, `SimulatorConfig`, `VCSConfig` dataclasses |
-| `src/dv_agentic/prompts/*.md` — Standalone templates | ✅ | `code_generator`, `log_analyzer` follow standalone rules |
+| `src/dv_agentic/prompts/*.tmpl.md` — Standalone templates | ✅ | `code_generator`, `log_analyzer` follow standalone rules |
 | `src/dv_agentic/agents/base.py` — `BaseAgent` / `AgentConfig` ABC | ✅ | `Literal["internal", "external"]` environment alignment |
 | pre-commit / ruff / mypy static analysis and hooks | ✅ | 0 errors, 0 type issues, bound to git hooks |
 | Sphinx documentation compilation and autodiscovery | ✅ | Complete `docs/` build scripts and full autodiscovery of the `cli/` subpackage |
@@ -88,7 +88,7 @@
 | `src/dv_agentic/agents/sim_controller.py` | ✅ | Call adapters, branch management, feedback loop |
 | `src/dv_agentic/agents/log_analyzer.py` | ✅ | Parse sim logs, classify errors, regex-based parsing |
 | `src/dv_agentic/agents/coverage_analyst.py` | ✅ | Analyze coverage DB, suggest test scenarios based on stats |
-| Base prompt templates (`prompts/*.md`) | ✅ | Minimal prompts for non-LLM logic if needed |
+| Base prompt templates (`prompts/*.tmpl.md`) | ✅ | Minimal prompts for non-LLM logic if needed |
 
 ## Phase 3b — LLM-Powered Agent Implementation ✅ (Completed)
 
@@ -96,11 +96,11 @@
 
 | Agent | Status | Description |
 |-------|------|------|
-| `src/dv_agentic/agents/spec_analyst.py` | ✅ | Parse spec docs, generate `vplan.yaml` + `prompts/spec_analyst.md` |
-| `src/dv_agentic/agents/bug_classifier.py` | ✅ | Classify DUT vs. TB bugs + `prompts/bug_classifier.md` |
-| `src/dv_agentic/agents/orchestrator.py` | ✅ | Task routing, handoff coordination + `prompts/orchestrator.md` |
-| `src/dv_agentic/agents/reporter.py` | ✅ | Aggregate session results + `prompts/reporter.md` |
-| `src/dv_agentic/agents/code_generator.py` | ✅ | Generate / modify code + `prompts/code_generator.md` |
+| `src/dv_agentic/agents/spec_analyst.py` | ✅ | Parse spec docs, generate `vplan.yaml` + `prompts/spec_analyst.tmpl.md` |
+| `src/dv_agentic/agents/bug_classifier.py` | ✅ | Classify DUT vs. TB bugs + `prompts/bug_classifier.tmpl.md` |
+| `src/dv_agentic/agents/orchestrator.py` | ✅ | Task routing, handoff coordination + `prompts/orchestrator.tmpl.md` |
+| `src/dv_agentic/agents/reporter.py` | ✅ | Aggregate session results + `prompts/reporter.tmpl.md` |
+| `src/dv_agentic/agents/code_generator.py` | ✅ | Generate / modify code + `prompts/code_generator.tmpl.md` |
 
 ## Phase 4 — Profile and Project Configuration System ✅ (Completed)
 
@@ -123,7 +123,7 @@
 |------|------|------|
 | `memory.db` SQLite schema design | 📋 | Session state, known bugs, task trace |
 | `tasks/{task_id}.yaml` writing logic | 📋 | Records for each iteration |
-| `git checkout -b agent/{task_id}` automation | 📋 | Implemented in `sim_controller` / `code_generator` |
+| `git checkout -b ai-task/{task_id}` automation | 📋 | Implemented in `sim_controller` / `code_generator` |
 | Commit message format guardrails | 📋 | `[agent] {reason} · task:{task_id}` |
 | Safe exit flow when budget is depleted | 📋 | Ensure clean branch, leave a task trace |
 

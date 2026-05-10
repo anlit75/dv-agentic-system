@@ -11,7 +11,7 @@ Examples:
 import argparse
 import asyncio
 
-from ._helpers import die, read_input
+from ._helpers import exit_with_error, read_input
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -41,7 +41,7 @@ def main() -> None:
     try:
         content = read_input(args.input_file)
     except OSError as exc:
-        die(str(exc))
+        exit_with_error(str(exc))
 
     from dv_agentic.agents.base import AgentConfig
     from dv_agentic.agents.log_analyzer import LogAnalyzerAgent

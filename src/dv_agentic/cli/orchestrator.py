@@ -7,7 +7,7 @@ Sub-agents are wired up automatically based on ``--simulator`` and
 When ``--project-config`` is provided, the three-layer configuration system
 is activated: team profile, IP-type rules, and adapter settings are all
 loaded from ``.agent/project.yaml`` and the profiles directory, and injected
-into every agent's system prompt via :class:`~dv_agentic.prompts.loader.PromptLoader`.
+into every agent's system prompt via :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`.
 
 Examples:
     .. code-block:: shell
@@ -30,7 +30,7 @@ import asyncio
 from typing import Any
 
 from ._factory import make_llm
-from ._helpers import die, read_input
+from ._helpers import exit_with_error, read_input
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -132,7 +132,7 @@ def _build_sub_agents(
         llm: The LLM client to share among sub-agents.
         project_ctx: Optional :class:`~dv_agentic.prompts.context.ProjectContext`
             loaded from ``project.yaml``.  When provided, injected into every
-            LLM-powered agent's :class:`~dv_agentic.prompts.loader.PromptLoader`.
+            LLM-powered agent's :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`.
         project_simulator: Optional :class:`~dv_agentic.tools.interface.SimulatorTool`
             loaded from ``project.yaml``.  Overrides ``--simulator`` flag.
         project_coverage: Optional :class:`~dv_agentic.tools.interface.CoverageTool`
@@ -143,7 +143,7 @@ def _build_sub_agents(
     """
     from dv_agentic.agents.base import AgentConfig
     from dv_agentic.agents.bug_classifier import BugClassifierAgent
-    from dv_agentic.agents.code_generator import CodeGeneratorAgent
+    from dv_agentic.agents.code_generator import DEFAULT_TB_ALLOWED_DIRS, CodeGeneratorAgent
     from dv_agentic.agents.coverage_analyst import CoverageAnalystAgent
     from dv_agentic.agents.log_analyzer import LogAnalyzerAgent
     from dv_agentic.agents.reporter import ReporterAgent
@@ -174,6 +174,7 @@ def _build_sub_agents(
             llm=llm,
             workspace_dir=".",
             project_config=project_ctx,
+            allowed_dirs=DEFAULT_TB_ALLOWED_DIRS,
         ),
         "bug_classifier": BugClassifierAgent(
             config=AgentConfig(name="bug_classifier", budget=b),
@@ -201,7 +202,7 @@ def main() -> None:
     try:
         task_input = read_input(args.input_file)
     except OSError as exc:
-        die(str(exc))
+        exit_with_error(str(exc))
 
     # --- Three-layer config ---
     project_ctx = None
@@ -216,7 +217,7 @@ def main() -> None:
                 profiles_dir=args.profiles_dir,
             )
         except (FileNotFoundError, ValueError) as exc:
-            die(f"Failed to load project config: {exc}")
+            exit_with_error(f"Failed to load project config: {exc}")
 
     try:
         from dv_agentic.agents.base import AgentConfig
@@ -240,7 +241,7 @@ def main() -> None:
         result = asyncio.run(agent.run(task_input))
         print(result)  # noqa: T201
     except Exception as exc:
-        die(str(exc))
+        exit_with_error(str(exc))
 
 
 if __name__ == "__main__":

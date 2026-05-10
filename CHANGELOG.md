@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-10
+
+### Added
+
+- `src/dv_agentic/cli/main.py`: Added a high-visibility orange terminal safety warning alerting developers whenever the `--no-tb-guard` safety bypass flag is active.
+
+### Changed
+
+- `src/dv_agentic/prompts/`: Standardized the base prompt templates to use the `.tmpl.md` suffix (e.g., `code_generator.tmpl.md`, `sim_controller.tmpl.md`) to clearly segregate template definitions from live subagent configuration instances.
+- `src/dv_agentic/config/config_loader.py` & `src/dv_agentic/prompts/prompt_loader.py`: Renamed `loader.py` files to resolve namespace collisions and import race conditions under strict python module scanning.
+- `tests/ts_wrappers.test.ts`: Renamed TypeScript wrapper check script from `test_ts_wrappers.test.ts` to follow post-suffix style conventions cleanly.
+- `src/dv_agentic/cli/_helpers.py`: Refactored standard shell termination helper function `die()` into modern, explicit `exit_with_error()`.
+- `src/dv_agentic/agents/sim_controller.py`: Retargeted automatic VCS task-branch generation to use the `ai-task/{task_id}` prefix instead of `agent/{task_id}` to separate agent execution lines in shared git records.
+- `docs/agentic-system-structure.md` & `ROADMAP.md`: Synchronized all documentation structures to reflect `.tmpl.md` file layout and the new `ai-task/` VCS workflow standard.
+
+## [0.4.0] - 2026-05-10
+
 ### Added
 
 - `src/dv_agentic/config/loader.py` & `__init__.py`: Completed the Three-Layer Configuration Loading system (Project -> Team Profile -> IP Protocol rules) supporting 4 levels of profiles directory resolution and robust fallback degradation.
@@ -138,7 +155,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/anlit75/dv-agentic-system/releases/tag/v0.1.0

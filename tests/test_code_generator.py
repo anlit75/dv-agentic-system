@@ -341,20 +341,20 @@ class TestTaskParsing:
 
 class TestPromptLoaderFallback:
     def test_uses_fallback_prompt_when_no_md(self, tmp_path: Path) -> None:
-        """Agent must NOT raise when code_generator.md is absent."""
+        """Agent must NOT raise when code_generator.tmpl.md is absent."""
         agent = _make_agent(responses=[_HIGH_RESPONSE], workspace_dir=str(tmp_path))
-        # prompts_dir defaults to package location which may not have .md in test env
+        # prompts_dir defaults to package location which may not have .tmpl.md in test env
         # Patch PromptLoader.load to raise FileNotFoundError
         with patch(
             "dv_agentic.agents.code_generator.PromptLoader.load",
-            side_effect=FileNotFoundError("no .md"),
+            side_effect=FileNotFoundError("no .tmpl.md"),
         ):
             result = asyncio.run(agent.run("Generate a sequence"))
         assert "pass" in result  # still completes using fallback prompt
 
     def test_uses_loader_when_md_present(self, tmp_path: Path) -> None:
-        """When a .md file exists, PromptLoader.load must be called."""
-        md = tmp_path / "code_generator.md"
+        """When a .tmpl.md file exists, PromptLoader.load must be called."""
+        md = tmp_path / "code_generator.tmpl.md"
         md.write_text("# Code Generator\nGenerate SV/UVM code.\n\n### Compile Confidence\n")
         agent = _make_agent(responses=[_HIGH_RESPONSE], workspace_dir=str(tmp_path))
         agent.prompts_dir = tmp_path

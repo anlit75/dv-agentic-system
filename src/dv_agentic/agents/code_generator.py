@@ -1,19 +1,25 @@
-"""SV/UVM code generation agent.
+"""SV/UVM testbench code generation agent.
 
+Scope boundary
+--------------
+This agent operates exclusively on **testbench** files (sequences, scoreboards,
+coverage groups, monitors, drivers, agents, env).  RTL source files are
+strictly read-only — this agent must never create or modify them.
+
+The ``allowed_dirs`` constructor parameter enforces this at write time.  When
+set, any file path whose top-level directory is not in the whitelist raises a
+``ValueError`` before a byte is written to disk.  ``..`` traversal is always
+blocked regardless of ``allowed_dirs``.
 
 Workflow
 --------
 1. Load the enriched ``code_generator`` system prompt via ``PromptLoader``.
 2. Send the task description as the first user message.
 3. Parse the LLM response for ``### Compile Confidence``.
-4. **HIGH or MEDIUM** -> extract code, write files, return report.
-5. **LOW or UNKNOWN** -> append open questions as a follow-up user message,
+4. **HIGH or MEDIUM** → extract code, write files, return report.
+5. **LOW or UNKNOWN** → append open questions as a follow-up user message,
    repeat from step 3.
 6. Stop when confidence passes or ``AgentConfig.budget`` is exhausted.
-
-Git branch management is the caller's responsibility (Orchestrator or
-SimControllerAgent).  This agent only reads and writes files under
-``workspace_dir``.
 """
 
 import logging
@@ -22,11 +28,34 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..prompts.context import ProjectContext, SessionState
-from ..prompts.loader import PromptLoader
+from ..prompts.prompt_loader import PromptLoader
 from ..tools.llm.interface import BaseLLMClient
 from .base import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# TB directory whitelist (used by CLI; not enforced when allowed_dirs=None)
+# ---------------------------------------------------------------------------
+
+#: Default set of top-level directories considered testbench territory.
+#: Paths whose first component is not in this set are rejected when
+#: ``allowed_dirs`` is explicitly provided to :class:`CodeGeneratorAgent`.
+DEFAULT_TB_ALLOWED_DIRS: frozenset[str] = frozenset(
+    {
+        "tb",
+        "tests",
+        "env",
+        "sequences",
+        "agents",
+        "scoreboards",
+        "monitors",
+        "drivers",
+        "coverage",
+        "checkers",
+        "assertions",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -133,22 +162,22 @@ class CodeReport:
 
 
 class CodeGeneratorAgent(BaseAgent):
-    """Generates and modifies SV/UVM code through multi-turn LLM dialogue.
+    """Generates and modifies SV/UVM **testbench** code through multi-turn LLM dialogue.
 
-    Terminates when the LLM reports HIGH or MEDIUM compile confidence
-    (self-review pass) or when ``AgentConfig.budget`` iterations are
-    exhausted.
+    Terminates when the LLM reports HIGH or MEDIUM compile confidence or when
+    ``AgentConfig.budget`` iterations are exhausted.
 
     Args:
-        config: Agent configuration.  ``budget`` caps the LLM call count.
-        llm: Any :class:`BaseLLMClient` (``AnthropicAPIClient``,
-            ``LocalLLMClient``, or a test double).
-        project_config: Optional project context for PromptLoader enrichment
-            (team rules, VIP index, vplan summary …).
+        config: Agent configuration.
+        llm: Any :class:`BaseLLMClient`.
+        project_config: Optional project context for PromptLoader enrichment.
         session: Optional session state injected into the system prompt.
         prompts_dir: Directory containing ``code_generator.md``.
-            ``None`` → use the package-default location.
         workspace_dir: Root directory where generated files are written.
+        allowed_dirs: Whitelist of top-level directory names the agent may
+            write into.  ``None`` (default) disables the check — use
+            :data:`DEFAULT_TB_ALLOWED_DIRS` in production.  ``..`` traversal
+            is always blocked regardless of this setting.
     """
 
     #: Confidence levels that signal a passing self-review.
@@ -158,7 +187,6 @@ class CodeGeneratorAgent(BaseAgent):
     _CODE_BLOCK_RE = re.compile(r"```(?:\w+)?\n(.*?)```", re.DOTALL)
     _CONFIDENCE_RE = re.compile(r"\b(HIGH|MEDIUM|LOW)\b", re.IGNORECASE)
     _FILE_PATH_RE = re.compile(r"`([^`]+\.[a-zA-Z]+)`")
-    # Matches: `// file: path/to/file.sv`  or  `// === path/to/file.sv ===`
     _FILE_MARKER_RE = re.compile(
         r"^(?://|#)\s*(?:file:|===)\s*(.+?)(?:\s*===)?\s*$",
         re.IGNORECASE | re.MULTILINE,
@@ -172,6 +200,7 @@ class CodeGeneratorAgent(BaseAgent):
         session: SessionState | None = None,
         prompts_dir: Path | str | None = None,
         workspace_dir: str = ".",
+        allowed_dirs: frozenset[str] | set[str] | None = None,
     ) -> None:
         super().__init__(config)
         self.llm = llm
@@ -179,6 +208,10 @@ class CodeGeneratorAgent(BaseAgent):
         self.session = session
         self.prompts_dir = Path(prompts_dir) if prompts_dir else None
         self.workspace_dir = Path(workspace_dir)
+        # Freeze for safety; None means "no restriction" (test / custom use)
+        self.allowed_dirs: frozenset[str] | None = (
+            frozenset(allowed_dirs) if allowed_dirs is not None else None
+        )
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -275,8 +308,9 @@ class CodeGeneratorAgent(BaseAgent):
         except (FileNotFoundError, RuntimeError) as exc:
             logger.warning("PromptLoader unavailable (%s); using minimal fallback prompt.", exc)
             return (
-                "You are a SystemVerilog / UVM code generation specialist. "
-                "Generate correct, simulation-ready SV/UVM code. "
+                "You are a SystemVerilog / UVM testbench code generation specialist. "
+                "Generate correct, simulation-ready SV/UVM testbench code. "
+                "Never modify RTL source files. "
                 "Always end your response with:\n"
                 "### Compile Confidence\n"
                 "HIGH | MEDIUM | LOW — brief justification."
@@ -376,6 +410,45 @@ class CodeGeneratorAgent(BaseAgent):
         return specs
 
     # ------------------------------------------------------------------
+    # Private — path validation  ← NEW
+    # ------------------------------------------------------------------
+
+    def _validate_path(self, spec_path: str) -> None:
+        """Validate that *spec_path* is safe to write.
+
+        Two rules, applied unconditionally:
+
+        1. **No traversal**: ``..`` anywhere in the path is rejected.
+        2. **Whitelist** (only when ``self.allowed_dirs`` is set): the
+           top-level directory component must be in the whitelist.  Flat
+           paths (no directory component) are always allowed.
+
+        Args:
+            spec_path: Relative path as returned by the LLM.
+
+        Raises:
+            ValueError: If the path fails either check.
+        """
+        p = Path(spec_path)
+
+        # Rule 1: block traversal regardless of whitelist
+        if ".." in p.parts:
+            raise ValueError(
+                f"Path traversal is not allowed: '{spec_path}'. "
+                "The LLM must not use '..' to escape the workspace."
+            )
+
+        # Rule 2: whitelist check (only when configured)
+        if self.allowed_dirs is not None and len(p.parts) > 1:
+            top = p.parts[0]
+            if top not in self.allowed_dirs:
+                raise ValueError(
+                    f"Path '{spec_path}' targets directory '{top}' which is outside "
+                    f"the allowed testbench directories: {sorted(self.allowed_dirs)}. "
+                    "RTL source files are read-only — this agent must not modify them."
+                )
+
+    # ------------------------------------------------------------------
     # Private — follow-up message + file writing
     # ------------------------------------------------------------------
 
@@ -398,7 +471,11 @@ class CodeGeneratorAgent(BaseAgent):
         return "\n".join(lines)
 
     def _write_files(self, file_specs: list[FileSpec], workspace_dir: str) -> list[str]:
-        """Write *file_specs* under *workspace_dir*; return written paths."""
+        """Write *file_specs* under *workspace_dir*; return written paths.
+
+        Every path is validated via :meth:`_validate_path` before any file
+        system operation takes place.
+        """
         if not workspace_dir:
             raise ValueError("workspace_dir must not be empty")
         if not isinstance(file_specs, list):
@@ -414,6 +491,8 @@ class CodeGeneratorAgent(BaseAgent):
                 raise ValueError("File spec must have a path")
             if spec.content is None:
                 raise ValueError(f"File spec {spec.path} must have content")
+
+            self._validate_path(spec.path)
 
             target = base / spec.path
             target.parent.mkdir(parents=True, exist_ok=True)

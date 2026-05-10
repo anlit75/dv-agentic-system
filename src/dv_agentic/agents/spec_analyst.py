@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..prompts.context import ProjectContext, SessionState
-from ..prompts.loader import PromptLoader
+from ..prompts.prompt_loader import PromptLoader
 from ..tools.llm.interface import BaseLLMClient
 from .base import AgentConfig, BaseAgent
 

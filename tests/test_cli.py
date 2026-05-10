@@ -72,10 +72,10 @@ def test_helpers_read_input_file(tmp_path: Any) -> None:
     assert _helpers.read_input(str(temp_file)) == "hello file"
 
 
-def test_helpers_die() -> None:
-    """Test die function raises SystemExit."""
+def test_helpers_exit_with_error() -> None:
+    """Test exit_with_error function raises SystemExit."""
     with pytest.raises(SystemExit) as exc_info, patch("sys.stderr.write"):
-        _helpers.die("fatal error")
+        _helpers.exit_with_error("fatal error")
     assert exc_info.value.code == 1
 
 

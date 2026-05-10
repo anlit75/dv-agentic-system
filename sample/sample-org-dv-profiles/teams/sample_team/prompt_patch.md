@@ -23,7 +23,7 @@ Coverage collected on every run. The adapter adds `-coverage all` automatically.
 
 ### Commit and Branch Rules
 
-All agent-generated code lives on `agent/{task_id}` branches.
+All agent-generated code lives on `ai-task/{task_id}` branches.
 Commit message format: `[agent] {reason} · task:{task_id} · iter:{n}`
 Never commit directly to `main`. Always wait for human PR review.
 

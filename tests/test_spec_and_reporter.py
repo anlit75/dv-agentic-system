@@ -55,7 +55,7 @@ Session completed successfully. Coverage increased from 73% to 91%.
 None.
 
 ## Recommended Next Steps
-Merge agent/cov_fix_001 branch after review.
+Merge ai-task/cov_fix_001 branch after review.
 """
 
 
