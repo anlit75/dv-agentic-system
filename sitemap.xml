@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/agentic-system-structure/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/agentic-system/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/prompt-system/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/api/agents/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/api/cli/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+    <url>
+         <loc>https://anlit75.github.io/dv-agentic-system/api/tools/</loc>
+         <lastmod>2026-05-10</lastmod>
+    </url>
+</urlset>
