@@ -431,11 +431,15 @@ class CodeGeneratorAgent(BaseAgent):
         """
         p = Path(spec_path)
 
+        # Check for Windows drive specifier (e.g. C:) even on non-Windows/Linux hosts
+        has_win_drive = len(spec_path) >= 2 and spec_path[1] == ":" and spec_path[0].isalpha()
+
         # Rule 1: block traversal and absolute paths regardless of whitelist
         if (
             p.is_absolute()
             or spec_path.startswith("/")
             or spec_path.startswith("\\")
+            or has_win_drive
             or ".." in p.parts
         ):
             raise ValueError(
