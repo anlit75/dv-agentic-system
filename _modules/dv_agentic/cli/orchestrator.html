@@ -78,7 +78,7 @@
 <span class="sd">When ``--project-config`` is provided, the three-layer configuration system</span>
 <span class="sd">is activated: team profile, IP-type rules, and adapter settings are all</span>
 <span class="sd">loaded from ``.agent/project.yaml`` and the profiles directory, and injected</span>
-<span class="sd">into every agent&#39;s system prompt via :class:`~dv_agentic.prompts.loader.PromptLoader`.</span>
+<span class="sd">into every agent&#39;s system prompt via :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`.</span>
 
 <span class="sd">Examples:</span>
 <span class="sd">    .. code-block:: shell</span>
@@ -101,7 +101,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_llm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">die</span><span class="p">,</span> <span class="n">read_input</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">exit_with_error</span><span class="p">,</span> <span class="n">read_input</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_parser</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
@@ -203,7 +203,7 @@
 <span class="sd">        llm: The LLM client to share among sub-agents.</span>
 <span class="sd">        project_ctx: Optional :class:`~dv_agentic.prompts.context.ProjectContext`</span>
 <span class="sd">            loaded from ``project.yaml``.  When provided, injected into every</span>
-<span class="sd">            LLM-powered agent&#39;s :class:`~dv_agentic.prompts.loader.PromptLoader`.</span>
+<span class="sd">            LLM-powered agent&#39;s :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`.</span>
 <span class="sd">        project_simulator: Optional :class:`~dv_agentic.tools.interface.SimulatorTool`</span>
 <span class="sd">            loaded from ``project.yaml``.  Overrides ``--simulator`` flag.</span>
 <span class="sd">        project_coverage: Optional :class:`~dv_agentic.tools.interface.CoverageTool`</span>
@@ -214,7 +214,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.bug_classifier</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugClassifierAgent</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.code_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeGeneratorAgent</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.code_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_TB_ALLOWED_DIRS</span><span class="p">,</span> <span class="n">CodeGeneratorAgent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.coverage_analyst</span><span class="w"> </span><span class="kn">import</span> <span class="n">CoverageAnalystAgent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.log_analyzer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogAnalyzerAgent</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.reporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReporterAgent</span>
@@ -245,6 +245,7 @@
             <span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span>
             <span class="n">workspace_dir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
             <span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">,</span>
+            <span class="n">allowed_dirs</span><span class="o">=</span><span class="n">DEFAULT_TB_ALLOWED_DIRS</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="s2">&quot;bug_classifier&quot;</span><span class="p">:</span> <span class="n">BugClassifierAgent</span><span class="p">(</span>
             <span class="n">config</span><span class="o">=</span><span class="n">AgentConfig</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bug_classifier&quot;</span><span class="p">,</span> <span class="n">budget</span><span class="o">=</span><span class="n">b</span><span class="p">),</span>
@@ -274,7 +275,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">task_input</span> <span class="o">=</span> <span class="n">read_input</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input_file</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="n">die</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
 
     <span class="c1"># --- Three-layer config ---</span>
     <span class="n">project_ctx</span> <span class="o">=</span> <span class="kc">None</span>
@@ -289,7 +290,7 @@
                 <span class="n">profiles_dir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="n">die</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load project config: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">exit_with_error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load project config: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.agents.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span>
@@ -313,7 +314,7 @@
         <span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">task_input</span><span class="p">))</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>  <span class="c1"># noqa: T201</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="n">die</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span></div>
+        <span class="n">exit_with_error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span></div>
 
 
 

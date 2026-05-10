@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dv_agentic.config.loader &mdash; dv-agentic-system 0.2.0 documentation</title>
+  <title>dv_agentic.config.config_loader &mdash; dv-agentic-system 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
@@ -59,7 +59,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">dv_agentic.config.loader</li>
+      <li class="breadcrumb-item active">dv_agentic.config.config_loader</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -68,12 +68,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for dv_agentic.config.loader</h1><div class="highlight"><pre>
+  <h1>Source code for dv_agentic.config.config_loader</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Project configuration loader.</span>
 
 <span class="sd">Reads ``.agent/project.yaml`` and the referenced team/IP-type profiles,</span>
 <span class="sd">assembles a :class:`~dv_agentic.prompts.context.ProjectContext` for</span>
-<span class="sd">:class:`~dv_agentic.prompts.loader.PromptLoader` injection, and instantiates</span>
+<span class="sd">:class:`~dv_agentic.prompts.prompt_loader.PromptLoader` injection, and instantiates</span>
 <span class="sd">the correct :class:`~dv_agentic.tools.interface.SimulatorTool` and</span>
 <span class="sd">:class:`~dv_agentic.tools.interface.CoverageTool` adapters.</span>
 
@@ -118,7 +118,7 @@
 
 
 <div class="viewcode-block" id="ProjectConfig">
-<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig">[docs]</a>
+<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProjectConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Typed, validated representation of a parsed ``.agent/project.yaml``.</span>
@@ -149,7 +149,7 @@
 
 
 <div class="viewcode-block" id="ProjectLoader">
-<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.loader.ProjectLoader">[docs]</a>
+<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.config_loader.ProjectLoader">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProjectLoader</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Loads project configuration from ``project.yaml`` and profile directories.</span>
 
@@ -169,7 +169,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="ProjectLoader.load">
-<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.loader.ProjectLoader.load">[docs]</a>
+<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.config_loader.ProjectLoader.load">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">project_yaml_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s2">&quot;.agent/project.yaml&quot;</span><span class="p">,</span>
@@ -410,7 +410,7 @@
 
 
 <div class="viewcode-block" id="load_project">
-<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.loader.load_project">[docs]</a>
+<a class="viewcode-back" href="../../../dv_agentic.config.html#dv_agentic.config.config_loader.load_project">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_project</span><span class="p">(</span>
     <span class="n">project_yaml</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s2">&quot;.agent/project.yaml&quot;</span><span class="p">,</span>
     <span class="n">profiles_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

@@ -141,9 +141,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="dv_agentic.agents.html#module-dv_agentic.agents.code_generator">dv_agentic.agents.code_generator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#scope-boundary">Scope boundary</a></li>
 <li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#id3">Workflow</a></li>
 <li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent.PASS_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.PASS_CONFIDENCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent.allowed_dirs"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.allowed_dirs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent.run"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.run()</span></code></a></li>
 </ul>
 </li>
@@ -172,6 +174,7 @@
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#id12"><code class="docutils literal notranslate"><span class="pre">CodeTask.task_id</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.DEFAULT_TB_ALLOWED_DIRS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_TB_ALLOWED_DIRS</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec"><code class="docutils literal notranslate"><span class="pre">FileSpec</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec.path"><code class="docutils literal notranslate"><span class="pre">FileSpec.path</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.code_generator.FileSpec.content"><code class="docutils literal notranslate"><span class="pre">FileSpec.content</span></code></a></li>
@@ -325,6 +328,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent.PASS_CONFIDENCE"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.PASS_CONFIDENCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent.allowed_dirs"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.allowed_dirs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.agents.html#dv_agentic.agents.CodeGeneratorAgent.run"><code class="docutils literal notranslate"><span class="pre">CodeGeneratorAgent.run()</span></code></a></li>
 </ul>
 </li>
@@ -498,17 +502,17 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="dv_agentic.config.html">dv_agentic.config package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="dv_agentic.config.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="dv_agentic.config.html#module-dv_agentic.config.loader">dv_agentic.config.loader module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.config.html#module-dv_agentic.config.config_loader">dv_agentic.config.config_loader module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#three-layer-loading">Three-layer loading</a></li>
 <li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#profiles-dir-resolution-order"><code class="docutils literal notranslate"><span class="pre">profiles_dir</span></code> resolution order</a></li>
-<li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig"><code class="docutils literal notranslate"><span class="pre">ProjectConfig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.name"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.environment"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.environment</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.team"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.team</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.ip_types"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.ip_types</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.simulator"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.simulator</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.coverage"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.coverage</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectConfig.profiles_dir"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.profiles_dir</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig"><code class="docutils literal notranslate"><span class="pre">ProjectConfig</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.name"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.environment"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.environment</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.team"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.team</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.ip_types"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.ip_types</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.simulator"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.simulator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.coverage"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.coverage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectConfig.profiles_dir"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.profiles_dir</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#id0"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.coverage</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#id1"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.environment</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#id2"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.ip_types</span></code></a></li>
@@ -518,11 +522,11 @@
 <li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#id6"><code class="docutils literal notranslate"><span class="pre">ProjectConfig.team</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectLoader"><code class="docutils literal notranslate"><span class="pre">ProjectLoader</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.ProjectLoader.load"><code class="docutils literal notranslate"><span class="pre">ProjectLoader.load()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectLoader"><code class="docutils literal notranslate"><span class="pre">ProjectLoader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.ProjectLoader.load"><code class="docutils literal notranslate"><span class="pre">ProjectLoader.load()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.loader.load_project"><code class="docutils literal notranslate"><span class="pre">load_project()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.config.html#dv_agentic.config.config_loader.load_project"><code class="docutils literal notranslate"><span class="pre">load_project()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="dv_agentic.config.html#module-dv_agentic.config">Module contents</a><ul>
@@ -600,9 +604,9 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="dv_agentic.prompts.html#module-dv_agentic.prompts.loader">dv_agentic.prompts.loader module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader"><code class="docutils literal notranslate"><span class="pre">PromptLoader</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader.load"><code class="docutils literal notranslate"><span class="pre">PromptLoader.load()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="dv_agentic.prompts.html#module-dv_agentic.prompts.prompt_loader">dv_agentic.prompts.prompt_loader module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.prompt_loader.PromptLoader"><code class="docutils literal notranslate"><span class="pre">PromptLoader</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.prompt_loader.PromptLoader.load"><code class="docutils literal notranslate"><span class="pre">PromptLoader.load()</span></code></a></li>
 </ul>
 </li>
 </ul>

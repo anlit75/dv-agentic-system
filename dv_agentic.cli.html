@@ -148,7 +148,7 @@ templates and creates symlinks for Claude Code, Cursor, and OpenCode.</p>
 <ol class="arabic simple">
 <li><p>Optionally loads <code class="docutils literal notranslate"><span class="pre">project.yaml</span></code> + org profiles to enrich prompts
 (Level 1 injection: team rules + IP-type rules; session state omitted).</p></li>
-<li><p>For each of the agents, calls <a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader" title="dv_agentic.prompts.loader.PromptLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptLoader</span></code></a>
+<li><p>For each of the agents, calls <a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.prompt_loader.PromptLoader" title="dv_agentic.prompts.prompt_loader.PromptLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptLoader</span></code></a>
 to produce an enriched prompt body (placeholders filled, unmatched removed).</p></li>
 <li><p>Strips the OpenCode-style YAML front matter from the source template.</p></li>
 <li><p>Prepends Claude Code / Cursor compatible YAML front matter.</p></li>
@@ -224,7 +224,7 @@ cat<span class="w"> </span>sim.log<span class="w"> </span><span class="p">|</spa
 <p>When <code class="docutils literal notranslate"><span class="pre">--project-config</span></code> is provided, the three-layer configuration system
 is activated: team profile, IP-type rules, and adapter settings are all
 loaded from <code class="docutils literal notranslate"><span class="pre">.agent/project.yaml</span></code> and the profiles directory, and injected
-into every agent’s system prompt via <a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader" title="dv_agentic.prompts.loader.PromptLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptLoader</span></code></a>.</p>
+into every agent’s system prompt via <a class="reference internal" href="dv_agentic.prompts.html#dv_agentic.prompts.prompt_loader.PromptLoader" title="dv_agentic.prompts.prompt_loader.PromptLoader"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromptLoader</span></code></a>.</p>
 <p class="rubric">Examples</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Minimal: no profile injection</span>
 python3<span class="w"> </span>-m<span class="w"> </span>dv_agentic.cli.orchestrator<span class="w"> </span><span class="se">\</span>

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dv_agentic.prompts.loader &mdash; dv-agentic-system 0.2.0 documentation</title>
+  <title>dv_agentic.prompts.prompt_loader &mdash; dv-agentic-system 0.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
@@ -59,7 +59,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">dv_agentic.prompts.loader</li>
+      <li class="breadcrumb-item active">dv_agentic.prompts.prompt_loader</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -68,7 +68,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for dv_agentic.prompts.loader</h1><div class="highlight"><pre>
+  <h1>Source code for dv_agentic.prompts.prompt_loader</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
@@ -76,7 +76,7 @@
 
 
 <div class="viewcode-block" id="PromptLoader">
-<a class="viewcode-back" href="../../../dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader">[docs]</a>
+<a class="viewcode-back" href="../../../dv_agentic.prompts.html#dv_agentic.prompts.prompt_loader.PromptLoader">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PromptLoader</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Loads and enriches agent prompt templates.</span>
 
@@ -112,7 +112,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
 
 <div class="viewcode-block" id="PromptLoader.load">
-<a class="viewcode-back" href="../../../dv_agentic.prompts.html#dv_agentic.prompts.loader.PromptLoader.load">[docs]</a>
+<a class="viewcode-back" href="../../../dv_agentic.prompts.html#dv_agentic.prompts.prompt_loader.PromptLoader.load">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the final system prompt string for the given agent.</span>
 
@@ -122,7 +122,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The enriched system prompt string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">prompt_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">agent_name</span><span class="si">}</span><span class="s2">.md&quot;</span>
+        <span class="n">prompt_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">agent_name</span><span class="si">}</span><span class="s2">.tmpl.md&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">prompt_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Prompt template for &#39;</span><span class="si">{</span><span class="n">agent_name</span><span class="si">}</span><span class="s2">&#39; not found at </span><span class="si">{</span><span class="n">prompt_path</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>

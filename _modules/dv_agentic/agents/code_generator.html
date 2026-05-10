@@ -69,22 +69,28 @@
            <div itemprop="articleBody">
              
   <h1>Source code for dv_agentic.agents.code_generator</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;SV/UVM code generation agent.</span>
+<span></span><span class="sd">&quot;&quot;&quot;SV/UVM testbench code generation agent.</span>
 
+<span class="sd">Scope boundary</span>
+<span class="sd">--------------</span>
+<span class="sd">This agent operates exclusively on **testbench** files (sequences, scoreboards,</span>
+<span class="sd">coverage groups, monitors, drivers, agents, env).  RTL source files are</span>
+<span class="sd">strictly read-only — this agent must never create or modify them.</span>
+
+<span class="sd">The ``allowed_dirs`` constructor parameter enforces this at write time.  When</span>
+<span class="sd">set, any file path whose top-level directory is not in the whitelist raises a</span>
+<span class="sd">``ValueError`` before a byte is written to disk.  ``..`` traversal is always</span>
+<span class="sd">blocked regardless of ``allowed_dirs``.</span>
 
 <span class="sd">Workflow</span>
 <span class="sd">--------</span>
 <span class="sd">1. Load the enriched ``code_generator`` system prompt via ``PromptLoader``.</span>
 <span class="sd">2. Send the task description as the first user message.</span>
 <span class="sd">3. Parse the LLM response for ``### Compile Confidence``.</span>
-<span class="sd">4. **HIGH or MEDIUM** -&gt; extract code, write files, return report.</span>
-<span class="sd">5. **LOW or UNKNOWN** -&gt; append open questions as a follow-up user message,</span>
+<span class="sd">4. **HIGH or MEDIUM** → extract code, write files, return report.</span>
+<span class="sd">5. **LOW or UNKNOWN** → append open questions as a follow-up user message,</span>
 <span class="sd">   repeat from step 3.</span>
 <span class="sd">6. Stop when confidence passes or ``AgentConfig.budget`` is exhausted.</span>
-
-<span class="sd">Git branch management is the caller&#39;s responsibility (Orchestrator or</span>
-<span class="sd">SimControllerAgent).  This agent only reads and writes files under</span>
-<span class="sd">``workspace_dir``.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -93,11 +99,34 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectContext</span><span class="p">,</span> <span class="n">SessionState</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..prompts.prompt_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptLoader</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..tools.llm.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseLLMClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentConfig</span><span class="p">,</span> <span class="n">BaseAgent</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># TB directory whitelist (used by CLI; not enforced when allowed_dirs=None)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1">#: Default set of top-level directories considered testbench territory.</span>
+<span class="c1">#: Paths whose first component is not in this set are rejected when</span>
+<span class="c1">#: ``allowed_dirs`` is explicitly provided to :class:`CodeGeneratorAgent`.</span>
+<span class="n">DEFAULT_TB_ALLOWED_DIRS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;tb&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tests&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;env&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;sequences&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;agents&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;scoreboards&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;monitors&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;drivers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;coverage&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;checkers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;assertions&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -221,22 +250,22 @@
 <div class="viewcode-block" id="CodeGeneratorAgent">
 <a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.code_generator.CodeGeneratorAgent">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CodeGeneratorAgent</span><span class="p">(</span><span class="n">BaseAgent</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates and modifies SV/UVM code through multi-turn LLM dialogue.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates and modifies SV/UVM **testbench** code through multi-turn LLM dialogue.</span>
 
-<span class="sd">    Terminates when the LLM reports HIGH or MEDIUM compile confidence</span>
-<span class="sd">    (self-review pass) or when ``AgentConfig.budget`` iterations are</span>
-<span class="sd">    exhausted.</span>
+<span class="sd">    Terminates when the LLM reports HIGH or MEDIUM compile confidence or when</span>
+<span class="sd">    ``AgentConfig.budget`` iterations are exhausted.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        config: Agent configuration.  ``budget`` caps the LLM call count.</span>
-<span class="sd">        llm: Any :class:`BaseLLMClient` (``AnthropicAPIClient``,</span>
-<span class="sd">            ``LocalLLMClient``, or a test double).</span>
-<span class="sd">        project_config: Optional project context for PromptLoader enrichment</span>
-<span class="sd">            (team rules, VIP index, vplan summary …).</span>
+<span class="sd">        config: Agent configuration.</span>
+<span class="sd">        llm: Any :class:`BaseLLMClient`.</span>
+<span class="sd">        project_config: Optional project context for PromptLoader enrichment.</span>
 <span class="sd">        session: Optional session state injected into the system prompt.</span>
 <span class="sd">        prompts_dir: Directory containing ``code_generator.md``.</span>
-<span class="sd">            ``None`` → use the package-default location.</span>
 <span class="sd">        workspace_dir: Root directory where generated files are written.</span>
+<span class="sd">        allowed_dirs: Whitelist of top-level directory names the agent may</span>
+<span class="sd">            write into.  ``None`` (default) disables the check — use</span>
+<span class="sd">            :data:`DEFAULT_TB_ALLOWED_DIRS` in production.  ``..`` traversal</span>
+<span class="sd">            is always blocked regardless of this setting.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1">#: Confidence levels that signal a passing self-review.</span>
@@ -246,7 +275,6 @@
     <span class="n">_CODE_BLOCK_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;```(?:\w+)?\n(.*?)```&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
     <span class="n">_CONFIDENCE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\b(HIGH|MEDIUM|LOW)\b&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
     <span class="n">_FILE_PATH_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;`([^`]+\.[a-zA-Z]+)`&quot;</span><span class="p">)</span>
-    <span class="c1"># Matches: `// file: path/to/file.sv`  or  `// === path/to/file.sv ===`</span>
     <span class="n">_FILE_MARKER_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
         <span class="sa">r</span><span class="s2">&quot;^(?://|#)\s*(?:file:|===)\s*(.+?)(?:\s*===)?\s*$&quot;</span><span class="p">,</span>
         <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">,</span>
@@ -260,6 +288,7 @@
         <span class="n">session</span><span class="p">:</span> <span class="n">SessionState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">prompts_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">workspace_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+        <span class="n">allowed_dirs</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">llm</span>
@@ -267,6 +296,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prompts_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">prompts_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">prompts_dir</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">workspace_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">workspace_dir</span><span class="p">)</span>
+        <span class="c1"># Freeze for safety; None means &quot;no restriction&quot; (test / custom use)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_dirs</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">frozenset</span><span class="p">(</span><span class="n">allowed_dirs</span><span class="p">)</span> <span class="k">if</span> <span class="n">allowed_dirs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># BaseAgent ABC</span>
@@ -366,8 +399,9 @@
         <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">RuntimeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;PromptLoader unavailable (</span><span class="si">%s</span><span class="s2">); using minimal fallback prompt.&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">(</span>
-                <span class="s2">&quot;You are a SystemVerilog / UVM code generation specialist. &quot;</span>
-                <span class="s2">&quot;Generate correct, simulation-ready SV/UVM code. &quot;</span>
+                <span class="s2">&quot;You are a SystemVerilog / UVM testbench code generation specialist. &quot;</span>
+                <span class="s2">&quot;Generate correct, simulation-ready SV/UVM testbench code. &quot;</span>
+                <span class="s2">&quot;Never modify RTL source files. &quot;</span>
                 <span class="s2">&quot;Always end your response with:</span><span class="se">\n</span><span class="s2">&quot;</span>
                 <span class="s2">&quot;### Compile Confidence</span><span class="se">\n</span><span class="s2">&quot;</span>
                 <span class="s2">&quot;HIGH | MEDIUM | LOW — brief justification.&quot;</span>
@@ -467,6 +501,55 @@
         <span class="k">return</span> <span class="n">specs</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Private — path validation  ← NEW</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that *spec_path* is safe to write.</span>
+
+<span class="sd">        Two rules, applied unconditionally:</span>
+
+<span class="sd">        1. **No traversal**: ``..`` anywhere in the path is rejected.</span>
+<span class="sd">        2. **Whitelist** (only when ``self.allowed_dirs`` is set): the</span>
+<span class="sd">           top-level directory component must be in the whitelist.  Flat</span>
+<span class="sd">           paths (no directory component) are always allowed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            spec_path: Relative path as returned by the LLM.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the path fails either check.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">spec_path</span><span class="p">)</span>
+
+        <span class="c1"># Check for Windows drive specifier (e.g. C:) even on non-Windows/Linux hosts</span>
+        <span class="n">has_win_drive</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec_path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">spec_path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;:&quot;</span> <span class="ow">and</span> <span class="n">spec_path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span>
+
+        <span class="c1"># Rule 1: block traversal and absolute paths regardless of whitelist</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span>
+            <span class="ow">or</span> <span class="n">spec_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">spec_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">has_win_drive</span>
+            <span class="ow">or</span> <span class="s2">&quot;..&quot;</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">parts</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Absolute paths and path traversal are not allowed: &#39;</span><span class="si">{</span><span class="n">spec_path</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+                <span class="s2">&quot;The LLM must use relative paths within the workspace and &quot;</span>
+                <span class="s2">&quot;not use &#39;..&#39; to escape it.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Rule 2: whitelist check (only when configured)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowed_dirs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">top</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">top</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowed_dirs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Path &#39;</span><span class="si">{</span><span class="n">spec_path</span><span class="si">}</span><span class="s2">&#39; targets directory &#39;</span><span class="si">{</span><span class="n">top</span><span class="si">}</span><span class="s2">&#39; which is outside &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;the allowed testbench directories: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allowed_dirs</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="s2">&quot;RTL source files are read-only — this agent must not modify them.&quot;</span>
+                <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Private — follow-up message + file writing</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
@@ -489,7 +572,11 @@
         <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_write_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FileSpec</span><span class="p">],</span> <span class="n">workspace_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write *file_specs* under *workspace_dir*; return written paths.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Write *file_specs* under *workspace_dir*; return written paths.</span>
+
+<span class="sd">        Every path is validated via :meth:`_validate_path` before any file</span>
+<span class="sd">        system operation takes place.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">workspace_dir</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;workspace_dir must not be empty&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_specs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -505,6 +592,8 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;File spec must have a path&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File spec </span><span class="si">{</span><span class="n">spec</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2"> must have content&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_path</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
 
             <span class="n">target</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="n">spec</span><span class="o">.</span><span class="n">path</span>
             <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

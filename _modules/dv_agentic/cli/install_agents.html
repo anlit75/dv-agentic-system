@@ -78,7 +78,7 @@
 <span class="sd">------------</span>
 <span class="sd">1. Optionally loads ``project.yaml`` + org profiles to enrich prompts</span>
 <span class="sd">   (Level 1 injection: team rules + IP-type rules; session state omitted).</span>
-<span class="sd">2. For each of the agents, calls :class:`~dv_agentic.prompts.loader.PromptLoader`</span>
+<span class="sd">2. For each of the agents, calls :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`</span>
 <span class="sd">   to produce an enriched prompt body (placeholders filled, unmatched removed).</span>
 <span class="sd">3. Strips the OpenCode-style YAML front matter from the source template.</span>
 <span class="sd">4. Prepends Claude Code / Cursor compatible YAML front matter.</span>
@@ -146,7 +146,7 @@
     <span class="s2">&quot;sim_controller&quot;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
             <span class="s2">&quot;Compile source files and run a simulation test inside a dedicated &quot;</span>
-            <span class="s2">&quot;git branch (agent/</span><span class="si">{task_id}</span><span class="s2">). Retries up to budget times on failure. &quot;</span>
+            <span class="s2">&quot;git branch (ai-task/</span><span class="si">{task_id}</span><span class="s2">). Retries up to budget times on failure. &quot;</span>
             <span class="s2">&quot;Use whenever you need to run a simulation and track results on a &quot;</span>
             <span class="s2">&quot;branch ready for PR review.&quot;</span>
         <span class="p">),</span>
@@ -283,7 +283,7 @@
             <span class="k">return</span> <span class="mi">1</span>
 
     <span class="c1"># 2. PromptLoader — uses package-default prompts directory</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.prompts.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptLoader</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dv_agentic.prompts.prompt_loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptLoader</span>
 
     <span class="n">loader</span> <span class="o">=</span> <span class="n">PromptLoader</span><span class="p">(</span><span class="n">project_config</span><span class="o">=</span><span class="n">project_ctx</span><span class="p">)</span>
 

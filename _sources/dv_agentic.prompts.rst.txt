@@ -12,10 +12,10 @@ dv\_agentic.prompts.context module
    :show-inheritance:
    :undoc-members:
 
-dv\_agentic.prompts.loader module
----------------------------------
+dv\_agentic.prompts.prompt\_loader module
+-----------------------------------------
 
-.. automodule:: dv_agentic.prompts.loader
+.. automodule:: dv_agentic.prompts.prompt_loader
    :members:
    :show-inheritance:
    :undoc-members:

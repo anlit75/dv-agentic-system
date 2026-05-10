@@ -4,10 +4,10 @@ dv\_agentic.config package
 Submodules
 ----------
 
-dv\_agentic.config.loader module
---------------------------------
+dv\_agentic.config.config\_loader module
+----------------------------------------
 
-.. automodule:: dv_agentic.config.loader
+.. automodule:: dv_agentic.config.config_loader
    :members:
    :show-inheritance:
    :undoc-members:
