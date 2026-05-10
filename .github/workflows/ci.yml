@@ -52,4 +52,4 @@ jobs:
 
       - name: Run TypeScript Wrapper Tests
         run: |
-          bun test tests/test_ts_wrappers.test.ts
+          bun test tests/ts_wrappers.test.ts
