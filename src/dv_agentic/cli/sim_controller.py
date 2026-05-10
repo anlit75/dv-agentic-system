@@ -13,7 +13,7 @@ Examples:
 import argparse
 import asyncio
 
-from ._helpers import die
+from ._helpers import exit_with_error
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -96,7 +96,7 @@ def main() -> None:
         result = asyncio.run(agent.run(task))
         print(result)  # noqa: T201
     except Exception as exc:
-        die(str(exc))
+        exit_with_error(str(exc))
 
 
 if __name__ == "__main__":

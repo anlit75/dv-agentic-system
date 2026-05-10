@@ -9,7 +9,7 @@ from dv_agentic.prompts.context import (
     SimulatorConfig,
     VCSConfig,
 )
-from dv_agentic.prompts.loader import PromptLoader
+from dv_agentic.prompts.prompt_loader import PromptLoader
 
 
 def test_prompt_loader_init_default() -> None:
@@ -42,7 +42,7 @@ def test_prompt_loader_load_not_found(tmp_path: Path) -> None:
 
 def test_prompt_loader_load_success(tmp_path: Path) -> None:
     """Test successful loading and basic enrichment."""
-    prompt_file = tmp_path / "test_agent.md"
+    prompt_file = tmp_path / "test_agent.tmpl.md"
     prompt_file.write_text("Hello {{NAME}}!", encoding="utf-8")
 
     loader = PromptLoader(prompts_dir=tmp_path)

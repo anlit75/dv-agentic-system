@@ -25,7 +25,7 @@ def read_input(input_file: str | None, input_text: str | None = None) -> str:
     return sys.stdin.read()
 
 
-def die(message: str) -> None:
+def exit_with_error(message: str) -> None:
     """Print message to stderr and exit with code 1.
 
     Args:

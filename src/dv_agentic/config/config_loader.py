@@ -2,7 +2,7 @@
 
 Reads ``.agent/project.yaml`` and the referenced team/IP-type profiles,
 assembles a :class:`~dv_agentic.prompts.context.ProjectContext` for
-:class:`~dv_agentic.prompts.loader.PromptLoader` injection, and instantiates
+:class:`~dv_agentic.prompts.prompt_loader.PromptLoader` injection, and instantiates
 the correct :class:`~dv_agentic.tools.interface.SimulatorTool` and
 :class:`~dv_agentic.tools.interface.CoverageTool` adapters.
 

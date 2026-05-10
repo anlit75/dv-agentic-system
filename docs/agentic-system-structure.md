@@ -44,15 +44,15 @@ dv-agentic-system/
 │       │       └── api.py                 # External API client (Claude / GPT)
 │       │
 │       ├── prompts/                       # Base prompt templates (plain text, no environment knowledge)
-│       │   ├── orchestrator.md
-│       │   ├── spec_analyst.md
-│       │   ├── code_generator.md
-│       │   ├── sim_controller.md
-│       │   ├── log_analyzer.md
-│       │   ├── wave_analyzer.md
-│       │   ├── coverage_analyst.md
-│       │   ├── bug_classifier.md
-│       │   └── reporter.md
+│       │   ├── orchestrator.tmpl.md
+│       │   ├── spec_analyst.tmpl.md
+│       │   ├── code_generator.tmpl.md
+│       │   ├── sim_controller.tmpl.md
+│       │   ├── log_analyzer.tmpl.md
+│       │   ├── wave_analyzer.tmpl.md
+│       │   ├── coverage_analyst.tmpl.md
+│       │   ├── bug_classifier.tmpl.md
+│       │   └── reporter.tmpl.md
 │       │
 │       └── profiles/
 │           └── _template/                 # Schema only, defines fields a profile should have
@@ -192,18 +192,18 @@ Structure of each `.md` (using code_generator.md as an example):
 ```markdown
 ---
 name: code_generator
-description: Generates and fixes SV / pyuvm code, commits on agent/task branch
+description: Generates and fixes SV / pyuvm code, commits on ai-task/task branch
 tools: [read_file, write_file, run_bash]
 ---
 
-{base prompt from prompts/code_generator.md}
+{base prompt from prompts/code_generator.tmpl.md}
 
 {team prompt_patch from composition.team}
 
 {ip_type protocol_rules from composition.ip_types}
 
 ## VCS Rules
-- All modifications are performed on the `agent/{task_id}` branch
+- All modifications are performed on the `ai-task/{task_id}` branch
 - Commit message format: `[agent] {reason} · task:{task_id}`
 - Direct pushes to main/trunk are prohibited
 ```
@@ -214,7 +214,7 @@ tools: [read_file, write_file, run_bash]
   Agent starts task
       │
       ▼
-  git checkout -b agent/{task_id}   (or svn branch)
+  git checkout -b ai-task/{task_id}   (or svn branch)
       │
   Agent modifies files under tb/, tests/
   Commits after each fix (including task_id, iteration number)

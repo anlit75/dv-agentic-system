@@ -12,7 +12,7 @@ import argparse
 import asyncio
 
 from ._factory import make_llm
-from ._helpers import die, read_input
+from ._helpers import exit_with_error, read_input
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -49,7 +49,7 @@ def main() -> None:
     try:
         session_results = read_input(args.input_file)
     except OSError as exc:
-        die(str(exc))
+        exit_with_error(str(exc))
 
     output_path = args.output_path
 
@@ -66,7 +66,7 @@ def main() -> None:
         result = asyncio.run(agent.run(session_results))
         print(result)  # noqa: T201
     except Exception as exc:
-        die(str(exc))
+        exit_with_error(str(exc))
 
 
 if __name__ == "__main__":

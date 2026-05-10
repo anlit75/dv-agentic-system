@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from dv_agentic.config.loader import ProjectLoader, load_project
+from dv_agentic.config.config_loader import ProjectLoader, load_project
 from dv_agentic.prompts.context import ProjectContext
 from dv_agentic.tools.adapters.imc import IMCAdapter
 from dv_agentic.tools.adapters.pyuvm import PyuvmCoverageAdapter

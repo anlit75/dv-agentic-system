@@ -7,6 +7,6 @@ Primary entry point::
     ctx, simulator, coverage = load_project(".agent/project.yaml")
 """
 
-from .loader import ProjectConfig, ProjectLoader, load_project
+from .config_loader import ProjectConfig, ProjectLoader, load_project
 
 __all__ = ["ProjectConfig", "ProjectLoader", "load_project"]

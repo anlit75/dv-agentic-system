@@ -7,7 +7,7 @@ What it does
 ------------
 1. Optionally loads ``project.yaml`` + org profiles to enrich prompts
    (Level 1 injection: team rules + IP-type rules; session state omitted).
-2. For each of the agents, calls :class:`~dv_agentic.prompts.loader.PromptLoader`
+2. For each of the agents, calls :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`
    to produce an enriched prompt body (placeholders filled, unmatched removed).
 3. Strips the OpenCode-style YAML front matter from the source template.
 4. Prepends Claude Code / Cursor compatible YAML front matter.
@@ -75,7 +75,7 @@ _AGENT_META: dict[str, dict[str, object]] = {
     "sim_controller": {
         "description": (
             "Compile source files and run a simulation test inside a dedicated "
-            "git branch (agent/{task_id}). Retries up to budget times on failure. "
+            "git branch (ai-task/{task_id}). Retries up to budget times on failure. "
             "Use whenever you need to run a simulation and track results on a "
             "branch ready for PR review."
         ),
@@ -210,7 +210,7 @@ def install(
             return 1
 
     # 2. PromptLoader — uses package-default prompts directory
-    from dv_agentic.prompts.loader import PromptLoader
+    from dv_agentic.prompts.prompt_loader import PromptLoader
 
     loader = PromptLoader(project_config=project_ctx)
 

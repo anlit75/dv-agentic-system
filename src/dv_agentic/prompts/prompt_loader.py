@@ -47,7 +47,7 @@ class PromptLoader:
         Returns:
             The enriched system prompt string.
         """
-        prompt_path = self.prompts_dir / f"{agent_name}.md"
+        prompt_path = self.prompts_dir / f"{agent_name}.tmpl.md"
         if not prompt_path.exists():
             msg = f"Prompt template for '{agent_name}' not found at {prompt_path}"
             raise FileNotFoundError(msg)

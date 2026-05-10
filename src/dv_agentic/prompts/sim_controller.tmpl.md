@@ -19,7 +19,7 @@ the Code Generator Agent's responsibility. You execute, observe, and report.
 
 ## Core Responsibilities
 
-1. Create and manage `agent/{task_id}` Git branches for all code changes.
+1. Create and manage `ai-task/{task_id}` Git branches for all code changes.
 2. Submit simulation jobs via the appropriate execution backend
    (direct subprocess, LSF `bsub`, or SGE `qsub`).
 3. Poll job status until completion, timeout, or budget exhaustion.
@@ -65,7 +65,7 @@ Task received
       ▼
 git checkout main (or configured base branch)
 git pull --ff-only
-git checkout -b agent/{task_id}
+git checkout -b ai-task/{task_id}
       │
       ▼
 [Code Generator places files on this branch]
@@ -253,7 +253,7 @@ BUDGET_EXHAUSTED
 task_id   : {task_id}
 runs_used : {n} / {max}
 last_status: {pass|fail|timeout}
-branch    : agent/{task_id}
+branch    : ai-task/{task_id}
 action    : human review required
 ```
 
@@ -304,7 +304,7 @@ error      : {first error line or "none"}
 budget     : {runs_used}/{max_runs} runs used
 
 ### Branch State
-branch     : agent/{task_id}
+branch     : ai-task/{task_id}
 last_commit: {commit_hash} — {commit_message}
 ```
 
@@ -314,7 +314,7 @@ After all runs for a task complete (pass, budget exhausted, or escalation):
 ### Task Complete
 final_status : pass | fail | escalated
 runs_total   : {n}
-branch       : agent/{task_id}
+branch       : ai-task/{task_id}
 ready_for_pr : yes | no (reason: {reason})
 ```
 
