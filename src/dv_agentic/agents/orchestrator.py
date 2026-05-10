@@ -13,6 +13,17 @@ Each turn:
   4. Sub-agent result is appended to history as a new user message.
   5. Repeat until ACTION is ``done`` / ``escalate``, or budget is exhausted.
 
+Dynamic escalation
+-----------------------------------
+When the Orchestrator dispatches ``run_log_analyzer`` it also tracks the
+``failure_subtype`` field in the returned :class:`~dv_agentic.agents.log_analyzer.FailureSummary`.
+If the subtype *shifts* between consecutive log-analyzer calls (e.g.
+``missing_timescale`` → ``unmatched_block``) the Orchestrator escalates
+immediately instead of iterating further.  A shifting error space indicates
+that each fix is revealing a new root-cause rather than converging, which
+means additional iterations are unlikely to produce a passing simulation and
+token budget is better spent on human diagnosis.
+
 Valid actions
 -------------
 ``run_code_generator``, ``run_sim_controller``, ``run_log_analyzer``,
@@ -148,6 +159,7 @@ class OrchestratorAgent(BaseAgent):
         r"Human\s+Review\s+Required\s*\n(YES|NO)(.*?)(?=\n###|\Z)",
         re.IGNORECASE | re.DOTALL,
     )
+    _FAILURE_SUBTYPE_RE = re.compile(r"failure_subtype\s+:\s+(\S+)", re.IGNORECASE)
 
     def __init__(
         self,
@@ -188,10 +200,15 @@ class OrchestratorAgent(BaseAgent):
             raise RuntimeError("System prompt must not be empty")
         if self.iteration != 0:
             raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
+
         history: list[dict[str, str]] = [{"role": "user", "content": task_input}]
 
         workflow = "unknown"
         steps: list[str] = []
+        # Dynamic escalation: track failure_subtype from consecutive log-analyzer calls.
+        # Populated only when action == "run_log_analyzer"; not reset between iterations
+        # so we can compare the current subtype with the previous one.
+        _failure_subtype_history: list[str] = []
 
         while await self.step():
             response = await self.llm.complete(system_prompt, history, max_tokens=1000)
@@ -239,6 +256,40 @@ class OrchestratorAgent(BaseAgent):
 
             # Dispatch to sub-agent
             sub_result = await self._dispatch(decision.action, decision.input_text)
+
+            # ----------------------------------------------------------------
+            # Dynamic escalation: detect shifting failure subtypes.
+            # When run_log_analyzer returns a different failure_subtype than the
+            # previous call we know each fix is revealing a new root-cause rather
+            # than converging.  Continuing to iterate would burn token budget
+            # without making progress — escalate immediately.
+            # ----------------------------------------------------------------
+            if decision.action == "run_log_analyzer":
+                current_subtype = self._extract_failure_subtype(sub_result)
+                if _failure_subtype_history and _failure_subtype_history[-1] != current_subtype:
+                    prev = _failure_subtype_history[-1]
+                    reason = (
+                        f"Failure type shifted from '{prev}' to '{current_subtype}' "
+                        f"across iterations — iterating is unlikely to converge. "
+                        f"Manual diagnosis required."
+                    )
+                    logger.warning(
+                        "Orchestrator: failure subtype shifted %s → %s at iter=%d; escalating",
+                        prev,
+                        current_subtype,
+                        self.iteration,
+                    )
+                    steps.append(f"run_log_analyzer: {sub_result[:120].strip()}")
+                    return OrchestratorResult(
+                        task_id=task_id,
+                        workflow=workflow,
+                        final_status="escalated",
+                        steps=steps,
+                        requires_human_review=True,
+                        human_review_reason=reason,
+                    ).to_str()
+                _failure_subtype_history.append(current_subtype)
+
             step_label = f"{decision.action}: {sub_result[:120].strip()}"
             steps.append(step_label)
 
@@ -344,6 +395,19 @@ class OrchestratorAgent(BaseAgent):
         assert decision.workflow in ("1", "2", "3", "unknown")
         assert decision.action in self.VALID_ACTIONS
         return decision
+
+    def _extract_failure_subtype(self, log_analyzer_output: str) -> str:
+        """Parse the ``failure_subtype`` field from a :class:`FailureSummary` string.
+
+        Args:
+            log_analyzer_output: The string returned by ``LogAnalyzerAgent.run()``.
+
+        Returns:
+            The subtype token (e.g. ``"missing_timescale"``), or ``"unknown"``
+            if the field is absent (e.g. when the sub-agent itself errored).
+        """
+        m = self._FAILURE_SUBTYPE_RE.search(log_analyzer_output)
+        return m.group(1) if m else "unknown"
 
     def _load_system_prompt(self) -> str:
         try:
