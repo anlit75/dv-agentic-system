@@ -54,14 +54,98 @@ _PATTERNS: list[tuple[re.Pattern[str], str]] = [
 # Classes where a debug re-run is unlikely to help
 _NO_DEBUG_CLASSES = frozenset({"compile_error"})
 
+# ---------------------------------------------------------------------------
+# Granular sub-type patterns (CVDP-informed failure clusters)
+# ---------------------------------------------------------------------------
+# Checked against the matched line after the top-level error_class is
+# determined.  The Orchestrator uses failure_subtype to detect when the
+# failure *kind* shifts between iterations and escalate early instead of
+# burning the whole token budget on a shifting error space.
+
+_COMPILE_SUBTYPE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (
+        re.compile(r"`timescale|no\s+timescale|timescale\s+not|missing.*timescale", re.IGNORECASE),
+        "missing_timescale",
+    ),
+    (
+        re.compile(
+            r"unmatched|unexpected\s+end\b|missing\s+end\b|begin\s+without|"
+            r"fork\s+without|endmodule.*without",
+            re.IGNORECASE,
+        ),
+        "unmatched_block",
+    ),
+    (
+        re.compile(r"blocking.*non.?blocking|non.?blocking.*blocking|mixed.*assign", re.IGNORECASE),
+        "mixed_assignment",
+    ),
+    (
+        re.compile(
+            r"multiple\s+driver|driven\s+by\s+multiple|already\s+driven|multiple.*drive",
+            re.IGNORECASE,
+        ),
+        "multiple_drivers",
+    ),
+    (
+        re.compile(r"width\s+mismatch|bit.width|size\s+mismatch|truncat", re.IGNORECASE),
+        "width_mismatch",
+    ),
+    (
+        re.compile(
+            r"port\s+not\s+found|undefined\s+port|port\s+mismatch|"
+            r"interface\s+mismatch|connection\s+error",
+            re.IGNORECASE,
+        ),
+        "interface_mismatch",
+    ),
+]
+
+_SIM_SUBTYPE_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"scoreboard", re.IGNORECASE), "scoreboard_fail"),
+    (
+        re.compile(r"coverage|covergroup|0\s+hit|bin.*not.*hit|bin.*miss", re.IGNORECASE),
+        "coverage_miss",
+    ),
+    (
+        re.compile(r"timing|synchroni[sz]|clock.*edge|cycle.*off|latency.*exceed", re.IGNORECASE),
+        "timing_offset",
+    ),
+    (
+        re.compile(r"interface|port\s+mismatch|signal.*mismatch|connection.*fail", re.IGNORECASE),
+        "interface_mismatch",
+    ),
+    (
+        re.compile(r"protocol|sva\b|property.*fail|assertion.*fail", re.IGNORECASE),
+        "protocol_violation",
+    ),
+]
+
 
 @dataclass
 class FailureSummary:
-    """Structured result produced by :class:`LogAnalyzerAgent`."""
+    """Structured result produced by :class:`LogAnalyzerAgent`.
+
+    Granular sub-category within *error_class*.
+
+    Used by the Orchestrator's dynamic escalation logic: when the
+    *failure_subtype* shifts between consecutive log-analyzer calls the
+    Orchestrator escalates immediately instead of continuing to iterate,
+    saving token budget on a shifting error space.
+
+    Compile-error subtypes (CVDP cluster-informed):
+      ``missing_timescale``, ``unmatched_block``, ``mixed_assignment``,
+      ``multiple_drivers``, ``width_mismatch``, ``interface_mismatch``,
+      ``syntax_general``
+
+    Sim-error subtypes:
+      ``scoreboard_fail``, ``coverage_miss``, ``timing_offset``,
+      ``interface_mismatch``, ``protocol_violation``, ``sim_general``
+    """
 
     error_class: str
     first_occurrence: str  # "line N" or "N/A"
     message: str  # first matching line, trimmed to 120 chars
+    failure_subtype: str = "unknown"
     context_lines: list[str] = field(default_factory=list)
     debug_required: bool = False
     next_step: str = ""
@@ -72,6 +156,7 @@ class FailureSummary:
         return (
             f"### Failure Summary\n"
             f"error_class      : {self.error_class}\n"
+            f"failure_subtype  : {self.failure_subtype}\n"
             f"first_occurrence : {self.first_occurrence}\n"
             f"message          : {self.message}\n\n"
             f"### Context Window\n{ctx}\n\n"
@@ -162,10 +247,12 @@ class LogAnalyzerAgent(BaseAgent):
                             break
 
                     debug_required = self._needs_debug(error_class, context, lines_iter)
+                    failure_subtype = self._classify_subtype(error_class, "\n".join(context))
                     return FailureSummary(
                         error_class=error_class,
                         first_occurrence=f"line {i + 1}",
                         message=line[:120].strip(),
+                        failure_subtype=failure_subtype,
                         context_lines=context,
                         debug_required=debug_required,
                         next_step=self._recommend(error_class, debug_required),
@@ -177,10 +264,52 @@ class LogAnalyzerAgent(BaseAgent):
             error_class="unknown",
             first_occurrence="N/A",
             message="No recognisable error pattern found.",
+            failure_subtype="unknown",
             context_lines=[],
             debug_required=True,
             next_step="Re-run in debug mode with +UVM_VERBOSITY=UVM_HIGH.",
         )
+
+    @staticmethod
+    def _classify_subtype(error_class: str, text: str) -> str:
+        """Return a granular failure sub-type for dynamic escalation tracking.
+
+        Matches the combined text of the matched line plus its context window
+        against the CVDP-informed sub-type pattern tables.
+
+        Args:
+            error_class: Top-level class already determined by :attr:`_PATTERNS`.
+            text: Concatenated matched line + context lines to search.
+
+        Returns:
+            A sub-type string such as ``"missing_timescale"`` or
+            ``"scoreboard_fail"``.  Falls back to ``"syntax_general"`` for
+            compile errors and ``"sim_general"`` for runtime errors when no
+            sub-type pattern matches.
+        """
+        if error_class == "compile_error":
+            for pattern, subtype in _COMPILE_SUBTYPE_PATTERNS:
+                if pattern.search(text):
+                    return subtype
+            return "syntax_general"
+
+        if error_class in (
+            "uvm_fatal",
+            "uvm_error",
+            "cocotb_error",
+            "scoreboard_mismatch",
+            "sim_assertion",
+            "x_propagation",
+            "timeout",
+        ):
+            for pattern, subtype in _SIM_SUBTYPE_PATTERNS:
+                if pattern.search(text):
+                    return subtype
+            return "sim_general"
+
+        # For "unknown" and any future classes, echo the class itself so the
+        # Orchestrator can still track shifts (unknown→unknown is stable).
+        return error_class
 
     @staticmethod
     def _needs_debug(error_class: str, context: list[str], remaining_lines: Iterator[str]) -> bool:

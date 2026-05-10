@@ -2,81 +2,169 @@
 
 [![CI Status](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anlit75/dv-agentic-system)
-![Version](https://img.shields.io/badge/version-v0.2.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.5.0-blue?style=flat-square)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-> AI Agentic System for UVM/pyuvm Verification
+## The DV Engineer's Productivity Problem
 
-`dv-agentic-system` is a multi-agent collaboration framework designed specifically for Digital IC Verification. This system aims to automate tedious tasks in the verification workflow, including SPEC analysis, test environment setup, code generation, simulation control, log debugging, and coverage analysis.
+You're debugging a test failure at 2 AM. The simulator log is 80,000 lines long. The coverage hole is buried three layers deep in a scoreboard you didn't write. And your release tape-out deadline doesn't move.
 
-## Architecture
+**This is not a tooling problem. It's a cognitive load problem.**
 
-This system adopts an "**Environment-Agnostic**" design philosophy and is divided into three independent layers:
+State-of-the-art LLMs can reason about SystemVerilog. But raw API access doesn't solve anything — you need an agent that understands your IP protocol rules, your team's VIP catalog, your simulator's error taxonomy, and knows the difference between a DUT bug and a testbench bug. Building that from scratch for every project is exactly the kind of tedious work that kills verification velocity.
 
-1. **Shared Package (`dv-agentic-system`)**
-   - Contains the system core, agent logic, Simulator/Coverage Adapters, and Base Prompts.
-   - **Completely generic**; it does not contain any company secrets or specific IP knowledge.
-2. **Team Profile Repo (`{org}-dv-profiles`)**
-   - Responsible for storing configuration for each DV Team, specific IP protocol rules (e.g., AXI, PCIe), VIP API manuals, and custom Prompt Patches.
-3. **Verification Project Implant Point (`{project}/.agent`)**
-   - Attached to existing UVM/pyuvm projects.
-   - Loads specific profiles via `project.yaml` and combines them with a dedicated team of Agents to perform automated development and debugging locally.
+`dv-agentic-system` is the foundation that handles that scaffolding so you don't have to.
 
-For detailed system architecture design, please refer to [`docs/agentic-system-structure.md`](docs/agentic-system-structure.md) and [`docs/agentic-system.md`](docs/agentic-system.md).
+## What It Does
+
+`dv-agentic-system` is a **multi-agent AI framework purpose-built for UVM / pyuvm verification**. It automates the highest-friction tasks in the verification workflow:
+
+| Task | What the Agent Does |
+|------|---------------------|
+| **SPEC Analysis** | Parses specification documents → generates `vplan.yaml` with coverage intent |
+| **Environment Setup** | Injects your team's protocol rules and VIP API references into every prompt |
+| **Code Generation** | Writes / modifies sequences, scoreboards, coverage groups, and monitors |
+| **Simulation Control** | Compiles, runs, and branches — with timeout and retry logic |
+| **Log Debugging** | Classifies 80K-line simulator logs into actionable error categories |
+| **Coverage Analysis** | Reads IMC / pyuvm coverage DBs and proposes targeted test scenarios |
+| **Bug Classification** | Distinguishes DUT bugs from TB bugs before escalating to the engineer |
+
+All agents operate under a strict **TB-only** policy — RTL source files are completely off-limits for reading or writing. The sole sources of hardware architectural truth are the SPEC and `vplan.yaml`.
+
+## Architecture: Three Layers, Zero Secrets
+
+The system is designed around a hard separation between generic intelligence and organization-specific knowledge:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Layer 1 · Shared Package  (this repo)                  │
+│  Agent logic, Simulator/Coverage Adapters, Base Prompts │
+│  Contains NO company IP, NO proprietary protocol rules  │
+├─────────────────────────────────────────────────────────┤
+│  Layer 2 · Team Profile Repo  ({org}-dv-profiles)       │
+│  AXI / PCIe / custom protocol rules, VIP API index,     │
+│  Prompt Patches — lives in your private org repo        │
+├─────────────────────────────────────────────────────────┤
+│  Layer 3 · Project Implant  ({project}/.agent/)         │
+│  project.yaml wires Layers 1 + 2 to a specific project  │
+│  Attaches to existing UVM / pyuvm projects in-place     │
+└─────────────────────────────────────────────────────────┘
+```
+
+This **Environment-Agnostic** design means:
+- The shared package can be open-sourced with zero IP risk
+- Each DV team customizes behavior through their private profile repo
+- Adding a new project requires only a `project.yaml` — no core changes
+
+For the full architecture specification, see [`docs/agentic-system-structure.md`](docs/agentic-system-structure.md) and [`docs/agentic-system.md`](docs/agentic-system.md).
 
 ## Toolchain Support
 
-This system supports seamless switching between internal enterprise tools and external open-source tools:
+Seamless switching between enterprise commercial tools and open-source CI tools:
 
 | Environment | Simulator | Coverage | OS |
 |-------------|-----------|----------|----|
 | **Internal** | Cadence Xcelium 25.03 | Cadence IMC 24.06 + Verisium 25.12 | RHEL 8.4 |
 | **External** | GHDL (LLVM) + cocotb | pyuvm functional coverage | Cross-platform |
+| **Lightweight CI** | Icarus Verilog / Verilator | lcov line coverage | Cross-platform |
+
+One codebase. Three environments. The same agent logic runs in all of them.
+
+## Research-Guided Optimization
+
+The optimizations are grounded in empirical findings from:
+
+> Pinckney, N., Deng, C., Ho, C. T., Tsai, Y. D., Liu, M., Zhou, W., ... & Ren, H. (2025). Comprehensive Verilog design problems: A next-generation benchmark dataset for evaluating large language models and agents on RTL design and verification. *arXiv preprint* [arXiv:2506.14074](https://arxiv.org/abs/2506.14074v1).
+
+The CVDP benchmark reveals that even frontier models (Claude 3.7, GPT-4.1) achieve only **22.77% pass rates on Checker Generation** (`cid13`) — the exact task our `CodeGeneratorAgent` handles. The root causes are not reasoning failures; they are mechanical failures: missing `timescale` declarations, unmatched `begin/end` blocks, mixed blocking/non-blocking assignments.
 
 ## Quick Start
 
-### 1. Environment Setup
-This project strictly uses [`uv`](https://github.com/astral-sh/uv) for package management.
+### Option A — Let Your AI Agent Install It (Recommended)
+
+Open your AI coding tool (Claude Code, Cursor, Copilot Chat, etc.), paste the prompt below, and let it handle the setup end-to-end.
+
+```
+Please set up dv-agentic-system in this repository by following these steps:
+
+1. Install dependencies using uv:
+   uv sync
+
+2. Activate the virtual environment (source .venv/bin/activate on macOS/Linux, or .venv\Scripts\activate on Windows).
+
+3. Install the pre-commit hooks:
+   uv run pre-commit install
+
+4. Generate and install the sub-agent prompt files:
+   uv run python -m dv_agentic.cli.install_agents
+
+5. Verify the installation by running the full static analysis:
+   uv run pre-commit run --all-files
+
+Report any errors and fix them before proceeding. On Windows, if symlink creation fails, confirm that Developer Mode is enabled in Windows Settings or the terminal is running as Administrator.
+```
+
+> [!TIP]\
+> If you already have a team profile repo (`{org}-dv-profiles`), also tell the agent the path to your `project.yaml` so it can validate the three-layer configuration at the same time.
+
+---
+
+### Option B — Manual Setup
+
+#### 1. Environment Setup
+
+This project uses [`uv`](https://github.com/astral-sh/uv) for reproducible dependency management.
 
 ```bash
-# Install dependencies (including development tools)
+# Install dependencies
 uv sync
 
 # Activate the virtual environment
 source .venv/bin/activate
-# On Windows, use: .venv\Scripts\activate
+# Windows: .venv\Scripts\activate
 ```
 
-### 2. Config Loading and Profiles
-The system uses a **Three-Layer Configuration Loader** (`project.yaml` -> team profile -> IP protocol rules) to dynamically inject context (Level 1: team parameters and IP protocol rules; Level 2: custom prompt patches and VIP catalog indexes) into the agentic system.
+#### 2. Configure Your Project
 
-- Local project settings: `.agent/project.yaml`
-- Profile Repository contains custom rules under `teams/` and `ip-types/` directories.
+The system uses a **three-layer configuration loader** (`project.yaml` → team profile → IP protocol rules) to inject context into every agent prompt.
 
-### 3. Sub-agent Installation
-You can easily generate and install the canonical prompt templates for your sub-agents (enriched with your organizational profile and IP rules) into your project.
+```
+{project}/.agent/project.yaml    ← points to your org's profile repo
+{org}-dv-profiles/teams/         ← team parameters, VIP index
+{org}-dv-profiles/ip-types/      ← AXI, PCIe, and other protocol rules
+```
+
+See [`sample/`](sample/) for complete working examples of all three layers.
+
+#### 3. Install Sub-agents
+
+Generate prompt files enriched with your org's profile and install them to your AI coding tool's expected path:
 
 ```bash
-# Generate agent prompts and install symlinks to .claude/agents/ and .cursor/rules/
+# Generate and install to .claude/agents/ and .cursor/rules/
 uv run python -m dv_agentic.cli.install_agents
 
-# Alternatively, on macOS/Linux, run the shell wrapper script:
+# macOS/Linux shell wrapper
 ./scripts/install-agents.sh
 ```
 
-> [!NOTE]
-> On Windows, creating symbolic links requires **Administrator Privileges** or enabling **Developer Mode** in Windows Settings (otherwise a warning will be displayed, but the prompt files will still be successfully written to `.agent/subagents/`).
+> [!NOTE]\
+> On Windows, symlink creation requires **Administrator Privileges** or **Developer Mode** enabled in Windows Settings. Without either, prompt files are still written to `.agent/subagents/` — only the symlinks are skipped.
 
-### 4. Development and Static Analysis
-The project uses `ruff` and `mypy` to ensure Python code quality, and automatically intercepts formatting issues before commits via `pre-commit`.
+#### 4. Static Analysis and Code Quality
 
 ```bash
-# Install pre-commit hook (required only once)
+# Install pre-commit hooks (once)
 uv run pre-commit install
 
-# Manually execute a full project scan
+# Run ruff + mypy across the full project
 uv run pre-commit run --all-files
 ```
 
 ## Roadmap
-For the implementation progress of each phase, supported Adapters, and upcoming core development goals, please refer to [`ROADMAP.md`](ROADMAP.md).
+
+For per-phase implementation progress, adapter status, and upcoming work, see [`ROADMAP.md`](ROADMAP.md).
+
+## License
+
+This project is licensed under the terms of the [MIT](LICENSE).

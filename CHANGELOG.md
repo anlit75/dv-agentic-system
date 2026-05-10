@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-10
+
+### Added
+
+- `tests/test_log_analyzer_subtype.py`: Added a separate test suite to verify the granular, CVDP-informed failure subtype classification patterns.
+- `tests/test_dynamic_escalation.py`: Added a separate test suite to verify the Orchestrator's immediate escalation behavior when failure subtypes shift.
+
+### Changed
+
+- `src/dv_agentic/agents/log_analyzer.py`: Implemented CVDP-informed failure subtype classification matching (e.g., `missing_timescale`, `unmatched_block`, `mixed_assignment`, etc.) to target mechanical error clusters in UVM/pyuvm verification, and added `failure_subtype` to the structured `FailureSummary` output.
+- `src/dv_agentic/agents/orchestrator.py`: Implemented a dynamic escalation check that tracks failure subtypes from consecutive log analyzer results and escalates immediately when a subtype shift is detected, preventing unproductive agent iteration and saving token budget.
+
 ## [0.4.1] - 2026-05-10
 
 ### Added
@@ -155,7 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.2.0...v0.3.0
