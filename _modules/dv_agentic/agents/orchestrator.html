@@ -84,6 +84,17 @@
 <span class="sd">  4. Sub-agent result is appended to history as a new user message.</span>
 <span class="sd">  5. Repeat until ACTION is ``done`` / ``escalate``, or budget is exhausted.</span>
 
+<span class="sd">Dynamic escalation</span>
+<span class="sd">-----------------------------------</span>
+<span class="sd">When the Orchestrator dispatches ``run_log_analyzer`` it also tracks the</span>
+<span class="sd">``failure_subtype`` field in the returned :class:`~dv_agentic.agents.log_analyzer.FailureSummary`.</span>
+<span class="sd">If the subtype *shifts* between consecutive log-analyzer calls (e.g.</span>
+<span class="sd">``missing_timescale`` → ``unmatched_block``) the Orchestrator escalates</span>
+<span class="sd">immediately instead of iterating further.  A shifting error space indicates</span>
+<span class="sd">that each fix is revealing a new root-cause rather than converging, which</span>
+<span class="sd">means additional iterations are unlikely to produce a passing simulation and</span>
+<span class="sd">token budget is better spent on human diagnosis.</span>
+
 <span class="sd">Valid actions</span>
 <span class="sd">-------------</span>
 <span class="sd">``run_code_generator``, ``run_sim_controller``, ``run_log_analyzer``,</span>
@@ -227,6 +238,7 @@
         <span class="sa">r</span><span class="s2">&quot;Human\s+Review\s+Required\s*\n(YES|NO)(.*?)(?=\n###|\Z)&quot;</span><span class="p">,</span>
         <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">_FAILURE_SUBTYPE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;failure_subtype\s+:\s+(\S+)&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -269,10 +281,15 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;System prompt must not be empty&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Agent must start at iteration 0 (current: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
         <span class="n">history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">task_input</span><span class="p">}]</span>
 
         <span class="n">workflow</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
         <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Dynamic escalation: track failure_subtype from consecutive log-analyzer calls.</span>
+        <span class="c1"># Populated only when action == &quot;run_log_analyzer&quot;; not reset between iterations</span>
+        <span class="c1"># so we can compare the current subtype with the previous one.</span>
+        <span class="n">_failure_subtype_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">():</span>
             <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">complete</span><span class="p">(</span><span class="n">system_prompt</span><span class="p">,</span> <span class="n">history</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
@@ -320,6 +337,40 @@
 
             <span class="c1"># Dispatch to sub-agent</span>
             <span class="n">sub_result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dispatch</span><span class="p">(</span><span class="n">decision</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">decision</span><span class="o">.</span><span class="n">input_text</span><span class="p">)</span>
+
+            <span class="c1"># ----------------------------------------------------------------</span>
+            <span class="c1"># Dynamic escalation: detect shifting failure subtypes.</span>
+            <span class="c1"># When run_log_analyzer returns a different failure_subtype than the</span>
+            <span class="c1"># previous call we know each fix is revealing a new root-cause rather</span>
+            <span class="c1"># than converging.  Continuing to iterate would burn token budget</span>
+            <span class="c1"># without making progress — escalate immediately.</span>
+            <span class="c1"># ----------------------------------------------------------------</span>
+            <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">&quot;run_log_analyzer&quot;</span><span class="p">:</span>
+                <span class="n">current_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_failure_subtype</span><span class="p">(</span><span class="n">sub_result</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">_failure_subtype_history</span> <span class="ow">and</span> <span class="n">_failure_subtype_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">current_subtype</span><span class="p">:</span>
+                    <span class="n">prev</span> <span class="o">=</span> <span class="n">_failure_subtype_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">reason</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Failure type shifted from &#39;</span><span class="si">{</span><span class="n">prev</span><span class="si">}</span><span class="s2">&#39; to &#39;</span><span class="si">{</span><span class="n">current_subtype</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;across iterations — iterating is unlikely to converge. &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Manual diagnosis required.&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;Orchestrator: failure subtype shifted </span><span class="si">%s</span><span class="s2"> → </span><span class="si">%s</span><span class="s2"> at iter=</span><span class="si">%d</span><span class="s2">; escalating&quot;</span><span class="p">,</span>
+                        <span class="n">prev</span><span class="p">,</span>
+                        <span class="n">current_subtype</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;run_log_analyzer: </span><span class="si">{</span><span class="n">sub_result</span><span class="p">[:</span><span class="mi">120</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">OrchestratorResult</span><span class="p">(</span>
+                        <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">,</span>
+                        <span class="n">workflow</span><span class="o">=</span><span class="n">workflow</span><span class="p">,</span>
+                        <span class="n">final_status</span><span class="o">=</span><span class="s2">&quot;escalated&quot;</span><span class="p">,</span>
+                        <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+                        <span class="n">requires_human_review</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">human_review_reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span>
+                <span class="n">_failure_subtype_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_subtype</span><span class="p">)</span>
+
             <span class="n">step_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">sub_result</span><span class="p">[:</span><span class="mi">120</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step_label</span><span class="p">)</span>
 
@@ -426,6 +477,19 @@
         <span class="k">assert</span> <span class="n">decision</span><span class="o">.</span><span class="n">workflow</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">decision</span><span class="o">.</span><span class="n">action</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_ACTIONS</span>
         <span class="k">return</span> <span class="n">decision</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_failure_subtype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_analyzer_output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse the ``failure_subtype`` field from a :class:`FailureSummary` string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            log_analyzer_output: The string returned by ``LogAnalyzerAgent.run()``.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The subtype token (e.g. ``&quot;missing_timescale&quot;``), or ``&quot;unknown&quot;``</span>
+<span class="sd">            if the field is absent (e.g. when the sub-agent itself errored).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_FAILURE_SUBTYPE_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">log_analyzer_output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="s2">&quot;unknown&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_system_prompt</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>

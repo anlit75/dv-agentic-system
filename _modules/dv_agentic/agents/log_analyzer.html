@@ -125,16 +125,100 @@
 <span class="c1"># Classes where a debug re-run is unlikely to help</span>
 <span class="n">_NO_DEBUG_CLASSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;compile_error&quot;</span><span class="p">})</span>
 
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Granular sub-type patterns (CVDP-informed failure clusters)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Checked against the matched line after the top-level error_class is</span>
+<span class="c1"># determined.  The Orchestrator uses failure_subtype to detect when the</span>
+<span class="c1"># failure *kind* shifts between iterations and escalate early instead of</span>
+<span class="c1"># burning the whole token budget on a shifting error space.</span>
+
+<span class="n">_COMPILE_SUBTYPE_PATTERNS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;`timescale|no\s+timescale|timescale\s+not|missing.*timescale&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;missing_timescale&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;unmatched|unexpected\s+end\b|missing\s+end\b|begin\s+without|&quot;</span>
+            <span class="sa">r</span><span class="s2">&quot;fork\s+without|endmodule.*without&quot;</span><span class="p">,</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;unmatched_block&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;blocking.*non.?blocking|non.?blocking.*blocking|mixed.*assign&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;mixed_assignment&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;multiple\s+driver|driven\s+by\s+multiple|already\s+driven|multiple.*drive&quot;</span><span class="p">,</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;multiple_drivers&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;width\s+mismatch|bit.width|size\s+mismatch|truncat&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;width_mismatch&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;port\s+not\s+found|undefined\s+port|port\s+mismatch|&quot;</span>
+            <span class="sa">r</span><span class="s2">&quot;interface\s+mismatch|connection\s+error&quot;</span><span class="p">,</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;interface_mismatch&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">_SIM_SUBTYPE_PATTERNS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;scoreboard&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span> <span class="s2">&quot;scoreboard_fail&quot;</span><span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;coverage|covergroup|0\s+hit|bin.*not.*hit|bin.*miss&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;coverage_miss&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;timing|synchroni[sz]|clock.*edge|cycle.*off|latency.*exceed&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;timing_offset&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;interface|port\s+mismatch|signal.*mismatch|connection.*fail&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;interface_mismatch&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;protocol|sva\b|property.*fail|assertion.*fail&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">),</span>
+        <span class="s2">&quot;protocol_violation&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
 
 <div class="viewcode-block" id="FailureSummary">
 <a class="viewcode-back" href="../../../dv_agentic.agents.html#dv_agentic.agents.log_analyzer.FailureSummary">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FailureSummary</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured result produced by :class:`LogAnalyzerAgent`.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structured result produced by :class:`LogAnalyzerAgent`.</span>
+
+<span class="sd">    Granular sub-category within *error_class*.</span>
+
+<span class="sd">    Used by the Orchestrator&#39;s dynamic escalation logic: when the</span>
+<span class="sd">    *failure_subtype* shifts between consecutive log-analyzer calls the</span>
+<span class="sd">    Orchestrator escalates immediately instead of continuing to iterate,</span>
+<span class="sd">    saving token budget on a shifting error space.</span>
+
+<span class="sd">    Compile-error subtypes (CVDP cluster-informed):</span>
+<span class="sd">      ``missing_timescale``, ``unmatched_block``, ``mixed_assignment``,</span>
+<span class="sd">      ``multiple_drivers``, ``width_mismatch``, ``interface_mismatch``,</span>
+<span class="sd">      ``syntax_general``</span>
+
+<span class="sd">    Sim-error subtypes:</span>
+<span class="sd">      ``scoreboard_fail``, ``coverage_miss``, ``timing_offset``,</span>
+<span class="sd">      ``interface_mismatch``, ``protocol_violation``, ``sim_general``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">error_class</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">first_occurrence</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;line N&quot; or &quot;N/A&quot;</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># first matching line, trimmed to 120 chars</span>
+    <span class="n">failure_subtype</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
     <span class="n">context_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">debug_required</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">next_step</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
@@ -147,6 +231,7 @@
         <span class="k">return</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;### Failure Summary</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;error_class      : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error_class</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;failure_subtype  : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">failure_subtype</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;first_occurrence : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">first_occurrence</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;message          : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
             <span class="sa">f</span><span class="s2">&quot;### Context Window</span><span class="se">\n</span><span class="si">{</span><span class="n">ctx</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">&quot;</span>
@@ -247,10 +332,12 @@
                             <span class="k">break</span>
 
                     <span class="n">debug_required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_debug</span><span class="p">(</span><span class="n">error_class</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">lines_iter</span><span class="p">)</span>
+                    <span class="n">failure_subtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_subtype</span><span class="p">(</span><span class="n">error_class</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">context</span><span class="p">))</span>
                     <span class="k">return</span> <span class="n">FailureSummary</span><span class="p">(</span>
                         <span class="n">error_class</span><span class="o">=</span><span class="n">error_class</span><span class="p">,</span>
                         <span class="n">first_occurrence</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;line </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                         <span class="n">message</span><span class="o">=</span><span class="n">line</span><span class="p">[:</span><span class="mi">120</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                        <span class="n">failure_subtype</span><span class="o">=</span><span class="n">failure_subtype</span><span class="p">,</span>
                         <span class="n">context_lines</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
                         <span class="n">debug_required</span><span class="o">=</span><span class="n">debug_required</span><span class="p">,</span>
                         <span class="n">next_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_recommend</span><span class="p">(</span><span class="n">error_class</span><span class="p">,</span> <span class="n">debug_required</span><span class="p">),</span>
@@ -262,10 +349,52 @@
             <span class="n">error_class</span><span class="o">=</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span>
             <span class="n">first_occurrence</span><span class="o">=</span><span class="s2">&quot;N/A&quot;</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="s2">&quot;No recognisable error pattern found.&quot;</span><span class="p">,</span>
+            <span class="n">failure_subtype</span><span class="o">=</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span>
             <span class="n">context_lines</span><span class="o">=</span><span class="p">[],</span>
             <span class="n">debug_required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">next_step</span><span class="o">=</span><span class="s2">&quot;Re-run in debug mode with +UVM_VERBOSITY=UVM_HIGH.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classify_subtype</span><span class="p">(</span><span class="n">error_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a granular failure sub-type for dynamic escalation tracking.</span>
+
+<span class="sd">        Matches the combined text of the matched line plus its context window</span>
+<span class="sd">        against the CVDP-informed sub-type pattern tables.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            error_class: Top-level class already determined by :attr:`_PATTERNS`.</span>
+<span class="sd">            text: Concatenated matched line + context lines to search.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A sub-type string such as ``&quot;missing_timescale&quot;`` or</span>
+<span class="sd">            ``&quot;scoreboard_fail&quot;``.  Falls back to ``&quot;syntax_general&quot;`` for</span>
+<span class="sd">            compile errors and ``&quot;sim_general&quot;`` for runtime errors when no</span>
+<span class="sd">            sub-type pattern matches.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">error_class</span> <span class="o">==</span> <span class="s2">&quot;compile_error&quot;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">subtype</span> <span class="ow">in</span> <span class="n">_COMPILE_SUBTYPE_PATTERNS</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">subtype</span>
+            <span class="k">return</span> <span class="s2">&quot;syntax_general&quot;</span>
+
+        <span class="k">if</span> <span class="n">error_class</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">&quot;uvm_fatal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;uvm_error&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;cocotb_error&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;scoreboard_mismatch&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sim_assertion&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;x_propagation&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;timeout&quot;</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">subtype</span> <span class="ow">in</span> <span class="n">_SIM_SUBTYPE_PATTERNS</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">subtype</span>
+            <span class="k">return</span> <span class="s2">&quot;sim_general&quot;</span>
+
+        <span class="c1"># For &quot;unknown&quot; and any future classes, echo the class itself so the</span>
+        <span class="c1"># Orchestrator can still track shifts (unknown→unknown is stable).</span>
+        <span class="k">return</span> <span class="n">error_class</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_needs_debug</span><span class="p">(</span><span class="n">error_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">remaining_lines</span><span class="p">:</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
