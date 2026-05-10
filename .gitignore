@@ -5,6 +5,8 @@ __pycache__/
 build/
 dist/
 wheels/
+dv_wheels/
+*.tar.gz
 *.egg-info/
 .eggs/
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/offline-download.sh`: Added an automated dependency downloader script for internet-connected hosts that fetches necessary wheels and bundles the source tree directly into `dv-agentic-system.tar.gz`.
+- `scripts/offline-install.sh`: Added a robust, cross-platform offline installation script for air-gapped target machines (Linux & Windows Git Bash) that automates venv setup, offline local installations, and sub-agent prompt template compilation.
+
+### Changed
+
+- `pyproject.toml`: Refactored `cocotb` and `pyuvm` from core `dependencies` to `[project.optional-dependencies]` (extras), ensuring a lightweight, pure enterprise UVM environment by default.
+- `.gitignore`: Configured ignores to mask local wheel downloads (`dv_wheels/`) and all archive bundles (`*.tar.gz`).
+
 ## [0.5.1] - 2026-05-10
 
 ### Added
