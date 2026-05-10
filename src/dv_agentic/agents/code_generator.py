@@ -431,11 +431,17 @@ class CodeGeneratorAgent(BaseAgent):
         """
         p = Path(spec_path)
 
-        # Rule 1: block traversal regardless of whitelist
-        if ".." in p.parts:
+        # Rule 1: block traversal and absolute paths regardless of whitelist
+        if (
+            p.is_absolute()
+            or spec_path.startswith("/")
+            or spec_path.startswith("\\")
+            or ".." in p.parts
+        ):
             raise ValueError(
-                f"Path traversal is not allowed: '{spec_path}'. "
-                "The LLM must not use '..' to escape the workspace."
+                f"Absolute paths and path traversal are not allowed: '{spec_path}'. "
+                "The LLM must use relative paths within the workspace and "
+                "not use '..' to escape it."
             )
 
         # Rule 2: whitelist check (only when configured)

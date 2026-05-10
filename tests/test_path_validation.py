@@ -53,6 +53,15 @@ class TestValidatePath:
         with pytest.raises(ValueError, match="traversal"):
             agent._validate_path("tb/../../rtl/dut.sv")
 
+    def test_absolute_path_always_blocked(self, tmp_path: Path) -> None:
+        """is_absolute must be rejected even when allowed_dirs is None."""
+        agent = _make_agent_with_whitelist(str(tmp_path), allowed_dirs=None)
+        with pytest.raises(ValueError, match="Absolute paths"):
+            agent._validate_path("/etc/passwd")
+
+        with pytest.raises(ValueError, match="Absolute paths"):
+            agent._validate_path("C:\\Windows\\system32\\cmd.exe")
+
     def test_rtl_dir_blocked_when_whitelist_set(self, tmp_path: Path) -> None:
         agent = _make_agent_with_whitelist(str(tmp_path))
         with pytest.raises(ValueError, match="read-only"):
@@ -117,6 +126,12 @@ class TestWriteFilesEnforcement:
         agent = _make_agent_with_whitelist(str(tmp_path), allowed_dirs=None)
         specs = [FileSpec(path="../escaped.sv", content="oops")]
         with pytest.raises(ValueError, match="traversal"):
+            agent._write_files(specs, str(tmp_path))
+
+    def test_absolute_path_raises_before_write(self, tmp_path: Path) -> None:
+        agent = _make_agent_with_whitelist(str(tmp_path), allowed_dirs=None)
+        specs = [FileSpec(path="/absolute/escaped.sv", content="oops")]
+        with pytest.raises(ValueError, match="Absolute paths"):
             agent._write_files(specs, str(tmp_path))
 
     def test_mixed_specs_atomic_on_first_bad_path(self, tmp_path: Path) -> None:
