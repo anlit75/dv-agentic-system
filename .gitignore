@@ -48,6 +48,5 @@ memory.db
 Thumbs.db
 
 # Documentation
-docs/_build/
-docs/*.rst
-!docs/index.rst
+_build/
+site/

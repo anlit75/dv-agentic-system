@@ -1,11 +1,11 @@
-# dv-agentic-system
+# 🤖 DV Agentic System
 
 [![CI Status](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anlit75/dv-agentic-system)
-![Version](https://img.shields.io/badge/version-v0.5.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.5.1-blue?style=flat-square)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
-## The DV Engineer's Productivity Problem
+## ⚡ The DV Engineer's Productivity Problem
 
 You're debugging a test failure at 2 AM. The simulator log is 80,000 lines long. The coverage hole is buried three layers deep in a scoreboard you didn't write. And your release tape-out deadline doesn't move.
 
@@ -15,7 +15,7 @@ State-of-the-art LLMs can reason about SystemVerilog. But raw API access doesn't
 
 `dv-agentic-system` is the foundation that handles that scaffolding so you don't have to.
 
-## What It Does
+## 🎯 What It Does
 
 `dv-agentic-system` is a **multi-agent AI framework purpose-built for UVM / pyuvm verification**. It automates the highest-friction tasks in the verification workflow:
 
@@ -31,7 +31,7 @@ State-of-the-art LLMs can reason about SystemVerilog. But raw API access doesn't
 
 All agents operate under a strict **TB-only** policy — RTL source files are completely off-limits for reading or writing. The sole sources of hardware architectural truth are the SPEC and `vplan.yaml`.
 
-## Architecture: Three Layers, Zero Secrets
+## 🏗️ Architecture: Three Layers, Zero Secrets
 
 The system is designed around a hard separation between generic intelligence and organization-specific knowledge:
 
@@ -58,7 +58,7 @@ This **Environment-Agnostic** design means:
 
 For the full architecture specification, see [`docs/agentic-system-structure.md`](docs/agentic-system-structure.md) and [`docs/agentic-system.md`](docs/agentic-system.md).
 
-## Toolchain Support
+## 🛠️ Toolchain Support
 
 Seamless switching between enterprise commercial tools and open-source CI tools:
 
@@ -70,7 +70,7 @@ Seamless switching between enterprise commercial tools and open-source CI tools:
 
 One codebase. Three environments. The same agent logic runs in all of them.
 
-## Research-Guided Optimization
+## 🔬 Research-Guided Optimization
 
 The optimizations are grounded in empirical findings from:
 
@@ -78,9 +78,9 @@ The optimizations are grounded in empirical findings from:
 
 The CVDP benchmark reveals that even frontier models (Claude 3.7, GPT-4.1) achieve only **22.77% pass rates on Checker Generation** (`cid13`) — the exact task our `CodeGeneratorAgent` handles. The root causes are not reasoning failures; they are mechanical failures: missing `timescale` declarations, unmatched `begin/end` blocks, mixed blocking/non-blocking assignments.
 
-## Quick Start
+## 🚀 Quick Start
 
-### Option A — Let Your AI Agent Install It (Recommended)
+### ✨ Option A — Let Your AI Agent Install It (Recommended)
 
 Open your AI coding tool (Claude Code, Cursor, Copilot Chat, etc.), paste the prompt below, and let it handle the setup end-to-end.
 
@@ -109,9 +109,9 @@ Report any errors and fix them before proceeding. On Windows, if symlink creatio
 
 ---
 
-### Option B — Manual Setup
+### 🔧 Option B — Manual Setup
 
-#### 1. Environment Setup
+#### 📦 1. Environment Setup
 
 This project uses [`uv`](https://github.com/astral-sh/uv) for reproducible dependency management.
 
@@ -124,7 +124,7 @@ source .venv/bin/activate
 # Windows: .venv\Scripts\activate
 ```
 
-#### 2. Configure Your Project
+#### ⚙️ 2. Configure Your Project
 
 The system uses a **three-layer configuration loader** (`project.yaml` → team profile → IP protocol rules) to inject context into every agent prompt.
 
@@ -136,7 +136,7 @@ The system uses a **three-layer configuration loader** (`project.yaml` → team 
 
 See [`sample/`](sample/) for complete working examples of all three layers.
 
-#### 3. Install Sub-agents
+#### 🤖 3. Install Sub-agents
 
 Generate prompt files enriched with your org's profile and install them to your AI coding tool's expected path:
 
@@ -151,7 +151,7 @@ uv run python -m dv_agentic.cli.install_agents
 > [!NOTE]\
 > On Windows, symlink creation requires **Administrator Privileges** or **Developer Mode** enabled in Windows Settings. Without either, prompt files are still written to `.agent/subagents/` — only the symlinks are skipped.
 
-#### 4. Static Analysis and Code Quality
+#### 🛡️ 4. Static Analysis and Code Quality
 
 ```bash
 # Install pre-commit hooks (once)
@@ -161,10 +161,10 @@ uv run pre-commit install
 uv run pre-commit run --all-files
 ```
 
-## Roadmap
+## 📍 Roadmap
 
 For per-phase implementation progress, adapter status, and upcoming work, see [`ROADMAP.md`](ROADMAP.md).
 
-## License
+## 📄 License
 
 This project is licensed under the terms of the [MIT](LICENSE).
