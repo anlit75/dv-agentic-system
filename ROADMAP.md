@@ -34,7 +34,7 @@
 | `src/dv_agentic/prompts/*.tmpl.md` — Standalone templates | ✅ | `code_generator`, `log_analyzer` follow standalone rules |
 | `src/dv_agentic/agents/base.py` — `BaseAgent` / `AgentConfig` ABC | ✅ | `Literal["internal", "external"]` environment alignment |
 | pre-commit / ruff / mypy static analysis and hooks | ✅ | 0 errors, 0 type issues, bound to git hooks |
-| Sphinx documentation compilation and autodiscovery | ✅ | Complete `docs/` build scripts and full autodiscovery of the `cli/` subpackage |
+| MkDocs Material documentation with mkdocstrings | ✅ | Modern documentation portal with auto-docstring extraction, dark/light theme, and live-reload |
 | CLI test suite and coverage reinforcement | ✅ | Comprehensive unit/integration testing, raising global coverage to 90% |
 | `sample/sample-project/.agent/project.yaml` | ✅ | Complete `project.yaml` example |
 | `sample/sample-org-dv-profiles/teams/` | 🔨 | Directory created, pending `sample_team/` contents |
@@ -137,52 +137,52 @@
 | `scripts/install-agents.sh` | ✅ | Cross-platform bash script supporting Windows with auto-detection of python and virtualenvs |
 | Post-installation verification script | ✅ | Generates a run-time installation validation and checks |
 
-## Phase 8 — Research-Guided DV Agentic Optimization (NVIDIA CVDP Insights) 📋
+## Phase 8 — Research-Guided DV Agentic Optimization (NVIDIA CVDP Insights) ✅ (Completed)
 
 **Objective**: Optimize the core `dv_agentic` prompt patterns, self-review checklists, and execution loops based on key testbench-only failure modes identified in state-of-the-art LLMs (e.g. Claude 3.7 / GPT-4.1) within NVIDIA's CVDP (Comprehensive Verilog Design Problems) paper, while strictly forbidding any RTL reading or writing.
 
 ### 🛡️ System Scope & RTL Access Prohibitions
 The `dv_agentic` system is designed strictly for testbench development (TB-only). Reading, writing, or accessing RTL design source files is strictly prohibited. The sole sources of hardware architectural and interface definitions are the SPEC and the verification plan.
 
-| Existing Violations | Core Correction Task |
+| Resolved Violations | Resolution Action |
 |----------------------|-----------------------|
-| **Violation 1**: `CodeGeneratorAgent._write_files()` lacks path restriction. | Add path validation in `_write_files()` using `_TB_ALLOWED_DIRS` check, raising `ValueError` on RTL paths. |
-| **Violation 2**: `code_generator.md` Core Responsibilities are vague. | Update responsibilities to specify modification of TB-only files and state RTL is completely off-limits for both reading and writing (rely solely on SPEC/vplan). |
-| **Violation 3**: Self-Review Checklist lacks RTL write-protection. | Add strict RTL read/write-protection assertions to the self-review constraints. |
+| **Violation 1 Resolved**: `CodeGeneratorAgent._write_files()` lacks path restriction. | Implemented `_validate_path()` in `_write_files()` checking against `DEFAULT_TB_ALLOWED_DIRS` and raising `ValueError` on RTL or traversal paths. |
+| **Violation 2 Resolved**: `code_generator.tmpl.md` Core Responsibilities are vague. | Refined core responsibilities in `code_generator.tmpl.md` to explicitly declare RTL completely forbidden and testbench-only scopes. |
+| **Violation 3 Resolved**: Self-Review Checklist lacks RTL write-protection. | Added clear, strict instructions in the `code_generator` system prompt asserting RTL as completely off-limits for reading and writing. |
 
 ---
 
-### 📋 Phase 8 Optimization Tasks
+### ✅ Phase 8 Optimization Tasks
 
 | Direction | Item | Status | Description |
 |-----------|------|--------|-------------|
-| **Direction 1: Path Controls** | **Strict TB Root Path Enforcement** | 📋 | Implement path validation in `CodeGeneratorAgent._write_files()` to restrict writing/reading to allowed directories (e.g., `tb`, `tests`, `env`). Refine `code_generator.md` Core Responsibilities to declare RTL completely off-limits. |
-| **Direction 2: Checklist** | **cid13 (Testbench Checker) Defenses** | 📋 | Expand `Self-Review Checklist` in `code_generator.md` to prevent CVDP's top failures in Checker Gen (22.77% pass rate), including missing timescales, unmatched blocks, and missing bounds checks. |
-| **Direction 3: Feedback Loop** | **Fine-Grained Failure Diagnostics** | 📋 | Upgrade `LogAnalyzerAgent` to output granular failure details (not just generic `error_class`). Update `OrchestratorAgent` to stop execution and escalate to human review if failure types shift across loops. |
+| **Direction 1: Path Controls** | **Strict TB Root Path Enforcement** | ✅ | Implemented strict path validation in `CodeGeneratorAgent._write_files()` restricting writes to permitted subdirectories. Refined `code_generator.tmpl.md` to make RTL completely off-limits. |
+| **Direction 2: Checklist** | **cid13 (Testbench Checker) Defenses** | ✅ | Implemented a highly rigorous, specialized SystemVerilog Testbench checklist in `code_generator.tmpl.md` covering timescales, unmatched blocks, assignments, multi-drivers, indices bounds, widths padding, etc. |
+| **Direction 3: Feedback Loop** | **Fine-Grained Failure Diagnostics** | ✅ | Configured `LogAnalyzerAgent` to output granular, regex-backed failure subtypes. Upgraded `OrchestratorAgent` to dynamically detect failure subtype shifts across iterations and immediately escalate with detailed diagnostic reports. |
 
 #### 🔍 Detailed Improvement Items
 
-##### 1. Immediate: Path Control & Writing Constraints
-* **`CodeGeneratorAgent._write_files()` Path Validation**: Verify file paths against `project.yaml` directories. Only allow writing to `paths.tb_root`, `paths.test_dir`, and general sub-folders under a permitted whitelist (e.g., `tb`, `tests`, `env`, `sequences`, `agents`, `scoreboards`). Explicitly block any reads or writes targeted at `paths.rtl_root` or any files in the RTL directories.
-* **`code_generator.md` Core Responsibilities Clarification**: Explicitly state: *"Modify existing testbench files (sequences, scoreboards, coverage groups, monitors, drivers, env) to fix compile errors or simulation failures. RTL source files are completely forbidden for both reading and writing — never access or open them. The sole sources for hardware architectural and interface definitions are the SPEC and the verification plan (vplan.yaml)."*
+##### 1. Path Control & Writing Constraints ✅ (Completed)
+* **`CodeGeneratorAgent._write_files()` Path Validation**: Verifies file paths against `project.yaml` directories. Only allows writing to `paths.tb_root`, `paths.test_dir`, and general sub-folders under a permitted whitelist (`tb`, `tests`, `env`, `sequences`, `agents`, `scoreboards`, `monitors`, `drivers`, `coverage`, `checkers`, `assertions`). Explicitly blocks any reads/writes targeted at RTL files or using `..` path traversal.
+* **`code_generator.tmpl.md` Core Responsibilities Clarification**: Explicitly states: *"Modify existing testbench files (sequences, scoreboards, coverage groups, monitors, drivers, env) to fix compile errors or simulation failures. RTL source files are completely forbidden for both reading and writing — never access or open them. The sole sources for hardware architectural and interface definitions are the SPEC and the verification plan (vplan.yaml)."*
 
-##### 2. Immediate: Checklist Enhancements (cid13 Defenses)
-Introduce a specialized, rigorous **SystemVerilog Testbench checklist** into the `Self-Review Checklist` in `code_generator.md` to prevent CVDP's top failures in Checker Gen (22.77% pass rate):
-* **Timescale Declaration**: Ensure a proper ``timescale` is declared at the top of files (the largest failure cluster in CVDP `cid13`).
-* **Unmatched Blocks**: Ensure every block pair (`begin`/`end`, `fork`/`join`) is perfectly balanced.
-* **No Mixed Assignments**: Do not mix blocking (`=`) and non-blocking (`<=`) assignments, particularly inside `always` blocks.
-* **Multiple Drivers Protection**: Check that no signal/reg is driven by more than one procedural block.
+##### 2. Checklist Enhancements (cid13 Defenses) ✅ (Completed)
+Introduced a specialized, rigorous **SystemVerilog Testbench checklist** into the `Self-Review Checklist` in `code_generator.tmpl.md` to prevent CVDP's top failures in Checker Gen (22.77% pass rate):
+* **Timescale Declaration**: Ensures a proper ``timescale` is declared at the top of files (the largest failure cluster in CVDP `cid13`).
+* **Unmatched Blocks**: Ensures every block pair (`begin`/`end`, `fork`/`join`) is perfectly balanced.
+* **No Mixed Assignments**: Mixed blocking (`=`) and non-blocking (`<=`) assignments are strictly forbidden in state-holding logic.
+* **Multiple Drivers Protection**: Verifies that no signal/reg is driven by more than one procedural block.
 * **Initialization Guard**: All variables must be initialized before they are read.
-* **Array Bounds Check**: Explicitly check index ranges before any array or queue accesses.
+* **Array Bounds Check**: Explicitly checks index ranges before any array or queue accesses.
 * **Cycle-Accurate Alignment**: Non-blocking assignments and delays must not cause state offsets or counter drifts.
 * **Explicit Width Handling**: Expression results of smaller widths must be explicitly padded/concatenated (e.g. `{{4'b0}, ...}`) when assigned to larger targets (preventing ALU zero-extension bugs).
 * **Coverage Verification**: Coverage bin names must match the `vplan.yaml` definitions *exactly*, and the checker must cover the full scope, including non-happy paths.
 
-##### 3. Medium-Term: Re-evaluating the "Iterative Improvement" Assumption
-* **Granular Failure Types**: `LogAnalyzerAgent` must parse compiler/simulation logs into specific categories (e.g., `syntax_error`, `timing_error`, `coverage_miss`, `interface_mismatch`).
+##### 3. Dynamic Escalation & Failure Diagnostics ✅ (Completed)
+* **Granular Failure Types**: `LogAnalyzerAgent` parses compiler/simulation logs into specific categories (e.g., `syntax_error`, `timing_error`, `coverage_miss`, `interface_mismatch`).
 * **Dynamic Escalation in Orchestrator**: Instead of iterating blindly through the budget:
-  * If consecutive failures have the same failure type, let the agent continue.
-  * If failure types shift dynamically between runs (indicating a complex, shifting error state), immediately stop and escalate to the user with a detailed diagnostics report, saving token budget.
+  * If consecutive failures have the same failure type, the agent continues.
+  * If failure types shift dynamically between runs (indicating a complex, shifting error state), it immediately stops and escalates to the user with a detailed diagnostics report, saving token budget.
 
 ## Long-term / Optional
 
@@ -194,13 +194,13 @@ Introduce a specialized, rigorous **SystemVerilog Testbench checklist** into the
 | `pip install` publish workflow | CI/CD configuration, PyPI or internal package registry |
 | External CI integration (GitHub Actions) | Run full verification loop using GHDL + cocotb + lcov adapters |
 
-## Progress Snapshot (2026-05-09)
+## Progress Snapshot (2026-05-10)
 
 ```
 Layer 1 (Shared Package)
   src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters completed
-  src/dv_agentic/agents/        ██████████  100%  All 8 agents completed and fully verified
-  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection completed
+  src/dv_agentic/agents/        ██████████  100%  All 8 agents completed + Phase 8 CVDP optimizations fully verified
+  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection + CVDP defenses completed
   src/dv_agentic/cli/           ██████████  100%  All CLI entrypoints fully tested (90% global coverage) & fully documented
   src/dv_agentic/profiles/      ██████████  100%  _template/ directory and all schemas completed
 
@@ -212,4 +212,4 @@ Layer 3 (Project Implant)
     .agent/                     ██████████  100%  Project configuration system and subagent installer completed
 ```
 
-**Next Milestone**: Enter Phase 8, implement research-guided optimizations for the `dv_agentic` system based on the NVIDIA CVDP paper insights. Phase 6 is temporarily postponed.
+**Next Milestone**: Expand long-term adapter capabilities (such as WaveAnalyzerAgent VCD/FSDB parsing or vector database local caching) and integrate external CI test suites. Phase 6 remains temporarily postponed.

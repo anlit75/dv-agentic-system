@@ -5,13 +5,13 @@
 ```
 Four independent existence layers:
 
-  [1] uvm-agentic-system/     ← Shared package (pip install)
+  [1] dv-agentic-system/      ← Shared package (pip install)
   [2] {org}-dv-profiles/      ← Profile repo for each DV Team (per-org or per-team)
   [3] {project}/              ← Each verification project (existing UVM env)
        └── .agent/            ← Implant point, contains subagent .md (tools auto-discover)
 ```
 
-## Layer 1: uvm-agentic-system/ (Shared Package)
+## Layer 1: dv-agentic-system/ (Shared Package)
 
 ```
 dv-agentic-system/
@@ -184,7 +184,7 @@ Different tools expect different paths, unified handling via install-agents.sh:
           └── symlink → .agent/orchestrator.md           (OpenCode)
 
 Run once:
-  bash uvm-agentic-system/scripts/install-agents.sh
+  bash dv-agentic-system/scripts/install-agents.sh
 ```
 
 Structure of each `.md` (using code_generator.md as an example):

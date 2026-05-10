@@ -1,6 +1,6 @@
 [project]
 name = "dv-agentic-system"
-version = "0.5.0"
+version = "0.5.1"
 description = "Core AI Agent System for UVM/pyuvm Verification"
 authors = [{name = "Ting-An Cheng"}]
 license = "MIT"
@@ -29,8 +29,9 @@ dev = [
     "pre-commit>=4.6.0",
     "pytest-cov>=7.1.0",
     "pytest-asyncio>=0.23.0",
-    "sphinx>=9.0.4",
-    "sphinx-rtd-theme>=3.1.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.24.0",
 ]
 
 [tool.hatch.build.targets.wheel]
