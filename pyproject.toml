@@ -1,6 +1,6 @@
 [project]
 name = "dv-agentic-system"
-version = "0.5.1"
+version = "0.6.0"
 description = "Core AI Agent System for UVM/pyuvm Verification"
 authors = [{name = "Ting-An Cheng"}]
 license = "MIT"

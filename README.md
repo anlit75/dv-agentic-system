@@ -2,7 +2,7 @@
 
 [![CI Status](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anlit75/dv-agentic-system)
-![Version](https://img.shields.io/badge/version-v0.5.1-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.6.0-blue?style=flat-square)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
 ## ⚡ The DV Engineer's Productivity Problem
@@ -159,6 +159,34 @@ uv run pre-commit install
 
 # Run ruff + mypy across the full project
 uv run pre-commit run --all-files
+```
+
+### 🔒 Option C — Air-Gapped Offline Setup
+
+For secure, internet-disconnected enterprise environments, you can bundle dependencies on an internet-connected machine and install them offline using the provided automated scripts.
+
+#### 📡 1. On an Internet-Connected Machine
+Download core runtime dependencies as optimized `.whl` files and package the project:
+```bash
+# By default, downloads minimal core runtime dependencies (~3MB)
+./scripts/offline-download.sh
+```
+
+> [!TIP]\
+> You can include additional toolchains by using optional flags:
+> * `./scripts/offline-download.sh --with-cocotb` (Downloads `cocotb` + `pyuvm` verification packages)
+> * `./scripts/offline-download.sh --with-dev` (Downloads full `pytest` / static analysis / documentation toolchains)
+
+This generates `dv-agentic-system.tar.gz`. Copy this archive to your secure offline machine.
+
+#### 💻 2. On the Air-Gapped Target Machine
+Extract the bundle and run the installation script:
+```bash
+# Extract and enter the bundle
+tar -xzf dv-agentic-system.tar.gz && cd dv-agentic-system
+
+# Run the automated installer (creates .venv & installs pre-built wheels)
+./scripts/offline-install.sh
 ```
 
 ## 📍 Roadmap
