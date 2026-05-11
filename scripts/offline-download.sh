@@ -10,6 +10,21 @@ echo "================================================================="
 WHEELS_DIR="dv_wheels"
 TAR_FILE="dv-agentic-system.tar.gz"
 
+# Parse optional arguments
+WITH_DEV=false
+WITH_COCOTB=false
+
+for arg in "$@"; do
+    case $arg in
+        --with-dev)
+            WITH_DEV=true
+            ;;
+        --with-cocotb)
+            WITH_COCOTB=true
+            ;;
+    esac
+done
+
 # Dynamically detect available pip tool on the host machine
 if [ -f ".venv/Scripts/pip.exe" ]; then
     PIP_CMD=".venv/Scripts/pip.exe"
@@ -39,56 +54,100 @@ echo "Using pip command: $PIP_CMD"
 echo "Creating output directory: $WHEELS_DIR..."
 mkdir -p "$WHEELS_DIR"
 
-# Download build backend and core dependencies (lightweight enterprise setup)
-echo "1. Downloading core dependencies and packaging tools..."
-$PIP_CMD download \
-    --only-binary=:all: \
-    -d "$WHEELS_DIR" \
-    pydantic \
-    pyyaml \
-    hatchling
+# Check if uv is installed to optimize downloading
+if command -v uv >/dev/null 2>&1; then
+    echo "⚡ Detected 'uv' packaging tool! Using 'uv pip compile' for optimized, lean dependency resolution..."
 
-# Download open-source verification dependencies only if explicitly requested
-if [[ "$*" == *"--with-cocotb"* ]]; then
-    echo "1b. Downloading open-source cocotb & pyuvm dependencies..."
+    COMPILE_FLAGS=""
+    if [ "$WITH_COCOTB" = true ]; then
+        COMPILE_FLAGS="$COMPILE_FLAGS --extra cocotb"
+    fi
+    if [ "$WITH_DEV" = true ]; then
+        COMPILE_FLAGS="$COMPILE_FLAGS --all-groups"
+    fi
+
+    TEMP_REQ="temp-requirements.txt"
+    echo "Generating locked dependency tree into $TEMP_REQ..."
+    uv pip compile pyproject.toml $COMPILE_FLAGS -o "$TEMP_REQ"
+
+    echo "Downloading locked dependencies..."
     $PIP_CMD download \
         --only-binary=:all: \
         -d "$WHEELS_DIR" \
-        cocotb \
-        pyuvm
+        -r "$TEMP_REQ"
+
+    # Always download hatchling, pip, setuptools, and wheel for packaging/install needs
+    $PIP_CMD download \
+        --only-binary=:all: \
+        -d "$WHEELS_DIR" \
+        hatchling \
+        pip \
+        setuptools \
+        wheel
+
+    rm -f "$TEMP_REQ"
+else
+    echo "ℹ️ 'uv' not found. Falling back to standard pip download..."
+
+    # Download build backend, core dependencies, and packaging tools
+    echo "1. Downloading core dependencies and packaging tools..."
+    $PIP_CMD download \
+        --only-binary=:all: \
+        -d "$WHEELS_DIR" \
+        pydantic \
+        pyyaml \
+        hatchling \
+        pip \
+        setuptools \
+        wheel
+
+    # Download open-source verification dependencies only if explicitly requested
+    if [ "$WITH_COCOTB" = true ]; then
+        echo "1b. Downloading open-source cocotb & pyuvm dependencies..."
+        $PIP_CMD download \
+            --only-binary=:all: \
+            -d "$WHEELS_DIR" \
+            cocotb \
+            pyuvm
+    fi
+
+    # Download documentation and static analysis dependencies only if explicitly requested
+    if [ "$WITH_DEV" = true ]; then
+        echo "2. Downloading development & doc dependencies..."
+        $PIP_CMD download \
+            -d "$WHEELS_DIR" \
+            pytest \
+            pytest-cov \
+            ruff \
+            mypy \
+            mkdocs \
+            mkdocs-material \
+            mkdocstrings \
+            mkdocstrings-python
+    fi
 fi
 
-# Download documentation and static analysis dependencies
-echo "2. Downloading development & doc dependencies..."
-$PIP_CMD download \
-    -d "$WHEELS_DIR" \
-    pytest \
-    pytest-cov \
-    ruff \
-    mypy \
-    mkdocs \
-    mkdocs-material \
-    mkdocstrings \
-    mkdocstrings-python
-
-# Bundle source code and downloaded wheels together
+# Bundle source code and downloaded wheels together under a parent folder to avoid tarbombs
 echo "3. Creating offline bundle archive ($TAR_FILE)..."
 if command -v tar >/dev/null 2>&1; then
-    tar --exclude="*.venv*" \
-        --exclude="*__pycache__*" \
-        --exclude="*.git*" \
-        --exclude="*.ruff_cache*" \
-        --exclude="*.mypy_cache*" \
-        --exclude="*.pytest_cache*" \
-        -czf "$TAR_FILE" \
-        "$WHEELS_DIR" \
-        pyproject.toml \
-        README.md \
-        ROADMAP.md \
-        CHANGELOG.md \
-        src/ \
-        tests/ \
-        scripts/
+    # Create temporary directory layout to ensure all files extract into a parent folder
+    TEMP_BUNDLE_DIR="dv-agentic-system"
+    mkdir -p "$TEMP_BUNDLE_DIR"
+
+    # Copy files/folders to the temporary directory
+    cp -r "$WHEELS_DIR" "$TEMP_BUNDLE_DIR/"
+    cp pyproject.toml "$TEMP_BUNDLE_DIR/"
+    cp README.md "$TEMP_BUNDLE_DIR/"
+    cp -r src "$TEMP_BUNDLE_DIR/"
+    cp -r scripts "$TEMP_BUNDLE_DIR/"
+
+    # Clean up any potential local virtualenvs or caches in the copied folders
+    find "$TEMP_BUNDLE_DIR" -type d -name ".venv" -exec rm -rf {} + 2>/dev/null || true
+    find "$TEMP_BUNDLE_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+    tar -czf "$TAR_FILE" "$TEMP_BUNDLE_DIR"
+    rm -rf "$TEMP_BUNDLE_DIR"
+
     echo "✅ Success! Pinned tarball created at: $TAR_FILE"
 else
     echo "❌ Error: 'tar' utility not found. Please compress the files manually."

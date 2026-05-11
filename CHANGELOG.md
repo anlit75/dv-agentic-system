@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-11
+
 ### Added
 
-- `scripts/offline-download.sh`: Added an automated dependency downloader script for internet-connected hosts that fetches necessary wheels and bundles the source tree directly into `dv-agentic-system.tar.gz`.
-- `scripts/offline-install.sh`: Added a robust, cross-platform offline installation script for air-gapped target machines (Linux & Windows Git Bash) that automates venv setup, offline local installations, and sub-agent prompt template compilation.
+- `scripts/offline-download.sh`: Added an automated dependency downloader script for internet-connected hosts that compiles a lean package tree (via `uv pip compile`), downloads dependencies as wheels (including `hatchling`, `pip`, `setuptools`, and `wheel`), and nests files cleanly under a `dv-agentic-system/` parent directory before archiving into `dv-agentic-system.tar.gz` to prevent tarbombing.
+- `scripts/offline-install.sh`: Added a bulletproof, cross-platform offline installation script for air-gapped target machines (Linux & Windows Git Bash) that automates venv setup, offline local installations, and sub-agent prompt template compilation.
+- `README.md`: Added **Option C: Air-Gapped Offline Setup** quickstart guide with optimized download and installation one-liners.
 
 ### Changed
 
+- `scripts/offline-install.sh`: Enhanced Python executable detection to verify execution capability (via `python -c "import sys"`), preventing crashes and silent aborts caused by Windows Store dummy Python aliases (which return exit code 49).
+- `scripts/offline-install.sh`: Switched from editable installation (`-e .`) to standard installation (`.`) to fully bypass the `editables` packaging requirement of the hatchling build backend, ensuring bulletproof offline pip compilation.
 - `pyproject.toml`: Refactored `cocotb` and `pyuvm` from core `dependencies` to `[project.optional-dependencies]` (extras), ensuring a lightweight, pure enterprise UVM environment by default.
 - `.gitignore`: Configured ignores to mask local wheel downloads (`dv_wheels/`) and all archive bundles (`*.tar.gz`).
 
@@ -197,7 +202,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.0...v0.4.1

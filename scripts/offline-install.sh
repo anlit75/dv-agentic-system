@@ -16,13 +16,27 @@ if [ ! -d "$WHEELS_DIR" ]; then
     exit 1
 fi
 
+# Verify we are in the project root directory (contains pyproject.toml)
+if [ ! -f "pyproject.toml" ]; then
+    echo "❌ Error: 'pyproject.toml' not found in current working directory."
+    echo "   Please run this script from the project root directory."
+    exit 1
+fi
+
 # Detect available Python command (prefer python3, fallback to python)
-if command -v python3 >/dev/null 2>&1; then
+# We test if the commands can actually execute 'import sys' to filter out Windows Store dummy aliases (which return exit code 49)
+set +e
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1 && python3 -c "import sys" >/dev/null 2>&1; then
     PYTHON_CMD="python3"
-elif command -v python >/dev/null 2>&1; then
+elif command -v python >/dev/null 2>&1 && python -c "import sys" >/dev/null 2>&1; then
     PYTHON_CMD="python"
-else
-    echo "❌ Error: Neither python3 nor python was found in your PATH."
+fi
+set -e
+
+if [ -z "$PYTHON_CMD" ]; then
+    echo "❌ Error: A functional Python interpreter (python3 or python) was not found in your PATH."
+    echo "   Please install Python (>= 3.8) and add it to your PATH."
     exit 1
 fi
 
@@ -48,9 +62,9 @@ fi
 echo "3. Upgrading pip and packaging utilities..."
 pip install --no-index --find-links="$WHEELS_DIR" --upgrade pip setuptools wheel || true
 
-# 4. Perform offline installation of dv-agentic-system in editable mode
+# 4. Perform offline installation of dv-agentic-system
 echo "4. Installing dv-agentic-system and dependencies..."
-pip install --no-index --find-links="$WHEELS_DIR" -e .
+pip install --no-index --find-links="$WHEELS_DIR" .
 
 # 5. Compile and install sub-agent prompt templates (use standard python within venv)
 echo "5. Compiling and installing sub-agent prompt configurations..."
