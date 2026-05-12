@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 from .bug_classifier import BugClassifierAgent, ClassificationResult
 from .code_generator import CodeGeneratorAgent, CodeReport, CodeTask, FileSpec
 from .coverage_analyst import CoverageAnalystAgent, CoverageSummary

@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Project configuration loading for the dv-agentic-system.
 
 Primary entry point::

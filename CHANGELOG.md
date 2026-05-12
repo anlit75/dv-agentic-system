@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `.pre-commit-config.yaml`: Integrated the `add-license-header` hook to enforce SPDX license headers automatically across Python (`.py`), Shell (`.sh`), and TypeScript (`.ts`) source files.
+
+### Changed
+
+- `README.md`: Upgraded the static version badge to a dynamic, Shields.io-powered GitHub Release badge that automatically syncs with the latest published version and links directly to the releases page.
+- Codebase-wide: Applied standardized SPDX-compliant copyright headers (`SPDX-FileCopyrightText` and `SPDX-License-Identifier`) recursively across all source code files.
+
 ## [0.6.1] - 2026-05-12
 
 ### Fixed

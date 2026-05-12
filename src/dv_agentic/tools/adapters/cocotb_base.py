@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Base class for cocotb.runner based simulator adapters."""
 
 import logging

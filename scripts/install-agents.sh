@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 # scripts/install-agents.sh
 #
 # Generates enriched .agent/subagents/*.md files and creates symlinks

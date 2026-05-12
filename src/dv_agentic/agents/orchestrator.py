@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Orchestrator agent.
 
 Routes tasks to the appropriate workflow and coordinates sub-agent handoffs.

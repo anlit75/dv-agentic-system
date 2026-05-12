@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Coverage analysis agent.
 
 The agent retrieves a coverage DB for a given job ID, compares the

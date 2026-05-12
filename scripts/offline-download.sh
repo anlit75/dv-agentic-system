@@ -1,4 +1,11 @@
 #!/bin/bash
+
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 # scripts/offline-download.sh
 # Run this on an internet-connected machine to fetch all necessary dependencies.
 set -e

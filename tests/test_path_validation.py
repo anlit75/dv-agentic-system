@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Path validation tests for CodeGeneratorAgent.
 
 These tests cover the TB boundary enforcement added to _validate_path()

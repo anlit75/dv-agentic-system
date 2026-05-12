@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Adapter for Icarus Verilog simulator (External/Open-source environment)."""
 
 from .cocotb_base import CocotbBaseAdapter

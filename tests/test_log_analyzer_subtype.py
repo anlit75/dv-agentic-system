@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Tests for failure_subtype classification added to LogAnalyzerAgent.
 
 These tests extend the existing test_log_analyzer.py coverage to verify the

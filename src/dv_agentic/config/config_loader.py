@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Project configuration loader.
 
 Reads ``.agent/project.yaml`` and the referenced team/IP-type profiles,

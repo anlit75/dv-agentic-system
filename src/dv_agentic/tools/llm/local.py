@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Internal LLM client for the local/internal endpoint (OpenAI-compatible).
 
 Reads LOCAL_LLM_BASE_URL and LOCAL_LLM_API_KEY from the environment,

@@ -8,6 +8,17 @@ repos:
         args: [--unsafe]
       - id: check-added-large-files
 
+  - repo: https://github.com/arkinmodi/add-license-header
+    rev: v2.4.1
+    hooks:
+      - id: add-license-header
+        types_or: [python, shell, ts]
+        args:
+          - --license
+          - |
+            SPDX-FileCopyrightText: 2026 Ting-An Cheng
+            SPDX-License-Identifier: MIT
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.9.9
     hooks:

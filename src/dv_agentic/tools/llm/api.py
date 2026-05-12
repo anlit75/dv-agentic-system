@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """External LLM client for the LLM Messages API.
 
 Uses only Python stdlib (urllib) — no third-party SDK required.

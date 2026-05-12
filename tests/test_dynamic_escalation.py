@@ -1,3 +1,9 @@
+# LICENSE HEADER MANAGED BY add-license-header
+#
+# SPDX-FileCopyrightText: 2026 Ting-An Cheng
+# SPDX-License-Identifier: MIT
+#
+
 """Tests for the dynamic escalation logic added to OrchestratorAgent.
 
 The Orchestrator now tracks ``failure_subtype`` across consecutive
