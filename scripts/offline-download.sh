@@ -138,6 +138,9 @@ if command -v tar >/dev/null 2>&1; then
     cp -r "$WHEELS_DIR" "$TEMP_BUNDLE_DIR/"
     cp pyproject.toml "$TEMP_BUNDLE_DIR/"
     cp README.md "$TEMP_BUNDLE_DIR/"
+    if [ -f "LICENSE" ]; then
+        cp LICENSE "$TEMP_BUNDLE_DIR/"
+    fi
     cp -r src "$TEMP_BUNDLE_DIR/"
     cp -r scripts "$TEMP_BUNDLE_DIR/"
 

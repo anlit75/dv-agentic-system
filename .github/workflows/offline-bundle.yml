@@ -1,0 +1,87 @@
+name: Build Offline Bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      with_dev:
+        description: 'Include development and doc dependencies (--with-dev)'
+        type: boolean
+        default: false
+      with_cocotb:
+        description: 'Include cocotb & pyuvm verification dependencies (--with-cocotb)'
+        type: boolean
+        default: false
+      python_version:
+        description: 'Target Python Version for RH8'
+        type: choice
+        options:
+          - '3.11'
+          - '3.12'
+        default: '3.11'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-bundle:
+    name: Build Offline Tarball
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ github.event.inputs.python_version || '3.11' }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Run Offline Downloader
+        run: |
+          chmod +x scripts/offline-download.sh
+
+          # Build arguments
+          ARGS=""
+          if [ "${{ github.event.inputs.with_dev }}" = "true" ]; then
+            ARGS="$ARGS --with-dev"
+          fi
+          if [ "${{ github.event.inputs.with_cocotb }}" = "true" ]; then
+            ARGS="$ARGS --with-cocotb"
+          fi
+
+          ./scripts/offline-download.sh $ARGS
+
+          # If triggered by a tag push, duplicate the bundle with a version-tagged filename for the release asset
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            PYTHON_VER="${{ github.event.inputs.python_version || '3.11' }}"
+            cp dv-agentic-system.tar.gz "dv-agentic-system-${TAG_NAME}-offline-py${PYTHON_VER}.tar.gz"
+          fi
+
+      - name: Upload Offline Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dv-agentic-system-offline-py${{ github.event.inputs.python_version || '3.11' }}
+          path: dv-agentic-system.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Create GitHub Release and Upload Asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dv-agentic-system-*-offline-py*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
