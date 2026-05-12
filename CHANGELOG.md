@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-05-12
+
+### Fixed
+
+- `scripts/offline-download.sh` / `.github/workflows/offline-bundle.yml`: Resolved a critical compatibility issue where hardcoded Python 3.11 dependency wheels in the automated offline bundle made the installation fail or unusable on target Red Hat Enterprise Linux 8 (RH8) environments using other Python versions (such as Python 3.12). Refactored build workflows and release assets to compile and bundle dependencies dynamically matching the target Python version.
+- `scripts/offline-install.sh`: Corrected the minimum Python environment version requirements check output from `>= 3.8` to `>= 3.11` to match the actual package metadata constraint in `pyproject.toml`, preventing confusing installation errors on air-gapped target hosts.
+
 ## [0.6.0] - 2026-05-11
 
 ### Added

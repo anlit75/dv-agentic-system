@@ -36,7 +36,7 @@ set -e
 
 if [ -z "$PYTHON_CMD" ]; then
     echo "❌ Error: A functional Python interpreter (python3 or python) was not found in your PATH."
-    echo "   Please install Python (>= 3.8) and add it to your PATH."
+    echo "   Please install Python (>= 3.11) and add it to your PATH."
     exit 1
 fi
 

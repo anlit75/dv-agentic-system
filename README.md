@@ -2,7 +2,7 @@
 
 [![CI Status](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml/badge.svg?style=flat-square)](https://github.com/anlit75/dv-agentic-system/actions/workflows/ci.yml)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/anlit75/dv-agentic-system)
-![Version](https://img.shields.io/badge/version-v0.6.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.6.1-blue?style=flat-square)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 
 ## ⚡ The DV Engineer's Productivity Problem
