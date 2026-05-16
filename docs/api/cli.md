@@ -56,3 +56,32 @@ These CLI handlers map command-line arguments to agent runs.
 ::: dv_agentic.cli.install_agents
     options:
       heading_level: 4
+
+---
+
+## Wiki Knowledge Base Commands
+
+These commands manage the persistent LLM Wiki knowledge base introduced in v0.7.0.
+Wiki integration must be enabled via `wiki.enabled: true` in `.agent/project.yaml`.
+
+### Wiki Ingest Service
+Ingest runs inside agents (`LogAnalyzerAgent`, `BugClassifierAgent`, `ReporterAgent`); there is no separate `wiki_ingest` CLI entry point.
+
+::: dv_agentic.wiki.ingest
+    options:
+      heading_level: 4
+
+### Wiki Lint Command
+::: dv_agentic.cli.wiki_lint
+    options:
+      heading_level: 4
+
+### Wiki Search Index
+::: dv_agentic.wiki.search
+    options:
+      heading_level: 4
+
+### Wiki Build Command
+::: dv_agentic.cli.wiki_build
+    options:
+      heading_level: 4

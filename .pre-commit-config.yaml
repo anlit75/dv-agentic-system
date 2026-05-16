@@ -1,11 +1,16 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      # GitHub Actions and agents prompts use YAML tags / constructors PyYAML treats as "unsafe"
+      # (not arbitrary code—just non-standard schema). Safe mode fails on those files; --unsafe
+      # still catches syntax errors while allowing those constructs.
       - id: check-yaml
         args: [--unsafe]
+      - id: check-toml
+      - id: check-merge-conflict
       - id: check-added-large-files
 
   - repo: https://github.com/arkinmodi/add-license-header
@@ -19,8 +24,9 @@ repos:
             SPDX-FileCopyrightText: 2026 Ting-An Cheng
             SPDX-License-Identifier: MIT
 
+  # Keep rev aligned with ruff in uv.lock / pyproject tooling (same linter behavior locally vs hooks).
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.9
+    rev: v0.15.12
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]

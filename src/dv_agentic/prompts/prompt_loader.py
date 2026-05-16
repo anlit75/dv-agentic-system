@@ -7,7 +7,14 @@
 import re
 from pathlib import Path
 
+# Avoid circular import: WikiConfig lives in wiki.manager which has no
+# dependency on prompts. Import lazily in _load_wiki_context().
+from typing import TYPE_CHECKING
+
 from .context import ProjectContext, SessionState
+
+if TYPE_CHECKING:
+    from ..wiki.manager import WikiConfig
 
 
 class PromptLoader:
@@ -24,6 +31,7 @@ class PromptLoader:
         prompts_dir: Path | str | None = None,
         project_config: ProjectContext | None = None,
         session: SessionState | None = None,
+        wiki_config: "WikiConfig | None" = None,
     ) -> None:
         """Initialize the PromptLoader.
 
@@ -32,6 +40,8 @@ class PromptLoader:
                 Defaults to the package-relative prompts/ directory.
             project_config: Optional project configuration object for Level 1/2 injection.
             session: Optional session state object for Level 2 injection.
+            wiki_config: Optional wiki integration config.  When enabled,
+                wiki knowledge overwrites static profile placeholders.
         """
         if prompts_dir is None:
             # Discovery logic:
@@ -55,6 +65,7 @@ class PromptLoader:
 
         self.project_config = project_config
         self.session = session
+        self.wiki_config = wiki_config
 
     def load(self, agent_name: str) -> str:
         """Return the final system prompt string for the given agent.
@@ -140,7 +151,37 @@ class PromptLoader:
                 f"Budget remaining: {s.budget_remaining or 'N/A'}"
             )
 
+        # Wiki knowledge overlays static profile (wiki wins when non-empty)
+        if self.wiki_config and self.wiki_config.enabled:
+            for key, value in self._load_wiki_context().items():
+                if value:
+                    context[key] = value
+
         return context
+
+    def _load_wiki_context(self) -> dict[str, str]:
+        """Query the wiki and return placeholder-ready strings.
+
+        Degrades gracefully — returns an empty dict on any error so a
+        missing or broken wiki never prevents prompt loading.
+        """
+        try:
+            from ..wiki.query import WikiQueryService
+
+            query = WikiQueryService(self.wiki_config)  # type: ignore[arg-type]
+            return {
+                "KNOWN_ERROR_PATTERNS": query.get_known_error_patterns(top_k=5),
+                "KNOWN_RTL_BUGS": query.get_known_rtl_bugs(top_k=5),
+                "COVERAGE_HOLE_HISTORY": query.get_coverage_history(top_k=3),
+                "WIKI_PATTERN_SUMMARY": query.get_pattern_summary(),
+            }
+        except Exception:
+            import logging as _logging
+
+            _logging.getLogger(__name__).debug(
+                "PromptLoader: wiki context loading failed (non-fatal)", exc_info=True
+            )
+            return {}
 
     def _inject(self, template: str, context: dict[str, str]) -> str:
         """Replace {{KEY}} with context[KEY], remove unmatched placeholder lines."""

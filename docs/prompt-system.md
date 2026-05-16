@@ -45,9 +45,11 @@ visually obvious in standalone use that the section is absent/empty.
 | `{{IP_TYPE_RULES}}` | `profiles/ip-types/{ip}/protocol_rules.yaml` | code_generator, bug_classifier, coverage_analyst |
 | `{{VIP_INDEX}}` | `profiles/teams/{team}/vip_index.yaml` | code_generator |
 | `{{PROJECT_VPLAN_SUMMARY}}` | `.agent/vplan.yaml` (summarised) | coverage_analyst, spec_analyst |
-| `{{KNOWN_ERROR_PATTERNS}}` | `profiles/` error DB | log_analyzer |
-| `{{KNOWN_RTL_BUGS}}` | `.agent/memory.db` | log_analyzer, bug_classifier |
-| `{{SESSION_STATE}}` | `.agent/memory.db` current session | all agents |
+| `{{KNOWN_ERROR_PATTERNS}}` | wiki `patterns/` (wiki-first) → `profiles/` error DB (fallback) | log_analyzer, bug_classifier |
+| `{{KNOWN_RTL_BUGS}}` | wiki `bugs/` (wiki-first) → `.agent/tasks/` (fallback) | log_analyzer, bug_classifier |
+| `{{COVERAGE_HOLE_HISTORY}}` | wiki `coverage/` (requires `wiki.enabled: true`) | coverage_analyst |
+| `{{WIKI_PATTERN_SUMMARY}}` | wiki `patterns/` statistics (requires `wiki.enabled: true`) | code_generator |
+| `{{SESSION_STATE}}` | `.agent/tasks/{task_id}.yaml` current session | all agents |
 
 If a placeholder has no data to inject (e.g. no team profile configured),
 the PromptLoader removes the placeholder line entirely rather than leaving

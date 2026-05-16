@@ -241,14 +241,19 @@ def _install_asset_to_targets(
 
 
 def _install_assets(
-    src_dir: Path, asset_type: str, project_root: Path, force: bool = False
+    src_dir: Path,
+    asset_type: str,
+    project_root: Path,
+    force: bool = False,
+    targets_override: dict[str, list[str]] | None = None,
 ) -> None:
     """Discover and install tools or skills from *src_dir* to the configured targets."""
     if not src_dir.is_dir():
         return
 
     logger.info("Discovering %s in %s...", asset_type, src_dir)
-    targets = [project_root / t for t in _TARGETS.get(asset_type, [])]
+    target_map = targets_override if targets_override is not None else _TARGETS
+    targets = [project_root / t for t in target_map.get(asset_type, [])]
     for target in targets:
         target.mkdir(parents=True, exist_ok=True)
 
@@ -309,34 +314,75 @@ def _write_opencode_agent_file(
     logger.info("  wrote %s", target.relative_to(project_root))
 
 
+_CLAUDE_TARGETS: dict[str, list[str]] = {
+    "agents": [".claude/agents"],
+    "tools": [".claude/tools"],
+    "skills": [".claude/skills"],
+}
+_OPENCODE_TARGETS: dict[str, list[str]] = {
+    "agents": [".opencode/agents"],
+    "tools": [".opencode/tools"],
+    "skills": [".opencode/skills"],
+}
+
+
+def _merged_targets(target: str) -> dict[str, list[str]]:
+    """Return the effective target-directory mapping for the requested *target*."""
+    if target == "claude":
+        return _CLAUDE_TARGETS
+    if target == "opencode":
+        return _OPENCODE_TARGETS
+    # all
+    return _TARGETS
+
+
 def install(
     project_root: Path,
     project_config_path: str | None = None,
     profiles_dir: str | None = None,
     force: bool = False,
+    target: str = "opencode",
 ) -> int:
-    """Standardized installer main entry."""
+    """Standardized installer main entry.
+
+    Args:
+        target: Which platform(s) to install to — ``"claude"``, ``"opencode"``
+            (default), or ``"all"``.
+    """
     project_ctx = _load_project_context(project_config_path, profiles_dir, project_root)
 
     from dv_agentic.prompts.prompt_loader import PromptLoader
 
     loader = PromptLoader(project_config=project_ctx)
 
-    _install_assets(project_root / "tools", "tools", project_root, force=force)
-    _install_assets(project_root / "skills", "skills", project_root, force=force)
+    effective_targets = _merged_targets(target)
+    _install_assets(
+        project_root / "tools",
+        "tools",
+        project_root,
+        force=force,
+        targets_override=effective_targets,
+    )
+    _install_assets(
+        project_root / "skills",
+        "skills",
+        project_root,
+        force=force,
+        targets_override=effective_targets,
+    )
 
     # Agent directories: Claude Code and OpenCode each receive their own format.
     # .claude/agents/ → Claude Code YAML front matter
     # .opencode/agents/ → original OpenCode YAML front matter (from template)
-    claude_agent_dir = project_root / ".claude" / "agents"
-    opencode_agent_dir = project_root / ".opencode" / "agents"
-    claude_agent_dir.mkdir(parents=True, exist_ok=True)
-    opencode_agent_dir.mkdir(parents=True, exist_ok=True)
-
-    agent_writers: list[tuple[Path, Any]] = [
-        (claude_agent_dir, _write_agent_file),
-        (opencode_agent_dir, _write_opencode_agent_file),
-    ]
+    agent_writers: list[tuple[Path, Any]] = []
+    if target in ("claude", "all"):
+        claude_agent_dir = project_root / ".claude" / "agents"
+        claude_agent_dir.mkdir(parents=True, exist_ok=True)
+        agent_writers.append((claude_agent_dir, _write_agent_file))
+    if target in ("opencode", "all"):
+        opencode_agent_dir = project_root / ".opencode" / "agents"
+        opencode_agent_dir.mkdir(parents=True, exist_ok=True)
+        agent_writers.append((opencode_agent_dir, _write_opencode_agent_file))
 
     errors = 0
     written = 0
@@ -347,15 +393,15 @@ def install(
         any_error = False
 
         for agent_dir, write_fn in agent_writers:
-            target = agent_dir / f"{agent_name}.md"
+            agent_md = agent_dir / f"{agent_name}.md"
 
-            if target.exists() and not force:
-                logger.info("  skip  %s (exists)", target.relative_to(project_root))
+            if agent_md.exists() and not force:
+                logger.info("  skip  %s (exists)", agent_md.relative_to(project_root))
                 skipped += 1
                 continue
 
             try:
-                write_fn(agent_name, loader, target, project_root)
+                write_fn(agent_name, loader, agent_md, project_root)
                 any_written = True
             except FileNotFoundError:
                 logger.warning("  warn %s — prompt template not found, skipping", agent_name)
@@ -386,7 +432,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description=(
             "Standardized Agent/Tool/Skill installer. "
             "Discovers agents/, tools/, and skills/ in the project root and "
-            "installs them to .claude/ and .opencode/ directories."
+            "installs them under .claude/ and/or .opencode/ depending on --target."
         ),
     )
     p.add_argument(
@@ -419,6 +465,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Overwrite existing files in target directories.",
     )
     p.add_argument(
+        "--target",
+        choices=["claude", "opencode", "all"],
+        default="opencode",
+        metavar="TARGET",
+        help=("Which platform(s) to install to: claude, opencode (default), or all."),
+    )
+    p.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -447,6 +500,7 @@ def main() -> None:
         project_config_path=args.project_config,
         profiles_dir=args.profiles_dir,
         force=args.force,
+        target=args.target,
     )
     sys.exit(rc)
 

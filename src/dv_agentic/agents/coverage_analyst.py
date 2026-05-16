@@ -19,6 +19,8 @@ from dataclasses import dataclass
 
 from ..tools.interface import CoverageTool
 from ..tools.models import CoverageDB
+from ..wiki.manager import WikiConfig
+from ..wiki.query import WikiQueryService
 from .base import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,7 @@ class CoverageSummary:
     overall_pct: float
     threshold_pct: float
     below_threshold: bool
+    history_context: str = ""
 
     def to_str(self) -> str:
         status = "BELOW THRESHOLD ⚠" if self.below_threshold else "OK ✓"
@@ -50,6 +53,10 @@ class CoverageSummary:
                 f"gap        : {gap:.2f}% needed to reach threshold",
                 "action     : Coverage hole analysis required (Phase 3b LLM agent)",
             ]
+
+        if self.history_context:
+            lines.append("\n" + self.history_context)
+
         return "\n".join(lines)
 
 
@@ -64,6 +71,7 @@ class CoverageAnalystAgent(BaseAgent):
         coverage: A ``CoverageTool`` adapter (IMC or pyuvm).
         threshold: Minimum acceptable overall coverage percentage.
             Defaults to 90.0.
+        wiki_config: Optional config to query coverage history.
     """
 
     def __init__(
@@ -71,10 +79,12 @@ class CoverageAnalystAgent(BaseAgent):
         config: AgentConfig,
         coverage: CoverageTool,
         threshold: float = 90.0,
+        wiki_config: WikiConfig | None = None,
     ) -> None:
         super().__init__(config)
         self.cov = coverage
         self.threshold = threshold
+        self.wiki_cfg = wiki_config
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -123,10 +133,17 @@ class CoverageAnalystAgent(BaseAgent):
             db.overall_percentage,
             self.threshold,
         )
+
+        history_ctx = ""
+        if self.wiki_cfg and self.wiki_cfg.enabled:
+            query_svc = WikiQueryService(self.wiki_cfg)
+            history_ctx = query_svc.get_coverage_history(top_k=5)
+
         return CoverageSummary(
             job_id=job_id,
             db_path=db.path,
             overall_pct=db.overall_percentage,
             threshold_pct=self.threshold,
             below_threshold=db.overall_percentage < self.threshold,
+            history_context=history_ctx,
         )

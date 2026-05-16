@@ -117,15 +117,22 @@ dv-agentic-system/
 │
 ├── .agent/                        # ← Config & session state for the agentic layer
 │   │
-│   ├── project.yaml               # Project config (compose profile, set budgets)
+│   ├── project.yaml               # Project config (compose profile, set budgets, wiki settings)
 │   │
 │   ├── vplan.yaml                 # SPEC Analyst generated / manually maintained vplan
 │   │
-│   ├── memory.db                  # SQLite, stores session state, known bugs
+│   ├── tasks/                     # Task records (includes agent trace for debug)
+│   │   ├── {task_id}.yaml         # In-progress or completed tasks
+│   │   └── ...
 │   │
-│   └── tasks/                     # Task records (includes agent trace for debug)
-│       ├── {task_id}.yaml         # In-progress or completed tasks
-│       └── ...
+│   └── wiki/                      # LLM Wiki knowledge base (git-tracked, optional: wiki.enabled)
+│       ├── WIKI.md                # Schema declaration (bootstrap file)
+│       ├── index.md               # All-pages index (LLM-updated after every ingest)
+│       ├── log.md                 # Append-only operation log
+│       ├── bugs/                  # Confirmed RTL and TB bug pages
+│       ├── patterns/              # Known failure pattern pages (maps to LogAnalyzer._PATTERNS)
+│       ├── coverage/              # Coverage hole analysis pages
+│       └── specs/                 # Spec clarification pages
 │
 ├── tools/                         # Standard root copy of OpenCode adapters + `_run_agent.sh` (source for installer)
 ├── skills/                        # Optional skill bundles (mirrored into tool-specific dirs)
@@ -175,6 +182,15 @@ guardrails:
   rtl_bug_require_review:    true
   code_change_require_review: true  # diff > 50 lines
   classifier_confidence_min:  0.75
+
+wiki:
+  enabled: false                   # Set to true to enable the LLM Wiki knowledge base
+  wiki_dir: ".agent/wiki"
+  max_context_tokens: 2000
+  auto_ingest: true
+  search_backend: "bm25"
+  lint_on_startup: true
+  lint_interval_sessions: 10
 ```
 
 ## Subagent Discovery Mechanism

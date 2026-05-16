@@ -48,6 +48,7 @@ graph TD
 * [**System Overview**](agentic-system.md): Read about the high-level workflows and multi-agent topology.
 * [**Structure & Design**](agentic-system-structure.md): Deep dive into classes, states, and the orchestrator decision lifecycle.
 * [**Prompt System**](prompt-system.md): Learn how templates and system instructions are loaded dynamically based on task context.
+* [**LLM Wiki**](llm-wiki.md): Architecture and usage guide for the Git-versioned Markdown knowledge base that compounds verification insights across sessions.
 
 ### ⚙️ API Reference
 * [**Agents API**](api/agents.md): Reference details for orchestrator and sub-agents.
