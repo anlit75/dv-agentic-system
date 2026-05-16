@@ -26,7 +26,7 @@ export default tool({
       .string()
       .default("")
       .describe(
-        "Where to write the report, relative to worktree root. " +
+        "Where to write the report, relative to project root. " +
         "Supports {task_id} placeholder. Leave empty to skip writing."
       ),
   },

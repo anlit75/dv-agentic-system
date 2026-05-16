@@ -16,7 +16,7 @@ export default tool({
   args: {
     log_file: tool.schema
       .string()
-      .describe("Path to the simulation log file, relative to the worktree root."),
+      .describe("Path to the simulation log file, relative to the project root."),
   },
   async execute(args, context) {
     const script = path.join(import.meta.dir, "_run_agent.sh")

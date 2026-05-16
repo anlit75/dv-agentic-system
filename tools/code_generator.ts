@@ -10,7 +10,7 @@ import path from "path"
 export default tool({
   description:
     "Generate or modify SystemVerilog / UVM code through a multi-turn LLM dialogue. " +
-    "Writes files directly into the current git branch under the worktree. " +
+    "Writes files directly into the current git branch under the project root. " +
     "Use this when you need new sequences, scoreboards, coverage groups, or bug fixes " +
     "targeting a specific coverage bin or simulation failure. " +
     "Returns a Code Generation Report listing files written and final confidence.",

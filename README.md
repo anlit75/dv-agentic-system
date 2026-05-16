@@ -141,7 +141,8 @@ See [`sample/`](sample/) for complete working examples of all three layers.
 Generate prompt files enriched with your org's profile and install them to your AI coding tool's expected path:
 
 ```bash
-# Generate and install to .claude/agents/ and .cursor/rules/
+# Generate and install agents under .claude/agents/ (Claude Code) and .opencode/agents/ (OpenCode);
+# mirror repo-root tools/ (including _run_agent.sh) and skills/ into each tool’s discovery paths
 uv run python -m dv_agentic.cli.install_agents
 
 # macOS/Linux shell wrapper
@@ -149,7 +150,7 @@ uv run python -m dv_agentic.cli.install_agents
 ```
 
 > [!NOTE]\
-> On Windows, symlink creation requires **Administrator Privileges** or **Developer Mode** enabled in Windows Settings. Without either, prompt files are still written to `.agent/subagents/` — only the symlinks are skipped.
+> On Windows, creating symlinks for mirrored `tools/` / `skills/` assets may require **Administrator Privileges** or **Developer Mode**. If symlinks fail, the installer falls back to copying files; generated agent `.md` files are always written directly.
 
 #### 🛡️ 4. Static Analysis and Code Quality
 

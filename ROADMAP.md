@@ -129,11 +129,11 @@
 
 ## Phase 7 — Subagent Installation Scripts and Tool Integration ✅ (Completed)
 
-**Objective**: Allow users to symlink subagent `.md` files to the expected paths of Claude Code / Cursor / OpenCode with one click.
+**Objective**: Install sub-agent `.md` files and mirrored `tools/` / `skills/` assets into Claude Code (`.claude/`) and OpenCode (`.opencode/`) discovery paths.
 
 | Item | Status | Description |
 |------|------|------|
-| `.agent/subagents/` canonical `.md` generation logic | ✅ | Composed from base + patch by prompt loader inside install_agents.py |
+| Dual-format agent installs (`.claude/agents/`, `.opencode/agents/`) | ✅ | Composed from `*.tmpl.md` via PromptLoader inside `install_agents.py`; OpenCode YAML preserved for OpenCode |
 | `scripts/install-agents.sh` | ✅ | Cross-platform bash script supporting Windows with auto-detection of python and virtualenvs |
 | Post-installation verification script | ✅ | Generates a run-time installation validation and checks |
 

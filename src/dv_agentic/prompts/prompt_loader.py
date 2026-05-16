@@ -34,9 +34,21 @@ class PromptLoader:
             session: Optional session state object for Level 2 injection.
         """
         if prompts_dir is None:
-            self.prompts_dir = Path(__file__).parent
-            if self.prompts_dir.name != "prompts":
-                msg = f"PromptLoader default path assumption broken: {self.prompts_dir}"
+            # Discovery logic:
+            # 1. Check if project_config provides a project_root with an agents/ folder
+            # 2. Fall back to package-relative prompts/ directory
+            package_default = Path(__file__).parent
+            project_agents = None
+            # Level 1: Project-level overrides (if project_root is provided)
+            if project_config and project_config.project_root:
+                project_agents_dir = Path(project_config.project_root) / "agents"
+                if project_agents_dir.is_dir():
+                    project_agents = project_agents_dir
+
+            self.prompts_dir = project_agents or package_default
+
+            if self.prompts_dir.name not in ("prompts", "agents"):
+                msg = f"PromptLoader path discovery failed: {self.prompts_dir}"
                 raise RuntimeError(msg)
         else:
             self.prompts_dir = Path(prompts_dir)

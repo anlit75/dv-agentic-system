@@ -7,13 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-05-16
+
 ### Added
 
+- `ProjectContext` & `PromptLoader`: Implemented **Standardized Agent Discovery Paths** by refactoring core logic to use a canonical `project_root` convention.
+- **Root Asset Directories**: Established `agents/`, `tools/`, and `skills/` at the project root as the industry-standard discovery locations for Claude Code and OpenCode.
+- **Canonical tools directory**: Moved OpenCode TypeScript adapters plus `_run_agent.sh` under repository root `tools/` for installer mirroring into `.claude/tools/` and `.opencode/tools/`.
+- `scripts/install-agents.sh`: Implemented a **Tiered Execution Strategy** with automated fallback logic (`uv` -> `virtualenv` -> `system python`) to ensure reliability in both connected and restricted environments.
+- `tests/test_install_agents.py`: Tests for mirrored tools/skills assets and dual-format agent file generation.
 - `.pre-commit-config.yaml`: Integrated the `add-license-header` hook to enforce SPDX license headers automatically across Python (`.py`), Shell (`.sh`), and TypeScript (`.ts`) source files.
 
 ### Changed
 
-- `README.md`: Upgraded the static version badge to a dynamic, Shields.io-powered GitHub Release badge that automatically syncs with the latest published version and links directly to the releases page.
+- `scripts/offline-download.sh`: Enhanced the offline bundling logic to include the new standard asset directories (`agents/`, `tools/`, `skills/`), ensuring complete functional parity in air-gapped deployments.
+- `src/dv_agentic/cli/install_agents.py`: Refactored the CLI installer to prioritize project-level asset discovery, renamed legacy `worktree` references to `project_root`, split helper functions for maintainability, and writes **separate** `.claude/agents/` (Claude Code YAML) and `.opencode/agents/` (OpenCode YAML preserved from `*.tmpl.md`) outputs.
+- `src/dv_agentic/cli/install_agents.py`: Mirrored `tools/` now includes underscore-prefixed helpers (e.g. `_run_agent.sh`); only dot-prefixed entries are skipped.
+- `README.md`, `docs/agentic-system-structure.md`, `docs/prompt-system.md`, `ROADMAP.md`: Documentation aligned with dual-format agents and standard discovery paths.
+- `README.md`: Upgraded the static version badge to a dynamic, Shields.io-powered GitHub Release badge that automatically syncs with the latest published version.
 - Codebase-wide: Applied standardized SPDX-compliant copyright headers (`SPDX-FileCopyrightText` and `SPDX-License-Identifier`) recursively across all source code files.
 
 ## [0.6.1] - 2026-05-12
@@ -218,7 +229,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.4.1...v0.5.0
