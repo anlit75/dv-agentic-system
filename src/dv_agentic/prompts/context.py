@@ -45,6 +45,8 @@ class VCSConfig:
 class ProjectContext:
     """Project-level rules and environment data for prompt enrichment."""
 
+    project_root: str | None = None
+
     # General Rules
     team_rules: str | None = None
     ip_type_rules: str | None = None

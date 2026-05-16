@@ -24,7 +24,7 @@ export default tool({
     output_path: tool.schema
       .string()
       .default(".agent/vplan.yaml")
-      .describe("Where to write the vplan, relative to the worktree root."),
+      .describe("Where to write the vplan, relative to the project root."),
     budget: tool.schema
       .number()
       .default(5)

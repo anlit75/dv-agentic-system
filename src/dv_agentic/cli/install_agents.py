@@ -6,8 +6,10 @@
 
 """CLI entrypoint for the agent installer.
 
-Generates enriched ``.agent/subagents/*.md`` files from the canonical prompt
-templates and creates symlinks for Claude Code, Cursor, and OpenCode.
+Materializes enriched ``.claude/agents/*.md`` (Claude Code YAML) and
+``.opencode/agents/*.md`` (OpenCode YAML preserved from templates) from
+``src/dv_agentic/prompts/*.tmpl.md``, and mirrors root ``tools/`` and ``skills/``
+into ``.claude/`` / ``.opencode/``.
 
 What it does
 ------------
@@ -16,19 +18,20 @@ What it does
 2. For each of the agents, calls :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`
    to produce an enriched prompt body (placeholders filled, unmatched removed).
 3. Strips the OpenCode-style YAML front matter from the source template.
-4. Prepends Claude Code / Cursor compatible YAML front matter.
-5. Writes to ``{worktree}/.agent/subagents/{agent}.md``.
-6. Creates symlinks in ``.claude/agents/`` and ``.cursor/rules/``.
+4. Prepends Claude Code compatible YAML front matter.
+5. Writes to ``{project_root}/.claude/agents/{agent}.md``.
+6. Writes enriched content to ``{project_root}/.opencode/agents/{agent}.md``,
+   keeping the OpenCode YAML from the template.
 
 Examples:
     .. code-block:: shell
 
         # No profile injection — raw prompts only
-        python3 -m dv_agentic.cli.install_agents --worktree /path/to/project
+        python3 -m dv_agentic.cli.install_agents --project-root /path/to/project
 
         # Full profile injection
         python3 -m dv_agentic.cli.install_agents \\
-            --worktree /path/to/project \\
+            --project-root /path/to/project \\
             --project-config .agent/project.yaml \\
             --profiles-dir ../team-profiles
 
@@ -40,13 +43,15 @@ import argparse
 import logging
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Agent metadata — defines the Claude Code / Cursor front matter per agent
+# Agent metadata — defines the Claude Code front matter per agent
 # ---------------------------------------------------------------------------
 
 # Tools listed follow Claude Code sub-agent conventions.
@@ -141,11 +146,12 @@ _AGENTS = [
     "reporter",
 ]
 
-# Symlink targets per tool
-_SYMLINK_DIRS = [
-    ".claude/agents",
-    ".cursor/rules",
-]
+# Target directories for installation
+_TARGETS = {
+    "agents": [".claude/agents", ".opencode/agents"],
+    "tools": [".opencode/tools", ".claude/tools"],
+    "skills": [".claude/skills", ".opencode/skills"],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -171,7 +177,7 @@ def _strip_front_matter(text: str) -> str:
 
 
 def _build_front_matter(name: str, meta: dict[str, object]) -> str:
-    """Build Claude Code / Cursor compatible YAML front matter block."""
+    """Build Claude Code compatible YAML front matter block."""
     description = str(meta["description"])
     tools = meta["tools"]
     tools_str = ", ".join(str(t) for t in tools) if isinstance(tools, list) else str(tools)
@@ -179,117 +185,193 @@ def _build_front_matter(name: str, meta: dict[str, object]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Core installer
+# Core installer helpers
 # ---------------------------------------------------------------------------
 
 
-def install(
-    worktree: Path,
-    project_yaml: Path | None,
-    profiles_dir: Path | None,
-    force: bool,
-) -> int:
-    """Generate enriched subagent files and create symlinks.
+def _remove_existing_link(link: Path, force: bool) -> bool:
+    """Remove an existing link or directory if *force*; return True when caller should skip.
 
-    Args:
-        worktree: Root of the verification project (contains ``.agent/``).
-        project_yaml: Optional path to ``.agent/project.yaml``.
-        profiles_dir: Optional root of the org profile repository.
-        force: Overwrite existing ``.md`` files if ``True``.
-
-    Returns:
-        Exit code: 0 on success, 1 if any agent failed.
+    Returns True  → link already exists and force is False (skip this target).
+    Returns False → link was removed (or never existed) and caller should proceed.
     """
-    # 1. Load ProjectContext (optional)
-    project_ctx = None
-    if project_yaml:
-        try:
-            from dv_agentic.config import load_project
+    if not (link.exists() or link.is_symlink()):
+        return False
+    if not force:
+        return True
+    if link.is_dir() and not link.is_symlink():
+        shutil.rmtree(link)
+    else:
+        link.unlink()
+    return False
 
-            project_ctx, _, _ = load_project(
-                project_yaml=project_yaml,
-                profiles_dir=profiles_dir,
-            )
-            logger.info("Loaded project config from %s", project_yaml)
-        except (FileNotFoundError, ValueError) as exc:
-            logger.error("Failed to load project config: %s", exc)
-            return 1
 
-    # 2. PromptLoader — uses package-default prompts directory
+def _symlink_asset(asset: Path, link: Path, project_root: Path, *, is_dir: bool) -> None:
+    """Create a relative symlink from *link* → *asset*, falling back to a copy on OSError."""
+    try:
+        rel_target = os.path.relpath(asset, start=link.parent)
+        link.symlink_to(rel_target, target_is_directory=is_dir)
+        logger.info(
+            "  symlink %s -> %s",
+            link.relative_to(project_root),
+            asset.relative_to(project_root),
+        )
+    except OSError:
+        if is_dir:
+            shutil.copytree(asset, link)
+        else:
+            shutil.copy2(asset, link)
+        logger.info(
+            "  copy    %s -> %s (symlink failed)",
+            link.relative_to(project_root),
+            asset.relative_to(project_root),
+        )
+
+
+def _install_asset_to_targets(
+    asset: Path, targets: list[Path], project_root: Path, force: bool
+) -> None:
+    """Install a single asset (file or directory) to every target directory."""
+    is_dir = asset.is_dir()
+    for t in targets:
+        link = t / asset.name
+        if _remove_existing_link(link, force):
+            continue
+        _symlink_asset(asset, link, project_root, is_dir=is_dir)
+
+
+def _install_assets(
+    src_dir: Path, asset_type: str, project_root: Path, force: bool = False
+) -> None:
+    """Discover and install tools or skills from *src_dir* to the configured targets."""
+    if not src_dir.is_dir():
+        return
+
+    logger.info("Discovering %s in %s...", asset_type, src_dir)
+    targets = [project_root / t for t in _TARGETS.get(asset_type, [])]
+    for target in targets:
+        target.mkdir(parents=True, exist_ok=True)
+
+    for asset in src_dir.iterdir():
+        if asset.name.startswith("."):
+            continue
+        _install_asset_to_targets(asset, targets, project_root, force)
+
+
+def _load_project_context(
+    project_config_path: str | None,
+    profiles_dir: str | None,
+    project_root: Path,
+) -> Any:
+    """Load a full ProjectContext from *project_config_path*, or create a minimal one."""
+    if project_config_path:
+        from dv_agentic.config import load_project
+
+        config_path = Path(project_config_path).resolve()
+        project_ctx, _, _ = load_project(
+            project_yaml=config_path,
+            profiles_dir=profiles_dir,
+        )
+        project_ctx.project_root = str(project_root)
+        return project_ctx
+
+    from dv_agentic.prompts.context import ProjectContext
+
+    return ProjectContext(project_root=str(project_root))
+
+
+def _write_agent_file(
+    agent_name: str,
+    loader: Any,
+    target: Path,
+    project_root: Path,
+) -> None:
+    """Write Claude Code format agent file: strip OpenCode YAML, prepend Claude Code YAML."""
+    raw = loader.load(agent_name)
+    body = _strip_front_matter(raw)
+    meta = _AGENT_META.get(agent_name, {"description": f"{agent_name} agent.", "tools": ["Read"]})
+    content = _build_front_matter(agent_name, meta) + body.strip() + "\n"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8")
+    logger.info("  wrote %s", target.relative_to(project_root))
+
+
+def _write_opencode_agent_file(
+    agent_name: str,
+    loader: Any,
+    target: Path,
+    project_root: Path,
+) -> None:
+    """Write OpenCode format agent file: preserve original OpenCode YAML front matter."""
+    raw = loader.load(agent_name)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(raw.strip() + "\n", encoding="utf-8")
+    logger.info("  wrote %s", target.relative_to(project_root))
+
+
+def install(
+    project_root: Path,
+    project_config_path: str | None = None,
+    profiles_dir: str | None = None,
+    force: bool = False,
+) -> int:
+    """Standardized installer main entry."""
+    project_ctx = _load_project_context(project_config_path, profiles_dir, project_root)
+
     from dv_agentic.prompts.prompt_loader import PromptLoader
 
     loader = PromptLoader(project_config=project_ctx)
 
-    # 3. Prepare output directories
-    subagents_dir = worktree / ".agent" / "subagents"
-    subagents_dir.mkdir(parents=True, exist_ok=True)
+    _install_assets(project_root / "tools", "tools", project_root, force=force)
+    _install_assets(project_root / "skills", "skills", project_root, force=force)
 
-    symlink_dirs: list[Path] = []
-    for rel in _SYMLINK_DIRS:
-        d = worktree / rel
-        d.mkdir(parents=True, exist_ok=True)
-        symlink_dirs.append(d)
+    # Agent directories: Claude Code and OpenCode each receive their own format.
+    # .claude/agents/ → Claude Code YAML front matter
+    # .opencode/agents/ → original OpenCode YAML front matter (from template)
+    claude_agent_dir = project_root / ".claude" / "agents"
+    opencode_agent_dir = project_root / ".opencode" / "agents"
+    claude_agent_dir.mkdir(parents=True, exist_ok=True)
+    opencode_agent_dir.mkdir(parents=True, exist_ok=True)
 
-    # 4. Generate each agent
+    agent_writers: list[tuple[Path, Any]] = [
+        (claude_agent_dir, _write_agent_file),
+        (opencode_agent_dir, _write_opencode_agent_file),
+    ]
+
     errors = 0
     written = 0
     skipped = 0
 
     for agent_name in _AGENTS:
-        target = subagents_dir / f"{agent_name}.md"
+        any_written = False
+        any_error = False
 
-        if target.exists() and not force:
-            logger.info("  skip  %s (exists — use --force to overwrite)", agent_name)
-            skipped += 1
-            continue
+        for agent_dir, write_fn in agent_writers:
+            target = agent_dir / f"{agent_name}.md"
 
-        # Load and enrich the prompt body
-        try:
-            enriched = loader.load(agent_name)
-        except FileNotFoundError:
-            logger.warning("  warn  %s — no prompt template found, skipping", agent_name)
-            continue
+            if target.exists() and not force:
+                logger.info("  skip  %s (exists)", target.relative_to(project_root))
+                skipped += 1
+                continue
 
-        body = _strip_front_matter(enriched)
-        meta = _AGENT_META.get(
-            agent_name,
-            {
-                "description": f"{agent_name} agent.",
-                "tools": ["Read"],
-            },
-        )
-        content = _build_front_matter(agent_name, meta) + body.strip() + "\n"
-
-        try:
-            target.write_text(content, encoding="utf-8")
-            logger.info("  wrote %s", target)
-            written += 1
-        except OSError as exc:
-            logger.error("  error writing %s: %s", target, exc)
-            errors += 1
-            continue
-
-        # Symlinks → relative path so they survive directory moves
-        for link_dir in symlink_dirs:
-            link = link_dir / f"{agent_name}.md"
             try:
-                if link.exists() or link.is_symlink():
-                    link.unlink()
-                # Compute relative path from the symlink's directory to the target file
-                rel_target = os.path.relpath(target, start=link_dir)
-                link.symlink_to(rel_target)
+                write_fn(agent_name, loader, target, project_root)
+                any_written = True
+            except FileNotFoundError:
+                logger.warning("  warn %s — prompt template not found, skipping", agent_name)
+                break
             except OSError as exc:
-                logger.warning("  warn  symlink %s → %s failed: %s", link, target, exc)
+                logger.error("  ERROR writing %s: %s", agent_name, exc)
+                any_error = True
 
-    # 5. Summary
+        if any_written:
+            written += 1
+        if any_error:
+            errors += 1
+
     print(  # noqa: T201
-        f"\nInstall complete: {written} written, {skipped} skipped, {errors} errors."
-        f"\nSubagents: {subagents_dir}"
+        f"\nInstall complete: {written} agents generated, {skipped} skipped, {errors} errors."
     )
-    if symlink_dirs:
-        for d in symlink_dirs:
-            print(f"Symlinks:  {d}")  # noqa: T201
-
     return 0 if errors == 0 else 1
 
 
@@ -302,12 +384,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="python3 -m dv_agentic.cli.install_agents",
         description=(
-            "Generate enriched .agent/subagents/*.md files and create symlinks "
-            "for Claude Code, Cursor, and OpenCode."
+            "Standardized Agent/Tool/Skill installer. "
+            "Discovers agents/, tools/, and skills/ in the project root and "
+            "installs them to .claude/ and .opencode/ directories."
         ),
     )
     p.add_argument(
-        "--worktree",
+        "--project-root",
         default=".",
         metavar="PATH",
         help="Root of the verification project (default: current directory).",
@@ -333,7 +416,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--force",
         action="store_true",
-        help="Overwrite existing .md files in .agent/subagents/.",
+        help="Overwrite existing files in target directories.",
     )
     p.add_argument(
         "--verbose",
@@ -348,19 +431,21 @@ def main() -> None:
     """Main execution block for the install-agents CLI."""
     args = _build_parser().parse_args()
 
+    # 1. Base path
+    project_root = Path(args.project_root).resolve()
+
+    # 2. Setup logging
+    log_level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(message)s",
+        level=log_level,
+        format="%(levelname)7s  %(message)s",
     )
 
-    worktree = Path(args.worktree).resolve()
-    project_yaml = Path(args.project_config).resolve() if args.project_config else None
-    profiles_dir = Path(args.profiles_dir).resolve() if args.profiles_dir else None
-
+    # 3. Execute
     rc = install(
-        worktree=worktree,
-        project_yaml=project_yaml,
-        profiles_dir=profiles_dir,
+        project_root=project_root,
+        project_config_path=args.project_config,
+        profiles_dir=args.profiles_dir,
         force=args.force,
     )
     sys.exit(rc)

@@ -44,7 +44,7 @@ def test_code_generator_cli_uses_cwd(
 
     mock_agent.assert_called_once()
     kwargs = mock_agent.call_args.kwargs
-    assert kwargs.get("workspace_dir") == ".", "CodeGenerator must use CWD instead of worktree"
+    assert kwargs.get("workspace_dir") == ".", "CodeGenerator must use CWD instead of project_root"
     mock_asyncio.assert_called_once()
 
 

@@ -8,8 +8,10 @@
 
 # scripts/install-agents.sh
 #
-# Generates enriched .agent/subagents/*.md files and creates symlinks
-# for Claude Code (.claude/agents/), Cursor (.cursor/rules/), and OpenCode.
+# Standardized Agent/Tool/Skill installer.
+#
+# Discovers agents/, tools/, and skills/ in the project root and installs
+# them to .claude/ and .opencode/ directories.
 #
 # Usage:
 #   bash scripts/install-agents.sh [--force] [options]
@@ -19,11 +21,11 @@
 #       --project-config .agent/project.yaml \
 #       --profiles-dir ../my-org-dv-profiles
 #
-# Override the worktree root (default: directory containing this script's parent):
-#   WORKTREE=/path/to/project bash scripts/install-agents.sh
+# Override the project root (default: directory containing this script's parent):
+#   PROJECT_ROOT=/path/to/project bash scripts/install-agents.sh
 #
 # All flags are forwarded verbatim to:
-#   python3 -m dv_agentic.cli.install_agents
+#   uv run python -m dv_agentic.cli.install_agents
 #
 # See --help for the full flag list:
 #   bash scripts/install-agents.sh --help
@@ -36,54 +38,60 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Default worktree: one directory above scripts/
-WORKTREE="${WORKTREE:-$(dirname "$SCRIPT_DIR")}"
+# Default project_root: one directory above scripts/
+PROJECT_ROOT="${PROJECT_ROOT:-$(dirname "$SCRIPT_DIR")}"
 
 # ---------------------------------------------------------------------------
-# Activate virtualenv if present
+# Tiered Execution Strategy (uv -> venv -> system python)
 # ---------------------------------------------------------------------------
 
-VENV_ACTIVATE=""
-for candidate in \
-    "${WORKTREE}/.venv/bin/activate" \
-    "${WORKTREE}/.venv/Scripts/activate" \
-    "${WORKTREE}/venv/bin/activate" \
-    "${WORKTREE}/venv/Scripts/activate" \
-    "${HOME}/.venv/dv_agentic/bin/activate" \
-    "${HOME}/.venv/dv_agentic/Scripts/activate"
-do
-    if [ -f "$candidate" ]; then
-        VENV_ACTIVATE="$candidate"
-        break
+# 1. Try uv (Preferred)
+CMD=""
+if command -v uv &>/dev/null; then
+    CMD="uv run python"
+elif command -v uv.exe &>/dev/null; then
+    CMD="uv.exe run python"
+fi
+
+# 2. If no uv, try to find and activate a virtualenv
+if [ -z "$CMD" ]; then
+    VENV_ACTIVATE=""
+    for candidate in \
+        "${PROJECT_ROOT}/.venv/bin/activate" \
+        "${PROJECT_ROOT}/.venv/Scripts/activate" \
+        "${PROJECT_ROOT}/venv/bin/activate" \
+        "${PROJECT_ROOT}/venv/Scripts/activate"
+    do
+        if [ -f "$candidate" ]; then
+            VENV_ACTIVATE="$candidate"
+            break
+        fi
+    done
+
+    if [ -n "$VENV_ACTIVATE" ]; then
+        # shellcheck disable=SC1090
+        source "$VENV_ACTIVATE"
+        echo "[install-agents] Using virtualenv: $VENV_ACTIVATE"
     fi
-done
 
-if [ -n "$VENV_ACTIVATE" ]; then
-    # shellcheck disable=SC1090
-    source "$VENV_ACTIVATE"
-    echo "[install-agents] Using virtualenv: $VENV_ACTIVATE"
+    # 3. Fallback to system python
+    CMD="python3"
+    if ! command -v python3 &>/dev/null; then
+        CMD="python"
+    fi
 fi
 
-# ---------------------------------------------------------------------------
-# Check that dv_agentic is importable
-# ---------------------------------------------------------------------------
+echo "[install-agents] Project Root: $PROJECT_ROOT"
+echo "[install-agents] Command: $CMD"
 
-PYTHON="python3"
-if ! command -v python3 &>/dev/null; then
-    PYTHON="python"
-fi
-
-if ! "$PYTHON" -c "import dv_agentic" 2>/dev/null; then
-    echo "[install-agents] ERROR: dv_agentic is not importable." >&2
-    echo "  Run: pip install -e . (or activate the correct virtualenv)" >&2
+# Check if dv_agentic is available
+if ! $CMD -c "import dv_agentic" &>/dev/null; then
+    echo "[install-agents] ERROR: dv_agentic package not found." >&2
+    echo "  Please ensure dependencies are installed (e.g., pip install -e . or uv sync)" >&2
     exit 1
 fi
 
-# ---------------------------------------------------------------------------
-# Run the installer
-# ---------------------------------------------------------------------------
-
-echo "[install-agents] Worktree: $WORKTREE"
-exec "$PYTHON" -m dv_agentic.cli.install_agents \
-    --worktree "$WORKTREE" \
+# shellcheck disable=SC2086
+exec $CMD -m dv_agentic.cli.install_agents \
+    --project-root "$PROJECT_ROOT" \
     "$@"

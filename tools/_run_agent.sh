@@ -23,13 +23,20 @@ set -euo pipefail
 AGENT="${1:?agent name required}"
 shift
 
+KNOWN_AGENTS="orchestrator spec_analyst code_generator sim_controller log_analyzer wave_analyzer coverage_analyst bug_classifier reporter"
+
+if ! echo "$KNOWN_AGENTS" | grep -qw "$AGENT"; then
+    echo "ERROR: Unknown agent: $AGENT" >&2
+    exit 1
+fi
+
 # ── Activate virtualenv when present ──────────────────────────────────────
-WORKTREE="${WORKTREE:-.}"
+PROJECT_ROOT="${PROJECT_ROOT:-.}"
 VENV_ACTIVATE=""
 
 for candidate in \
-  "${WORKTREE}/.venv/bin/activate" \
-  "${WORKTREE}/venv/bin/activate" \
+  "${PROJECT_ROOT}/.venv/bin/activate" \
+  "${PROJECT_ROOT}/venv/bin/activate" \
   "${HOME}/.venv/dv_agentic/bin/activate"
 do
   if [ -f "$candidate" ]; then

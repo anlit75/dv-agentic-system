@@ -151,6 +151,13 @@ if command -v tar >/dev/null 2>&1; then
     cp -r src "$TEMP_BUNDLE_DIR/"
     cp -r scripts "$TEMP_BUNDLE_DIR/"
 
+    # Standard asset directories (Standardized Discovery Paths)
+    for dir in agents tools skills; do
+        if [ -d "$dir" ]; then
+            cp -r "$dir" "$TEMP_BUNDLE_DIR/"
+        fi
+    done
+
     # Clean up any potential local virtualenvs or caches in the copied folders
     find "$TEMP_BUNDLE_DIR" -type d -name ".venv" -exec rm -rf {} + 2>/dev/null || true
     find "$TEMP_BUNDLE_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

@@ -8,7 +8,8 @@ Four independent existence layers:
   [1] dv-agentic-system/      ← Shared package (pip install)
   [2] {org}-dv-profiles/      ← Profile repo for each DV Team (per-org or per-team)
   [3] {project}/              ← Each verification project (existing UVM env)
-       └── .agent/            ← Implant point, contains subagent .md (tools auto-discover)
+       └── .agent/            ← Config & state (`project.yaml`, tasks, memory)
+       └── tools/, skills/, .claude/, .opencode/  ← Standard discovery paths populated by install scripts
 ```
 
 ## Layer 1: dv-agentic-system/ (Shared Package)
@@ -60,9 +61,11 @@ dv-agentic-system/
 │               ├── ip_type.yaml
 │               └── prompt_patch.md        # Patch format description
 │
+├── tools/                               # OpenCode TS tool adapters + `_run_agent.sh` (mirrored into `.opencode/tools/` / `.claude/tools/`)
+├── skills/
+│
 ├── scripts/
-│   └── install-agents.sh          # Symlinks subagent .md to expected paths of each tool
-│                                  # (.claude/agents/, .cursor/rules/, etc.)
+│   └── install-agents.sh                # Runs `install_agents`: agents + tools + skills into `.claude/` and `.opencode/`
 │
 ├── pyproject.toml
 └── README.md
@@ -112,20 +115,9 @@ dv-agentic-system/
 ```
 {project_root}/                    # Existing UVM / pyuvm environment, structure untouched
 │
-├── .agent/                        # ← Implant point, agent system operates here
+├── .agent/                        # ← Config & session state for the agentic layer
 │   │
 │   ├── project.yaml               # Project config (compose profile, set budgets)
-│   │
-│   ├── subagents/                 # Canonical subagent .md definitions
-│   │   ├── orchestrator.md        # ← Tools discover subagents from here
-│   │   ├── spec_analyst.md
-│   │   ├── code_generator.md
-│   │   ├── sim_controller.md
-│   │   ├── log_analyzer.md
-│   │   ├── wave_analyzer.md
-│   │   ├── coverage_analyst.md
-│   │   ├── bug_classifier.md
-│   │   └── reporter.md
 │   │
 │   ├── vplan.yaml                 # SPEC Analyst generated / manually maintained vplan
 │   │
@@ -134,6 +126,19 @@ dv-agentic-system/
 │   └── tasks/                     # Task records (includes agent trace for debug)
 │       ├── {task_id}.yaml         # In-progress or completed tasks
 │       └── ...
+│
+├── tools/                         # Standard root copy of OpenCode adapters + `_run_agent.sh` (source for installer)
+├── skills/                        # Optional skill bundles (mirrored into tool-specific dirs)
+│
+├── .claude/
+│   ├── agents/                    # Generated: Claude Code YAML + enriched prompt body
+│   ├── tools/                     # Symlinks / copies from `tools/`
+│   └── skills/                    # Symlinks / copies from `skills/`
+│
+├── .opencode/
+│   ├── agents/                    # Generated: OpenCode YAML (same shape as `*.tmpl.md`) + enriched body
+│   ├── tools/                     # Symlinks / copies from `tools/` (includes `_run_agent.sh`)
+│   └── skills/                    # Symlinks / copies from `skills/`
 │
 ├── tb/                            # Existing UVM environment (agents don't modify directly)
 ├── tests/                         #   ↑ Agents modify on a git branch
@@ -175,25 +180,43 @@ guardrails:
 ## Subagent Discovery Mechanism
 
 ```
-Different tools expect different paths, unified handling via install-agents.sh:
+Canonical prompts live in dv-agentic-system: src/dv_agentic/prompts/*.tmpl.md
 
-  .agent/subagents/orchestrator.md    ← canonical definition
+install-agents / python -m dv_agentic.cli.install_agents generates two outputs per agent:
+
+  PromptLoader enrichment (team + IP rules; session omitted)
           │
-          ├── symlink → .claude/agents/orchestrator.md   (Claude Code)
-          ├── symlink → .cursor/rules/orchestrator.md    (Cursor)
-          └── symlink → .agent/orchestrator.md           (OpenCode)
+          ├──────────────► .claude/agents/{agent}.md     (Claude Code front matter + body)
+          │
+          └──────────────► .opencode/agents/{agent}.md   (OpenCode front matter unchanged + body)
 
 Run once:
   bash dv-agentic-system/scripts/install-agents.sh
 ```
 
-Structure of each `.md` (using code_generator.md as an example):
+Structure of `.claude/agents/*.md` (Claude Code) — simplified example:
 
 ```markdown
 ---
 name: code_generator
 description: Generates and fixes SV / pyuvm code, commits on ai-task/task branch
-tools: [read_file, write_file, run_bash]
+tools: Read, Write, Bash
+---
+
+{enriched body — OpenCode YAML from the template was stripped}
+```
+
+Structure of `.opencode/agents/*.md` mirrors **`*.tmpl.md`**: OpenCode YAML (`description`, `mode`, `model`, nested `tools` flags, etc.) followed by the same enriched narrative body. Example shape:
+
+```markdown
+---
+description: …
+mode: subagent
+model: …
+temperature: …
+tools:
+  write: false
+  …
 ---
 
 {base prompt from prompts/code_generator.tmpl.md}
