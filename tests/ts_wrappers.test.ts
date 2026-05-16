@@ -60,7 +60,7 @@ describe("OpenCode Tools Wrappers Execute Function", () => {
 
   for (const tool of tools) {
     test(`${tool} execute() should construct CLI commands without failing`, async () => {
-      const toolPath = path.join(import.meta.dir, "..", ".opencode", "tools", tool);
+      const toolPath = path.join(import.meta.dir, "..", "tools", tool);
       const module = await import(toolPath);
 
       const config = module.default;
