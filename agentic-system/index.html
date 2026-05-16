@@ -1088,7 +1088,7 @@
 </span></code></pre></div>
 <p>This layering ensures your agent prompts, orchestration logic, and memory schema are identical; only the underlying tool implementations differ.</p>
 <h2 id="2-multi-agent-responsibility-breakdown">2. Multi-Agent Responsibility Breakdown<a class="headerlink" href="#2-multi-agent-responsibility-breakdown" title="Permanent link">&para;</a></h2>
-<p>Based on cognitive tasks analyzed from three workflows, they are split into 8 agents:</p>
+<p>Based on cognitive tasks analyzed from three workflows, they are split into 5 LLM-powered agents and 3 internal services:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────────┐
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│                     ORCHESTRATOR AGENT                          │
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│  • Receives tasks, determines which workflow to start           │
@@ -1106,6 +1106,7 @@
 <thead>
 <tr>
 <th>Agent</th>
+<th>Type</th>
 <th>Responsibility</th>
 <th>Input</th>
 <th>Output</th>
@@ -1114,57 +1115,59 @@
 <tbody>
 <tr>
 <td><strong>Orchestrator</strong></td>
+<td>LLM agent</td>
 <td>Task routing, budget control, handoff</td>
 <td>Task description</td>
 <td>Subtask instructions</td>
 </tr>
 <tr>
 <td><strong>SPEC Analyst</strong></td>
+<td>LLM agent</td>
 <td>Parse spec, generate vplan</td>
 <td>PDF/Text spec</td>
 <td>structured vplan</td>
 </tr>
 <tr>
 <td><strong>Code Generator</strong></td>
+<td>LLM agent</td>
 <td>Write SV/pyuvm code</td>
 <td>vplan + constraints</td>
 <td>code diff</td>
 </tr>
 <tr>
-<td><strong>Sim Controller</strong></td>
-<td>Call simulator, manage jobs</td>
-<td>compile/run cmds</td>
-<td>job status + paths</td>
-</tr>
-<tr>
-<td><strong>Log Analyzer</strong></td>
-<td>Parse log, find failure point</td>
-<td>log file</td>
-<td>failure summary</td>
-</tr>
-<tr>
-<td><strong>Wave Analyzer</strong></td>
-<td>Interpret waveform patterns</td>
-<td>Signal list + time</td>
-<td>signal analysis</td>
-</tr>
-<tr>
-<td><strong>Coverage Analyst</strong></td>
-<td>Analyze coverage DB, find holes</td>
-<td>ucdb/coverage report</td>
-<td>hole list + priority</td>
-</tr>
-<tr>
 <td><strong>Bug Classifier</strong></td>
+<td>LLM agent</td>
 <td>Differentiate TB bug vs RTL bug</td>
 <td>spec + log + code</td>
 <td>classification + evidence</td>
 </tr>
 <tr>
 <td><strong>Reporter</strong></td>
+<td>LLM agent</td>
 <td>Output bug report / summary</td>
 <td>analysis results</td>
 <td>structured report</td>
+</tr>
+<tr>
+<td><strong>Sim Controller</strong></td>
+<td>internal service (non-LLM)</td>
+<td>Call simulator, manage jobs; auto-invoked after Code Generator</td>
+<td>compile/run cmds</td>
+<td>job status + paths</td>
+</tr>
+<tr>
+<td><strong>Log Analyzer</strong></td>
+<td>internal service (non-LLM)</td>
+<td>Parse log, find failure point; auto-invoked after Sim Controller</td>
+<td>log content</td>
+<td>failure summary</td>
+</tr>
+<tr>
+<td><strong>Coverage Analyst</strong></td>
+<td>internal service (non-LLM)</td>
+<td>Threshold comparison, invoke for Workflow 3 coverage hole analysis</td>
+<td>ucdb/coverage report</td>
+<td>hole list + priority</td>
 </tr>
 </tbody>
 </table>
@@ -1184,13 +1187,13 @@
 </span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>         │                   generate_sequence(), validate_sv_syntax()
 </span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>         │ SV code
 </span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>         ▼
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>  [Sim Controller] ── tools: compile_check(), run_simulation()
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>  [Sim Controller Service]¹ ── compile_check(), run_simulation()
 </span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>         │
 </span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    ┌────┴────┐
 </span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>  PASS      FAIL
 </span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    │          │
 </span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    ▼          ▼
-</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>[Coverage   [Log Analyzer] ── tools: parse_log(), extract_error_context()
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>[Coverage   [Log Analyzer Service]¹ ── parse_log(), extract_error_context()
 </span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a> Analyst]        │
 </span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>(→ WF3)        ▼
 </span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>           [Bug Classifier]
@@ -1225,10 +1228,10 @@
 </span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>  ├── Is this fail worth spending time to run in debug mode?
 </span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>  │   (Based on: fail severity, past patterns, budget)
 </span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>  │
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>  ├── YES → [Sim Controller]
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>  ├── YES → [Sim Controller Service]¹
 </span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>  │           run_simulation(debug_mode=True, full_log=True)
 </span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>  │                 │
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>  │           [Wave Analyzer] + [Log Analyzer]
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>  │           [Log Analyzer Service]¹
 </span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>  │
 </span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>  └── NO  → [Bug Classifier] Make best guess using existing info
 </span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>                               Mark confidence level
@@ -1266,9 +1269,9 @@
 </span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>  ├── tools: generate_targeted_sequence(), constrain_by_protocol_rules()
 </span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>  │
 </span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>  ▼
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>  [Sim Controller] compile + run
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>  [Sim Controller Service]¹ compile + run
 </span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>         │
-</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>  [Log Analyzer] + [Coverage Analyst]
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>  [Log Analyzer Service]¹ + [Coverage Analyst]
 </span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>  ├── Did this pattern hit the target bin?
 </span><span id="__span-4-26"><a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>  ├── Were any new fails introduced?
 </span><span id="__span-4-27"><a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>  │
@@ -1277,6 +1280,12 @@
 </span><span id="__span-4-30"><a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>         │
 </span><span id="__span-4-31"><a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>  All completed → [Reporter] Output coverage delta report
 </span></code></pre></div>
+<blockquote>
+<p><strong>¹ Internal service (non-LLM):</strong> Sim Controller Service and Log Analyzer
+Service are invoked automatically by the OrchestratorAgent immediately after
+every <code>run_code_generator</code> step — no separate LLM routing call is required.
+They are not dispatched as independent agents.</p>
+</blockquote>
 <h2 id="4-shared-tool-interface-design">4. Shared Tool Interface Design<a class="headerlink" href="#4-shared-tool-interface-design" title="Permanent link">&para;</a></h2>
 <p>This is the key to allowing agents to be shared across both environments. Each tool defines a unified interface, while the underlying implementation is handled by adapters:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Unified interface (agents only see this layer)</span>
