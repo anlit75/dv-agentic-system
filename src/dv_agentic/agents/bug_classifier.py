@@ -139,7 +139,7 @@ class BugClassifierAgent(BaseAgent):
         # Load wiki context
         wiki_context = self._load_wiki_context(task_input)
         if wiki_context:
-            task_input = f"{task_input}\n\n---\n## 已知相似 Bug 紀錄\n{wiki_context}"
+            task_input = f"{task_input}\n\n---\n## Known Similar Bug Records\n{wiki_context}"
 
         history: list[dict[str, str]] = [{"role": "user", "content": task_input}]
         last: ClassificationResult | None = None

@@ -478,7 +478,7 @@ class TestAC4BugClassifierWikiAware:
         assert llm.complete.call_count == 1
         history = llm.complete.call_args[0][1]
         user_msg = history[0]["content"]
-        assert "已知相似 Bug 紀錄" in user_msg
+        assert "Known Similar Bug Records" in user_msg
         assert "t_old" not in user_msg, "ID is RTL_YYYYMMDD_seq, not task_id"
         assert "Check: bugs/RTL" in user_msg
 
