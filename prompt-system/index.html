@@ -573,10 +573,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#subagent-md-files-claude-code-cursor-opencode" class="md-nav__link">
+  <a href="#subagent-md-files-claude-code-opencode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Subagent .md Files (Claude Code / Cursor / OpenCode)
+        Subagent .md Files (Claude Code / OpenCode)
       
     </span>
   </a>
@@ -839,10 +839,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#subagent-md-files-claude-code-cursor-opencode" class="md-nav__link">
+  <a href="#subagent-md-files-claude-code-opencode" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Subagent .md Files (Claude Code / Cursor / OpenCode)
+        Subagent .md Files (Claude Code / OpenCode)
       
     </span>
   </a>
@@ -1000,49 +1000,40 @@ coherently inside the parent prompt, not as a config file.</p>
 </span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="k">-</span><span class="w"> </span><span class="sb">`fork/join`</span> inside sequences (use UVM phasing instead)
 </span></code></pre></div>
 <hr />
-<h2 id="subagent-md-files-claude-code-cursor-opencode">Subagent .md Files (Claude Code / Cursor / OpenCode)<a class="headerlink" href="#subagent-md-files-claude-code-cursor-opencode" title="Permanent link">&para;</a></h2>
-<p>The <code>.agent/subagents/{agent}.md</code> files used by AI coding tools are
-generated from the same base prompt, not separately authored:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>install-agents.sh runs PromptLoader at Level 1
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>(team + IP rules injected, session state omitted)
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        │
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        ▼
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>.agent/subagents/code_generator.md   ← written to disk
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        │
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        ├── symlink → .claude/agents/code_generator.md
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        └── symlink → .cursor/rules/code_generator.md
+<h2 id="subagent-md-files-claude-code-opencode">Subagent .md Files (Claude Code / OpenCode)<a class="headerlink" href="#subagent-md-files-claude-code-opencode" title="Permanent link">&para;</a></h2>
+<p>Prompts are authored once as templates and materialized by the installer (<code>install-agents.sh</code> or <code>python -m dv_agentic.cli.install_agents</code>) at <strong>Level 1</strong>: team and IP rules from <code>project.yaml</code> composition are injected; session state is omitted.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>install-agents / install_agents CLI
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>        │
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>        ├──► {project}/.claude/agents/{agent}.md
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        │       Claude Code YAML (`name`, `description`, `tools`, …) + enriched body
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        │
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        └──► {project}/.opencode/agents/{agent}.md
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>                OpenCode YAML (same fields as `*.tmpl.md`) + enriched body
 </span></code></pre></div>
-<p>These files are generated, not edited by hand. The canonical source is
-always <code>src/dv_agentic/prompts/code_generator.md</code>.</p>
-<p>The YAML front matter required by Claude Code / Cursor is prepended
-by the installer, not present in the source prompt:</p>
+<p>Do not hand-edit generated files for long-term changes — update the template under <code>src/dv_agentic/prompts/</code> and re-run the installer.</p>
+<p>The canonical template files use the <code>*.tmpl.md</code> naming convention (for example <code>code_generator.tmpl.md</code>). They include <strong>OpenCode-oriented</strong> YAML at the top of the file.</p>
+<p>For <strong>Claude Code</strong>, the installer <strong>strips</strong> that OpenCode front matter and prepends a Claude-compatible block (see <code>dv_agentic.cli.install_agents</code>).</p>
+<p>Example shape for <code>.claude/agents/*.md</code>:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nn">---</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">code_generator</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Generate and modify SV/UVM code targeting specific coverage bins or bug fixes</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nt">tools</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">read_file</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">write_file</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">run_bash</span><span class="p p-Indicator">]</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nt">tools</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Read, Write, Bash</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nn">---</span>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p p-Indicator">{</span><span class="nv">enriched prompt body</span><span class="p p-Indicator">}</span>
 </span></code></pre></div>
+<p>OpenCode outputs under <code>.opencode/agents/</code> keep the template’s original YAML keys (<code>mode</code>, <code>model</code>, <code>temperature</code>, nested <code>tools</code> permissions, etc.).</p>
 <hr />
 <h2 id="file-locations">File Locations<a class="headerlink" href="#file-locations" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>src/dv_agentic/prompts/          ← canonical source (part of package)
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    code_generator.md
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    log_analyzer.md
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    coverage_analyst.md
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    bug_classifier.md
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    spec_analyst.md
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    sim_controller.md
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    wave_analyzer.md
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    orchestrator.md
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    reporter.md
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>{project}/.agent/subagents/      ← generated by install-agents.sh (gitignore or commit)
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    code_generator.md            ← Level 1 enriched + YAML front matter
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    log_analyzer.md
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    ...
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>
-</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>{project}/.claude/agents/        ← symlinks to .agent/subagents/
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>{project}/.cursor/rules/         ← symlinks to .agent/subagents/
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>src/dv_agentic/prompts/          ← canonical templates (part of package)
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    orchestrator.tmpl.md
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    code_generator.tmpl.md
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    ...
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>{project}/tools/               ← TypeScript tool adapters + `_run_agent.sh`; mirrored into `.opencode/tools/` and `.claude/tools/`
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>{project}/skills/              ← optional; mirrored into both tool ecosystems
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>{project}/.claude/agents/      ← generated (Claude format)
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>{project}/.opencode/agents/    ← generated (OpenCode format, matches tmpl front matter)
 </span></code></pre></div>
 
 
