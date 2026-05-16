@@ -51,7 +51,10 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from ..wiki.manager import WikiConfig
 
 from ..prompts.context import ProjectContext, SessionState
 from ..prompts.prompt_loader import PromptLoader
@@ -175,6 +178,7 @@ class OrchestratorAgent(BaseAgent):
         project_config: ProjectContext | None = None,
         session: SessionState | None = None,
         prompts_dir: str | Path | None = None,
+        wiki_config: "WikiConfig | None" = None,
     ) -> None:
         super().__init__(config)
         self.llm = llm
@@ -182,6 +186,7 @@ class OrchestratorAgent(BaseAgent):
         self.project_config = project_config
         self.session = session
         self.prompts_dir = prompts_dir
+        self.wiki_config = wiki_config
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -206,6 +211,17 @@ class OrchestratorAgent(BaseAgent):
             raise RuntimeError("System prompt must not be empty")
         if self.iteration != 0:
             raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
+
+        # Fast sanity check: ensure wiki index matches disk before task execution.
+        if self.wiki_config and self.wiki_config.enabled and self.wiki_config.lint_on_startup:
+            try:
+                from ..wiki.lint import WikiLintService
+
+                lint_report = WikiLintService(self.wiki_config).run(depth="quick")
+                if lint_report.human_review_required:
+                    logger.warning("Wiki Quick Lint found issues: %s", lint_report.to_str())
+            except Exception as exc:
+                logger.debug("Orchestrator: Wiki quick lint failed: %s", exc)
 
         history: list[dict[str, str]] = [{"role": "user", "content": task_input}]
 

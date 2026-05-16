@@ -115,13 +115,12 @@
 | `sample/sample-org-dv-profiles/teams/sample_team/` full example | ✅ | Realistic team.yaml, vip_index.yaml, and prompt_patch.md examples |
 | `sample/sample-org-dv-profiles/ip-types/` example | ✅ | Fully structured AXI and PCIe protocol rules |
 
-## Phase 6 — Session State and VCS Integration 📋 (Temporarily Postponed)
+## Phase 6 — VCS Integration and Task Tracking 📋 (Temporarily Postponed)
 
-**Objective**: Achieve persistent state for Agent tasks and a complete Git workflow.
+**Objective**: Achieve persistent task tracking and a complete Git workflow.
 
 | Item | Status | Description |
 |------|------|------|
-| `memory.db` SQLite schema design | 📋 | Session state, known bugs, task trace |
 | `tasks/{task_id}.yaml` writing logic | 📋 | Records for each iteration |
 | `git checkout -b ai-task/{task_id}` automation | 📋 | Implemented in `sim_controller` / `code_generator` |
 | Commit message format guardrails | 📋 | `[agent] {reason} · task:{task_id}` |
@@ -184,25 +183,81 @@ Introduced a specialized, rigorous **SystemVerilog Testbench checklist** into th
   * If consecutive failures have the same failure type, the agent continues.
   * If failure types shift dynamically between runs (indicating a complex, shifting error state), it immediately stops and escalates to the user with a detailed diagnostics report, saving token budget.
 
+## Phase 9 — LLM Wiki Knowledge Integration ✅ (Completed, v0.7.0)
+
+**Objective**: Eliminate per-session knowledge reset by introducing a Git-versioned Markdown wiki (`.agent/wiki/`) that compounds verification knowledge across sessions. Based on Karpathy's LLM Wiki pattern — knowledge is compiled at write time, not re-derived at query time.
+
+> **Architecture**: Three-layer separation — Raw Source (immutable sim logs/coverage reports) → Wiki Layer (LLM-maintained Markdown) → Schema Layer (PromptLoader injection via placeholders). No existing Agent logic is modified; integration uses three seam points only.
+
+### Phase 9A — Minimal Viable Integration ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `src/dv_agentic/wiki/manager.py` — `WikiConfig` dataclass | ✅ | Parse `project.yaml` `wiki:` block; `enabled: false` default for backward compatibility |
+| `src/dv_agentic/wiki/ingest.py` — `WikiIngestService.ingest_pattern()` | ✅ | Auto-update `patterns/{failure_subtype}.md` hit count and fix history after each session |
+| `src/dv_agentic/wiki/query.py` — `WikiQueryService.get_known_error_patterns()` | ✅ | Return top-K pattern summaries within token budget (≤ 500 tokens per category) |
+| `src/dv_agentic/wiki/search.py` — `BM25SearchIndex` | ✅ | Pure-Python BM25 search via `bm25s[core]`; air-gapped RHEL 8.4 compatible; persistent index at `.agent/wiki/.search_index/`; transparent fallback to `KeywordSearchIndex` when `bm25s` absent |
+| `src/dv_agentic/prompts/prompt_loader.py` — `_load_wiki_context()` | ✅ | Extended `_gather_context()` to inject `{{KNOWN_ERROR_PATTERNS}}`, `{{KNOWN_RTL_BUGS}}`, `{{COVERAGE_HOLE_HISTORY}}`, `{{WIKI_PATTERN_SUMMARY}}` from wiki (wiki values override static profile values) |
+| `src/dv_agentic/config/config_loader.py` — wiki block parsing | ✅ | Parse and validate `wiki:` section in `project.yaml`; build `WikiConfig` |
+| `src/dv_agentic/cli/wiki_search.py` | ✅ | `python -m dv_agentic.cli.wiki_search "<query>" [--category bugs\|patterns\|coverage]` |
+| `tests/test_wiki_*.py` | ✅ | Unit tests with mocked `bm25s`; verify backward compatibility when `wiki.enabled: false` |
+
+**Acceptance Criteria Met**: `missing_timescale` hit count auto-increments across sessions; `{{KNOWN_ERROR_PATTERNS}}` populated on next session start; all existing tests pass.
+
+### Phase 9B — Bug Archiving and Classifier History Awareness ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `WikiIngestService.ingest_bug()` | ✅ | Create/update `bugs/RTL_{date}_{id}.md` or `bugs/TB_{date}_{id}.md` with evidence and YAML frontmatter |
+| `BugClassifierAgent` wiki pre-query | ✅ | Query `wiki/bugs/` before classifying; inject similar historical bugs to raise confidence (target: +0.1 vs. cold start) |
+| `wiki/log.md` append-only writes | ✅ | Every ingest appends a structured entry; no deletion or modification of existing entries |
+| `wiki/index.md` auto-update | ✅ | Atomically updated after every ingest; reflects all pages with frontmatter metadata |
+
+**Acceptance Criteria Met**: `BugClassifier` confidence ≥ 0.1 higher with historical bugs than cold-start; `bugs/_index.md` correctly lists all open bugs.
+
+### Phase 9C — Coverage Archiving and Reporter Auto-Ingest ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `WikiIngestService.ingest_coverage_hole()` | ✅ | Create/update `coverage/{covergroup}_{bin}.md` with action class and fill history |
+| `WikiIngestService.ingest_session()` | ✅ | Orchestrate all three ingest methods from `ReporterAgent` output |
+| `ReporterAgent` async auto-ingest | ✅ | Non-blocking `asyncio.create_task()` at end of `run()`; failure is non-fatal |
+| `CoverageAnalystAgent` wiki pre-query | ✅ | Load `{{COVERAGE_HOLE_HISTORY}}` before analysis to avoid re-attempting protocol-blocked bins |
+
+### Phase 9D — Wiki Lint and Full CLI ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `src/dv_agentic/wiki/lint.py` — `WikiLintService` | ✅ | Detect orphan pages, broken links, stale open bugs (> 90 days), missing pages, uncited claims |
+| `OrchestratorAgent` startup quick lint | ✅ | Non-blocking `asyncio.create_task()` on session start; logs warnings if human review required |
+| `src/dv_agentic/cli/wiki_lint.py` | ✅ | `python -m dv_agentic.cli.wiki_lint [--depth quick\|full]` |
+| `src/dv_agentic/cli/wiki_build.py` | ✅ | Rebuild BM25 index from scratch: `python -m dv_agentic.cli.wiki_build` |
+| Integration test: knowledge compounding | ✅ | 3-session workflow verifying hit_count increments and confidence lift |
+
+**Optional dependency**: `pip install "dv-agentic-system[wiki]"` (adds `bm25s[core]>=0.2.0`; no impact when `wiki.enabled: false`).
+
+---
+
 ## Long-term / Optional
 
 | Item | Description |
 |------|------|
 | `WaveAnalyzerAgent` full implementation | Requires VCD / FSDB parsing libraries; low priority |
-| Replace `memory.db` with vector DB | Enable semantic search (similarity matching for known bugs) |
+| Phase 9E — Semantic search upgrade | When wiki > 500 pages, switch `search_backend: "qmd"` in `project.yaml`; `QMDSearchIndex` implements same `WikiSearchIndex` ABC — no Agent changes required |
 | SVN branch support | VCS integration in Phase 6 focuses on Git initially, SVN reserved for later |
 | `pip install` publish workflow | CI/CD configuration, PyPI or internal package registry |
 | External CI integration (GitHub Actions) | Run full verification loop using GHDL + cocotb + lcov adapters |
 
-## Progress Snapshot (2026-05-10)
+## Progress Snapshot (2026-05-16)
 
 ```
 Layer 1 (Shared Package)
   src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters completed
-  src/dv_agentic/agents/        ██████████  100%  All 8 agents completed + Phase 8 CVDP optimizations fully verified
-  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection + CVDP defenses completed
-  src/dv_agentic/cli/           ██████████  100%  All CLI entrypoints fully tested (90% global coverage) & fully documented
+  src/dv_agentic/agents/        ██████████  100%  All 8 agents completed + Phase 8 CVDP optimizations + Phase 9 wiki-awareness
+  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection + wiki context injection
+  src/dv_agentic/cli/           ██████████  100%  All CLI entrypoints (+ wiki_search, wiki_lint, wiki_build) fully tested
   src/dv_agentic/profiles/      ██████████  100%  _template/ directory and all schemas completed
+  src/dv_agentic/wiki/          ██████████  100%  Phase 9A-9D completed (ingest, query, search, lint, manager)
 
 Layer 2 (Profile Repo)
   sample/                       ██████████  100%  All sample team, IP-type, and VIP catalog profiles completed
@@ -212,4 +267,4 @@ Layer 3 (Project Implant)
     .agent/                     ██████████  100%  Project configuration system and subagent installer completed
 ```
 
-**Next Milestone**: Expand long-term adapter capabilities (such as WaveAnalyzerAgent VCD/FSDB parsing or vector database local caching) and integrate external CI test suites. Phase 6 remains temporarily postponed.
+**Next Milestone**: Phase 6 (VCS Integration and Task Tracking) — persistent `tasks/{task_id}.yaml` writing, `git checkout -b ai-task/{task_id}` automation, commit message format guardrails, and safe exit flow when budget is depleted. Phase 9E (semantic search upgrade to `qmd`) activates when wiki exceeds 500 pages.

@@ -14,6 +14,7 @@ and the LLM has everything it needs in one shot.  Budget > 1 is unused
 in normal operation but respected for safety.
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,6 +22,7 @@ from pathlib import Path
 from ..prompts.context import ProjectContext, SessionState
 from ..prompts.prompt_loader import PromptLoader
 from ..tools.llm.interface import BaseLLMClient
+from ..wiki.manager import WikiConfig
 from .base import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -59,6 +61,7 @@ class ReporterAgent(BaseAgent):
         project_config: Optional context for PromptLoader enrichment.
         session: Optional session state.
         prompts_dir: Directory containing ``reporter.md``.
+        wiki_config: Optional config to auto-ingest session results.
     """
 
     def __init__(
@@ -69,6 +72,7 @@ class ReporterAgent(BaseAgent):
         project_config: ProjectContext | None = None,
         session: SessionState | None = None,
         prompts_dir: str | Path | None = None,
+        wiki_config: WikiConfig | None = None,
     ) -> None:
         super().__init__(config)
         self.llm = llm
@@ -76,6 +80,7 @@ class ReporterAgent(BaseAgent):
         self.project_config = project_config
         self.session = session
         self.prompts_dir = prompts_dir
+        self.wiki_cfg = wiki_config
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -116,11 +121,35 @@ class ReporterAgent(BaseAgent):
             output_path=written_path,
         )
         logger.info("Reporter: generated report for task '%s'", task_id)
+
+        if self.wiki_cfg and self.wiki_cfg.enabled:
+            asyncio.create_task(  # noqa: RUF006
+                asyncio.to_thread(self._auto_ingest_session, response, task_input, task_id)
+            )
+
         return report.to_str()
 
     # ------------------------------------------------------------------
     # Private
     # ------------------------------------------------------------------
+
+    def _auto_ingest_session(self, response: str, task_input: str, task_id: str) -> None:
+        try:
+            from ..wiki.ingest import WikiIngestService
+
+            if not self.wiki_cfg:
+                return
+            ingest_svc = WikiIngestService(self.wiki_cfg)
+            # Heuristically parse the full session history for patterns, bugs, and coverage holes.
+            ingest_svc.ingest_session(
+                session_report=response,
+                failure_summary=task_input,
+                classification=task_input,
+                coverage_summary=task_input,
+                task_id=task_id,
+            )
+        except Exception:
+            logger.debug("Reporter: auto-ingest failed (non-fatal)", exc_info=True)
 
     def _load_system_prompt(self) -> str:
         try:

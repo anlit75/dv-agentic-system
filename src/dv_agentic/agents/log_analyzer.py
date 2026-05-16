@@ -22,6 +22,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..wiki.manager import WikiConfig
 from .base import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -182,8 +183,9 @@ class LogAnalyzerAgent(BaseAgent):
             but is required by the ABC).
     """
 
-    def __init__(self, config: AgentConfig) -> None:
+    def __init__(self, config: AgentConfig, wiki_config: WikiConfig | None = None) -> None:
         super().__init__(config)
+        self.wiki_config = wiki_config
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -208,6 +210,11 @@ class LogAnalyzerAgent(BaseAgent):
 
         await self.step()  # Deterministic agent, one iteration per run
         summary = await asyncio.to_thread(self.analyze, task_input)
+
+        # Fire-and-forget wiki ingest (non-blocking, non-fatal)
+        if self.wiki_config and self.wiki_config.enabled:
+            asyncio.create_task(self._ingest_to_wiki(summary))  # noqa: RUF006
+
         return summary.to_str()
 
     # ------------------------------------------------------------------
@@ -343,3 +350,24 @@ class LogAnalyzerAgent(BaseAgent):
         if error_class in {"uvm_fatal", "sim_assertion", "cocotb_error"}:
             return "Pass to Bug Classifier with the above summary."
         return "Pass to Bug Classifier with the above summary."
+
+    async def _ingest_to_wiki(self, summary: FailureSummary) -> None:
+        """Background task: archive detected pattern into the wiki.
+
+        Non-fatal — all exceptions are caught and logged at DEBUG so a
+        wiki write failure never propagates to the caller.
+        """
+        try:
+            from ..wiki.ingest import WikiIngestService
+
+            svc = WikiIngestService(self.wiki_config)  # type: ignore[arg-type]
+            svc.ingest_pattern(
+                failure_subtype=summary.failure_subtype,
+                error_class=summary.error_class,
+                context_lines=summary.context_lines,
+                fix_applied=None,
+                success=False,
+                task_id=getattr(self.config, "task_id", "unknown"),
+            )
+        except Exception:
+            logger.debug("LogAnalyzerAgent: wiki ingest failed (non-fatal)", exc_info=True)

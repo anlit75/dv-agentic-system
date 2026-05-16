@@ -73,6 +73,8 @@ nav:
       - System Overview: agentic-system.md
       - Structure & Design: agentic-system-structure.md
       - Prompt System: prompt-system.md
+      - LLM Wiki: llm-wiki.md
+  - Air-gapped install: air-gapped-install.md
   - API Reference:
       - Agents: api/agents.md
       - Tools & adapters: api/tools.md

@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-05-16
+
+### Added
+
+- **Wiki module** (`src/dv_agentic/wiki/`): Introduced the LLM Wiki Knowledge Integration layer — a Git-versioned Markdown knowledge base (`.agent/wiki/`) that compounds verification knowledge across sessions, eliminating per-session knowledge reset.
+  - `wiki/manager.py` — `WikiConfig` dataclass (parsed from `project.yaml` `wiki:` block), `load_wiki_config()`, `atomic_write()`, `parse_page()`, `serialize_page()`, and `today_str()` / `now_iso()` shared utilities. All page I/O uses temp-file + `os.replace` to prevent partial writes.
+  - `wiki/ingest.py` — `WikiIngestService` with `ingest_pattern()` (Phase A: auto-create / update `patterns/{failure_subtype}.md` with hit-count and fix-history) and `ingest_bug()` (Phase B: create `bugs/{RTL|TB}_{date}_{id}.md` with YAML frontmatter and evidence). Returns `WikiIngestResult` with lists of pages created / updated.
+  - `wiki/query.py` — `WikiQueryService` with `get_known_error_patterns()`, `get_pattern_summary()`, `get_pattern_page()`, `get_known_rtl_bugs()` (Phase B), and `get_coverage_history()` (Phase C stub). All methods degrade gracefully to `""` on empty wiki or I/O error.
+  - `wiki/search.py` — `WikiSearchIndex` abstract base; `BM25SearchIndex` (uses `bm25s[core]`, air-gapped RHEL 8.4 compatible, persistent index at `.agent/wiki/.search_index/`) with transparent fallback to `KeywordSearchIndex` (zero extra dependencies) when `bm25s` is not installed.
+  - `wiki/lint.py` — `WikiLintService` with `run(depth="quick"|"full")` checking orphan pages, broken Markdown links, stale open bugs (> 90 days), missing pages referenced by `index.md`, and uncited claims.
+- **Wiki CLI** (`src/dv_agentic/cli/`): Three new CLI entry-points for direct wiki operations.
+  - `cli/wiki_search.py` — `python -m dv_agentic.cli.wiki_search "<query>" [--category bugs|patterns|coverage]`
+  - `cli/wiki_lint.py` — `python -m dv_agentic.cli.wiki_lint [--depth quick|full]`
+  - `cli/wiki_build.py` — `python -m dv_agentic.cli.wiki_build` (rebuild BM25 index from scratch)
+- **Agent wiki integration** (five agents updated with optional wiki-awareness):
+  - `agents/reporter.py` — `_ingest_to_wiki()` async background task (non-blocking `asyncio.create_task`) triggered at end of `run()` when `wiki_config.auto_ingest` is enabled.
+  - `agents/orchestrator.py` — `_run_wiki_lint_quick()` async background lint on session start; logs warnings if `human_review_required`.
+  - `agents/bug_classifier.py` — `_load_wiki_context()` queries `wiki/bugs/` before classifying, prepending similar historical bugs to raise confidence.
+  - `agents/coverage_analyst.py` — loads `{{COVERAGE_HOLE_HISTORY}}` from wiki before analysis to avoid re-attempting protocol-blocked bins.
+  - `agents/log_analyzer.py` — passes `failure_subtype` metadata to `WikiIngestService.ingest_pattern()` after each analysis.
+- **PromptLoader wiki context injection** (`src/dv_agentic/prompts/prompt_loader.py`): Extended `_gather_context()` with `_load_wiki_context()` that populates four new placeholders — `{{KNOWN_ERROR_PATTERNS}}`, `{{KNOWN_RTL_BUGS}}`, `{{COVERAGE_HOLE_HISTORY}}`, `{{WIKI_PATTERN_SUMMARY}}` — from the wiki; wiki values override static profile values when present.
+- **Config loader wiki block** (`src/dv_agentic/config/config_loader.py`): Parses and validates the new `wiki:` section in `project.yaml`; builds `WikiConfig`. Defaults to `enabled: false` for full backward compatibility.
+- **Wiki test suite** (`tests/`): Seven new test modules covering unit and integration scenarios.
+  - `test_wiki_ingest.py` — pattern creation, hit-count accumulation, bug page creation, append-only `log.md`, and atomic-write failure safety.
+  - `test_wiki_query.py` — top-K ordering, empty-wiki graceful degradation, token-budget enforcement.
+  - `test_wiki_search.py` — index build, BM25 relevance, incremental update; `bm25s`-conditional tests auto-skipped when the package is absent.
+  - `test_wiki_lint.py` — orphan detection, stale-bug detection, clean-wiki pass.
+  - `test_wiki_bug.py` — bug classification integration with wiki pre-query.
+  - `test_wiki_coverage.py` — coverage hole ingest and history retrieval.
+  - `test_wiki_integration.py` — three-session compounding workflow verifying hit-count growth and confidence lift; backward-compatibility check (`wiki.enabled: false`); wiki-failure non-fatal check.
+- **Design specification** (`docs/llm-wiki-dv-agentic-spec.md`): Complete LLM Wiki × DV Agentic System integration specification covering architecture, data models, component interfaces, agent integration seam points, CLI spec, search-layer design, phased implementation plan, test strategy, and anti-patterns.
+
+### Changed
+
+- `pyproject.toml`: Added `wiki` optional-dependency group (`bm25s[core]>=0.2.0`); install with `pip install "dv-agentic-system[wiki]"`. No impact when `wiki.enabled: false`.
+- `pyproject.toml` (`[tool.ruff.lint.per-file-ignores]`): Suppressed `T201` (print) for `cli/wiki_search.py` since `print()` is intentional in the CLI output path.
+
 ## [0.6.2] - 2026-05-16
 
 ### Added
@@ -229,7 +266,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.5.1...v0.6.0

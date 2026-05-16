@@ -19,6 +19,7 @@ Workflow
 5. If budget exhausted → mark ``requires_human_review = True``.
 """
 
+import asyncio
 import logging
 import re
 from dataclasses import dataclass
@@ -27,6 +28,7 @@ from pathlib import Path
 from ..prompts.context import ProjectContext, SessionState
 from ..prompts.prompt_loader import PromptLoader
 from ..tools.llm.interface import BaseLLMClient
+from ..wiki.manager import WikiConfig
 from .base import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -100,6 +102,7 @@ class BugClassifierAgent(BaseAgent):
         project_config: ProjectContext | None = None,
         session: SessionState | None = None,
         prompts_dir: str | Path | None = None,
+        wiki_config: WikiConfig | None = None,
     ) -> None:
         super().__init__(config)
         self.llm = llm
@@ -107,6 +110,7 @@ class BugClassifierAgent(BaseAgent):
         self.project_config = project_config
         self.session = session
         self.prompts_dir = prompts_dir
+        self.wiki_config = wiki_config
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -132,6 +136,11 @@ class BugClassifierAgent(BaseAgent):
         if self.iteration != 0:
             raise RuntimeError(f"Agent must start at iteration 0 (current: {self.iteration})")
 
+        # Load wiki context
+        wiki_context = self._load_wiki_context(task_input)
+        if wiki_context:
+            task_input = f"{task_input}\n\n---\n## 已知相似 Bug 紀錄\n{wiki_context}"
+
         history: list[dict[str, str]] = [{"role": "user", "content": task_input}]
         last: ClassificationResult | None = None
 
@@ -148,6 +157,8 @@ class BugClassifierAgent(BaseAgent):
             )
 
             if last.confidence >= self.confidence_threshold and last.bug_type != "UNKNOWN":
+                if self.wiki_config and self.wiki_config.enabled:
+                    asyncio.create_task(self._ingest_to_wiki(task_input, last))  # noqa: RUF006
                 return last.to_str()
 
             # Low confidence → ask for more evidence
@@ -175,6 +186,71 @@ class BugClassifierAgent(BaseAgent):
     # ------------------------------------------------------------------
     # Private
     # ------------------------------------------------------------------
+
+    def _load_wiki_context(self, failure_summary: str) -> str:
+        """Attempt to load relevant knowledge from wiki. Return empty string on failure."""
+        if not self.wiki_config or not self.wiki_config.enabled:
+            return ""
+        try:
+            # Phase B spec says to use query_svc.search but fallback to get_known_rtl_bugs
+            # if search is not available.
+            from ..wiki.query import WikiQueryService
+
+            query_svc = WikiQueryService(self.wiki_config)
+
+            # Since search() is not fully integrated in query.py stub, we fallback:
+            # First try search if it exists, otherwise get_known_rtl_bugs.
+            if hasattr(query_svc, "search"):
+                results = query_svc.search(failure_summary[:200], category="bugs", top_k=3)
+                if isinstance(results, list):
+                    blocks = []
+                    for r in results:
+                        fm = r.frontmatter
+                        b_id = fm.get("id", "unknown")
+                        blocks.append(
+                            f"**{b_id}** (confidence: {fm.get('confidence', 0)})\n"
+                            f"  → Check: bugs/{b_id}.md"
+                        )
+                    return "\n\n".join(blocks)
+                return str(results)
+            return query_svc.get_known_rtl_bugs(top_k=3)
+        except Exception:
+            logger.debug("Wiki context loading failed", exc_info=True)
+            return ""
+
+    async def _ingest_to_wiki(self, session_input: str, result: ClassificationResult) -> None:
+        """Asynchronously ingest the classification result into the wiki."""
+        if not self.wiki_config or not self.wiki_config.enabled:
+            return
+        if result.bug_type == "UNKNOWN":
+            return
+
+        try:
+            from ..wiki.ingest import WikiIngestService
+
+            ingest = WikiIngestService(self.wiki_config)
+
+            # Extract basic info from session_input heuristically
+            error_class = "unknown"
+            failure_subtype = "unknown"
+            for line in session_input.splitlines():
+                if line.startswith("error_class:"):
+                    error_class = line.split(":", 1)[1].strip()
+                elif line.startswith("failure_subtype:"):
+                    failure_subtype = line.split(":", 1)[1].strip()
+
+            await asyncio.to_thread(
+                ingest.ingest_bug,
+                bug_type=result.bug_type,
+                confidence=result.confidence,
+                evidence=result.evidence,
+                error_class=error_class,
+                failure_subtype=failure_subtype,
+                task_id="bug_classification",  # Default task_id
+            )
+            logger.info("Wiki ingest completed for bug classification")
+        except Exception:
+            logger.exception("Wiki ingest failed (non-fatal)")
 
     def _load_system_prompt(self) -> str:
         try:
