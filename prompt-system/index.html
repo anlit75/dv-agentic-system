@@ -18,7 +18,7 @@
         <link rel="prev" href="../agentic-system-structure/">
       
       
-        <link rel="next" href="../api/agents/">
+        <link rel="next" href="../llm-wiki/">
       
       
         
@@ -245,6 +245,25 @@
         </a>
       </li>
     
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../air-gapped-install/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Air-gapped install
+
+      </a>
+    </li>
   
 
       
@@ -603,9 +622,64 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm-wiki/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Wiki
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../air-gapped-install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Air-gapped install
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -628,10 +702,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -649,8 +723,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -935,17 +1009,27 @@ visually obvious in standalone use that the section is absent/empty.</p>
 </tr>
 <tr>
 <td><code>{{KNOWN_ERROR_PATTERNS}}</code></td>
-<td><code>profiles/</code> error DB</td>
-<td>log_analyzer</td>
-</tr>
-<tr>
-<td><code>{{KNOWN_RTL_BUGS}}</code></td>
-<td><code>.agent/memory.db</code></td>
+<td>wiki <code>patterns/</code> (wiki-first) → <code>profiles/</code> error DB (fallback)</td>
 <td>log_analyzer, bug_classifier</td>
 </tr>
 <tr>
+<td><code>{{KNOWN_RTL_BUGS}}</code></td>
+<td>wiki <code>bugs/</code> (wiki-first) → <code>.agent/tasks/</code> (fallback)</td>
+<td>log_analyzer, bug_classifier</td>
+</tr>
+<tr>
+<td><code>{{COVERAGE_HOLE_HISTORY}}</code></td>
+<td>wiki <code>coverage/</code> (requires <code>wiki.enabled: true</code>)</td>
+<td>coverage_analyst</td>
+</tr>
+<tr>
+<td><code>{{WIKI_PATTERN_SUMMARY}}</code></td>
+<td>wiki <code>patterns/</code> statistics (requires <code>wiki.enabled: true</code>)</td>
+<td>code_generator</td>
+</tr>
+<tr>
 <td><code>{{SESSION_STATE}}</code></td>
-<td><code>.agent/memory.db</code> current session</td>
+<td><code>.agent/tasks/{task_id}.yaml</code> current session</td>
 <td>all agents</td>
 </tr>
 </tbody>
