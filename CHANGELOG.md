@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-05-16
+
+### Added
+
+- **Internal services layer** (`src/dv_agentic/tools/services/`): Extracted deterministic, non-LLM workflows from standalone agents into reusable services aligned with single-orchestrator design (`AGENTS.md`).
+  - `services/log_analyzer.py` — `LogAnalyzerService` with `FailureSummary` parsing, wiki-aware pattern ingest hooks, and `run(log_content)`.
+  - `services/coverage_analyst.py` — `CoverageAnalystService` with threshold checks and wiki hole-history context.
+  - `services/sim_controller.py` — `SimControllerService` with `run(task, max_runs=10)` (replaces `BaseAgent.step()` loop), compile/run orchestration, and `SimReport` output.
+- **Orchestrator auto-chain**: After `run_code_generator`, the Orchestrator automatically invokes `SimControllerService` then `LogAnalyzerService` without an extra LLM routing turn; log output is fed back as the effective code-generator step result. Dynamic escalation on shifting `failure_subtype` remains active during the chain.
+- **`OrchestratorAgent._build_sim_task()`**: Parses inline JSON, fenced JSON blocks, or heuristic `test=` / `seed:` fields from decision `INPUT` into a `SimTask` so auto-chain does not pass Code Generator markdown to the simulator.
+- **`PromptLoader.load_temperature()`**: Reads `temperature` from prompt YAML frontmatter; defaults to `0.0` when missing or invalid.
+- **LLM temperature passthrough**: `BaseLLMClient.complete(..., temperature=None)`; `LLMAPIClient` and `LocalLLMClient` include `temperature` in request payloads when set. All LLM agents load frontmatter temperature in `_load_system_prompt()`.
+- **Tests**:
+  - `tests/test_prompts.py` — `TestLoadTemperature` (9 cases) for frontmatter parsing and package templates.
+  - `tests/test_orchestrator.py` — coverage dispatch via `_cov_svc`, `TestBuildSimTask`, auto-chain `SimTask` wiring.
+  - `tests/test_cli.py` — `test_orchestrator_cli_wires_simulator_and_coverage_services` verifies CLI passes adapters into `OrchestratorAgent`, not `sub_agents`.
+- `.pre-commit-config.yaml`: Local `no-cjk-in-source-and-docs` hook (`language: pygrep`) blocks CJK Unified Ideographs (UTF-8) in `src/`, `tests/`, `tools/`, `scripts/`, `agents/`, `skills/`, `docs/`, `.github/`, and root project docs (`README.md`, `CHANGELOG.md`, `ROADMAP.md`, `AGENTS.md`, `mkdocs.yml`, `pyproject.toml`); excludes `sample/`, `_build/`, and `.venv/`. Enforces English-only source, prompts, and documentation per `AGENTS.md`.
+
+### Changed
+
+- **Architecture (8 agents → 5 LLM agents + 3 services)**: `Orchestrator`, `SpecAnalyst`, `CodeGenerator`, `BugClassifier`, and `Reporter` remain LLM agents; `LogAnalyzer`, `CoverageAnalyst`, and `SimController` are internal services invoked by the Orchestrator (or standalone CLI). Documented in `docs/agentic-system.md` and `docs/agentic-system-structure.md`.
+- **`OrchestratorAgent` routing**: `VALID_ACTIONS` reduced to seven — `run_code_generator`, `run_coverage_analyst`, `run_bug_classifier`, `run_spec_analyst`, `run_reporter`, `done`, `escalate`. Removed `run_sim_controller` and `run_log_analyzer` (handled by auto-chain).
+- **`run_coverage_analyst` dispatch**: Uses injected `CoverageAnalystService` (`_cov_svc`) when a coverage adapter is present; no longer requires `sub_agents["coverage_analyst"]`.
+- **`cli/orchestrator.py`**: `_build_sub_agents()` builds four LLM sub-agents only; passes `simulator` and `coverage` adapters directly to `OrchestratorAgent`.
+- **Compatibility shims** (`agents/log_analyzer.py`, `coverage_analyst.py`, `sim_controller.py`): Thin subclasses delegating to services; preserve `LogAnalyzerAgent`, `CoverageAnalystAgent`, and `SimControllerAgent` import paths and standalone CLIs.
+- **Prompt templates**:
+  - `orchestrator.tmpl.md` — workflow diagram and valid actions aligned with implementation; `temperature: 0`; explicit note not to emit removed sim/log actions.
+  - `bug_classifier.tmpl.md` — `temperature: 0` for deterministic classification.
+  - `log_analyzer.tmpl.md`, `coverage_analyst.tmpl.md`, `sim_controller.tmpl.md` — standalone CLI notes when used outside the Orchestrator.
+- **OpenCode TypeScript wrappers** (`tools/log_analyzer.ts`, `coverage_analyst.ts`, `sim_controller.ts`): Minor CLI flag alignment with service entry points.
+
+### Fixed
+
+- `tests/test_adapter_factory.py`: Guard `importlib.util.find_spec("cocotb.runner")` with try/except so collection does not fail when cocotb is not installed.
+- `tools/llm/api.py` and `tools/llm/local.py`: Renamed HTTP response variable to avoid mypy `no-redef` on `body`.
+- Service shim `__init__` signatures: Added type annotations and explicit `__all__` exports for `FailureSummary`, `CoverageSummary`, and `SimReport`.
+
 ## [0.7.0] - 2026-05-16
 
 ### Added
@@ -266,7 +303,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.0...v0.6.1

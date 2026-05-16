@@ -231,7 +231,10 @@ class TestMultiTurnLoop:
         captured_histories: list[list[dict[str, str]]] = []
 
         async def capture_complete(
-            system: str, messages: list[dict[str, str]], max_tokens: int = 1000
+            system: str,
+            messages: list[dict[str, str]],
+            max_tokens: int = 1000,
+            temperature: float | None = None,
         ) -> str:
             captured_histories.append(list(messages))
             # First call → LOW, second → HIGH
@@ -252,7 +255,12 @@ class TestMultiTurnLoop:
         """assistant + user messages must accumulate in the history list."""
         histories: list[list[dict[str, str]]] = []
 
-        async def spy(system: str, messages: list[dict[str, str]], max_tokens: int = 1000) -> str:
+        async def spy(
+            system: str,
+            messages: list[dict[str, str]],
+            max_tokens: int = 1000,
+            temperature: float | None = None,
+        ) -> str:
             histories.append(list(messages))
             return _LOW_RESPONSE if len(histories) < 2 else _HIGH_RESPONSE
 

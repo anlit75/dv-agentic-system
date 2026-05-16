@@ -7,7 +7,7 @@
 import os
 import sys
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -63,6 +63,45 @@ def test_orchestrator_cli_uses_cwd(mock_asyncio: Any, mock_make_llm: Any, mock_a
 
     mock_agent.assert_called_once()
     mock_asyncio.assert_called_once()
+
+
+@patch("dv_agentic.tools.adapters.get_coverage_adapter")
+@patch("dv_agentic.tools.adapters.get_simulator_adapter")
+@patch("dv_agentic.cli.orchestrator.make_llm")
+def test_orchestrator_cli_wires_simulator_and_coverage_services(
+    mock_make_llm: Any,
+    mock_get_sim: Any,
+    mock_get_cov: Any,
+) -> None:
+    """CLI must pass simulator/coverage adapters into OrchestratorAgent (not sub_agents)."""
+    from dv_agentic.cli import orchestrator
+
+    stub_sim = MagicMock(name="simulator_adapter")
+    stub_cov = MagicMock(name="coverage_adapter")
+    mock_get_sim.return_value = stub_sim
+    mock_get_cov.return_value = stub_cov
+    mock_make_llm.return_value = MagicMock()
+
+    captured: dict[str, Any] = {}
+
+    with (
+        patch.object(sys, "argv", ["python3 -m dv_agentic.cli.orchestrator"]),
+        patch("dv_agentic.cli.orchestrator.read_input", return_value="dummy"),
+        patch("asyncio.run", return_value="ok"),
+        patch("dv_agentic.agents.orchestrator.OrchestratorAgent") as mock_orch_cls,
+    ):
+        orchestrator.main()
+        captured["kwargs"] = mock_orch_cls.call_args.kwargs
+
+    kwargs = captured["kwargs"]
+    assert kwargs["simulator"] is stub_sim
+    assert kwargs["coverage"] is stub_cov
+    sub = kwargs["sub_agents"]
+    assert "code_generator" in sub
+    assert "bug_classifier" in sub
+    assert "coverage_analyst" not in sub
+    assert "sim_controller" not in sub
+    assert "log_analyzer" not in sub
 
 
 def test_helpers_read_input_stdin() -> None:

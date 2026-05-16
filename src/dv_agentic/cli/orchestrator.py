@@ -128,10 +128,13 @@ def _build_sub_agents(
     args: argparse.Namespace,
     llm: Any,
     project_ctx: Any = None,
-    project_simulator: Any = None,
-    project_coverage: Any = None,
 ) -> dict[str, Any]:
-    """Instantiate all sub-agents and return them keyed by agent name.
+    """Instantiate LLM-powered sub-agents and return them keyed by agent name.
+
+    The three deterministic services (SimControllerService, LogAnalyzerService,
+    CoverageAnalystService) are no longer sub-agents; they are wired directly
+    into OrchestratorAgent via the ``simulator``, ``coverage``, and
+    ``coverage_threshold`` constructor parameters.
 
     Args:
         args: Parsed command-line arguments.
@@ -139,42 +142,20 @@ def _build_sub_agents(
         project_ctx: Optional :class:`~dv_agentic.prompts.context.ProjectContext`
             loaded from ``project.yaml``.  When provided, injected into every
             LLM-powered agent's :class:`~dv_agentic.prompts.prompt_loader.PromptLoader`.
-        project_simulator: Optional :class:`~dv_agentic.tools.interface.SimulatorTool`
-            loaded from ``project.yaml``.  Overrides ``--simulator`` flag.
-        project_coverage: Optional :class:`~dv_agentic.tools.interface.CoverageTool`
-            loaded from ``project.yaml``.  Overrides ``--adapter`` flag.
 
     Returns:
-        A dictionary mapping agent names to agent instances.
+        A dictionary mapping agent names to agent instances (4 entries:
+        ``code_generator``, ``bug_classifier``, ``spec_analyst``, ``reporter``).
     """
     from dv_agentic.agents.base import AgentConfig
     from dv_agentic.agents.bug_classifier import BugClassifierAgent
     from dv_agentic.agents.code_generator import DEFAULT_TB_ALLOWED_DIRS, CodeGeneratorAgent
-    from dv_agentic.agents.coverage_analyst import CoverageAnalystAgent
-    from dv_agentic.agents.log_analyzer import LogAnalyzerAgent
     from dv_agentic.agents.reporter import ReporterAgent
-    from dv_agentic.agents.sim_controller import SimControllerAgent
     from dv_agentic.agents.spec_analyst import SpecAnalystAgent
-    from dv_agentic.tools.adapters import get_coverage_adapter, get_simulator_adapter
 
     b = args.sub_budget
 
-    simulator = project_simulator or get_simulator_adapter(args.simulator)
-    coverage = project_coverage or get_coverage_adapter(args.adapter)
-
     return {
-        "log_analyzer": LogAnalyzerAgent(
-            config=AgentConfig(name="log_analyzer", budget=b),
-        ),
-        "coverage_analyst": CoverageAnalystAgent(
-            config=AgentConfig(name="coverage_analyst", budget=b),
-            coverage=coverage,
-            threshold=args.coverage_threshold,
-        ),
-        "sim_controller": SimControllerAgent(
-            config=AgentConfig(name="sim_controller", budget=b),
-            simulator=simulator,
-        ),
         "code_generator": CodeGeneratorAgent(
             config=AgentConfig(name="code_generator", budget=b),
             llm=llm,
@@ -228,21 +209,20 @@ def main() -> None:
     try:
         from dv_agentic.agents.base import AgentConfig
         from dv_agentic.agents.orchestrator import OrchestratorAgent
+        from dv_agentic.tools.adapters import get_coverage_adapter, get_simulator_adapter
 
         llm = make_llm(model=args.model)
-        sub_agents = _build_sub_agents(
-            args,
-            llm,
-            project_ctx=project_ctx,
-            project_simulator=project_simulator,
-            project_coverage=project_coverage,
-        )
+        sub_agents = _build_sub_agents(args, llm, project_ctx=project_ctx)
 
         agent = OrchestratorAgent(
             config=AgentConfig(name="orchestrator", budget=args.budget),
             llm=llm,
             sub_agents=sub_agents,
             project_config=project_ctx,
+            simulator=project_simulator or get_simulator_adapter(args.simulator),
+            coverage=project_coverage or get_coverage_adapter(args.adapter),
+            coverage_threshold=args.coverage_threshold,
+            sim_max_runs=args.sub_budget,
         )
         result = asyncio.run(agent.run(task_input))
         print(result)  # noqa: T201

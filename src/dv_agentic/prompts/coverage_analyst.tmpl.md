@@ -12,6 +12,11 @@ tools:
 
 # Coverage Analyst Agent
 
+> **Note (dv-agentic v2+):** CoverageAnalystService handles threshold
+> comparison directly. LLM-powered hole analysis (Workflow 3) still routes
+> through `run_coverage_analyst` in the Orchestrator. When using standalone,
+> instantiate `CoverageAnalystService` from `dv_agentic.tools.services`.
+
 You are a functional coverage analysis specialist for UVM and pyuvm
 verification environments. You read coverage databases and reports,
 identify coverage holes, classify each hole by actionability, and

@@ -5,6 +5,7 @@
 #
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -44,6 +45,77 @@ def test_prompt_loader_load_not_found(tmp_path: Path) -> None:
     msg = "Prompt template for 'non_existent_agent' not found"
     with pytest.raises(FileNotFoundError, match=msg):
         loader.load("non_existent_agent")
+
+
+class TestLoadTemperature:
+    """Unit tests for PromptLoader.load_temperature()."""
+
+    def test_missing_template_returns_zero(self, tmp_path: Path) -> None:
+        loader = PromptLoader(prompts_dir=tmp_path)
+        assert loader.load_temperature("missing_agent") == 0.0
+
+    def test_no_frontmatter_returns_zero(self, tmp_path: Path) -> None:
+        (tmp_path / "plain.tmpl.md").write_text("# No YAML\nBody", encoding="utf-8")
+        loader = PromptLoader(prompts_dir=tmp_path)
+        assert loader.load_temperature("plain") == 0.0
+
+    def test_integer_temperature(self, tmp_path: Path) -> None:
+        (tmp_path / "orch.tmpl.md").write_text(
+            "---\nname: orch\ntemperature: 0\n---\n# Prompt",
+            encoding="utf-8",
+        )
+        loader = PromptLoader(prompts_dir=tmp_path)
+        assert loader.load_temperature("orch") == 0.0
+
+    def test_float_temperature(self, tmp_path: Path) -> None:
+        (tmp_path / "creative.tmpl.md").write_text(
+            "---\ntemperature: 0.7\n---\n",
+            encoding="utf-8",
+        )
+        loader = PromptLoader(prompts_dir=tmp_path)
+        assert loader.load_temperature("creative") == 0.7
+
+    def test_missing_temperature_key_returns_zero(self, tmp_path: Path) -> None:
+        (tmp_path / "no_temp.tmpl.md").write_text(
+            "---\nname: agent\n---\n# Body",
+            encoding="utf-8",
+        )
+        loader = PromptLoader(prompts_dir=tmp_path)
+        assert loader.load_temperature("no_temp") == 0.0
+
+    def test_invalid_temperature_value_returns_zero(self, tmp_path: Path) -> None:
+        (tmp_path / "bad.tmpl.md").write_text(
+            "---\ntemperature: not-a-number\n---\n",
+            encoding="utf-8",
+        )
+        loader = PromptLoader(prompts_dir=tmp_path)
+        assert loader.load_temperature("bad") == 0.0
+
+    def test_read_oserror_returns_zero(self, tmp_path: Path) -> None:
+        path = tmp_path / "blocked.tmpl.md"
+        path.write_text("---\ntemperature: 0.5\n---\n", encoding="utf-8")
+        loader = PromptLoader(prompts_dir=tmp_path)
+        with patch.object(Path, "open", side_effect=OSError("denied")):
+            assert loader.load_temperature("blocked") == 0.0
+
+    def test_package_orchestrator_temperature_is_zero(self) -> None:
+        """Canonical orchestrator template uses temperature 0 for routing."""
+        try:
+            loader = PromptLoader()
+        except RuntimeError as e:
+            if "PromptLoader path discovery failed" in str(e):
+                pytest.skip("Default prompts path unavailable")
+            raise
+        assert loader.load_temperature("orchestrator") == 0.0
+
+    def test_package_bug_classifier_temperature_is_zero(self) -> None:
+        try:
+            loader = PromptLoader()
+        except RuntimeError as e:
+            if "PromptLoader path discovery failed" in str(e):
+                pytest.skip("Default prompts path unavailable")
+            raise
+        assert loader.load_temperature("bug_classifier") == 0.0
 
 
 def test_prompt_loader_load_success(tmp_path: Path) -> None:

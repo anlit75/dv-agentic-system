@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @deprecated (dv-agentic v2+)
+ * LogAnalyzerService is now called automatically by OrchestratorAgent as part
+ * of the code → sim → analyze auto-chain after every `run_code_generator` step.
+ * Prefer calling `run_orchestrator` instead of invoking this tool directly.
+ * This wrapper is retained for backward compatibility with existing installations.
+ */
 import { tool } from "@opencode-ai/plugin"
 import path from "path"
 

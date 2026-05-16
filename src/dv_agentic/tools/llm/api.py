@@ -56,6 +56,7 @@ class LLMAPIClient(BaseLLMClient):
         system: str,
         messages: list[dict[str, str]],
         max_tokens: int = 1000,
+        temperature: float | None = None,
     ) -> str:
         """Send a request to the LLM API and return the assistant reply.
 
@@ -63,6 +64,8 @@ class LLMAPIClient(BaseLLMClient):
             system: System prompt string.
             messages: Conversation turns in ``[{"role": ..., "content": ...}]`` form.
             max_tokens: Maximum tokens to generate.
+            temperature: Sampling temperature.  ``None`` omits the field from
+                the request body, deferring to the API default.
 
         Returns:
             The text content of the first content block in the response.
@@ -71,7 +74,9 @@ class LLMAPIClient(BaseLLMClient):
             RuntimeError: On non-2xx HTTP response.
         """
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self._post, system, messages, max_tokens)
+        return await loop.run_in_executor(
+            None, self._post, system, messages, max_tokens, temperature
+        )
 
     # ------------------------------------------------------------------
     # Private
@@ -82,16 +87,18 @@ class LLMAPIClient(BaseLLMClient):
         system: str,
         messages: list[dict[str, str]],
         max_tokens: int,
+        temperature: float | None = None,
     ) -> str:
         """Blocking HTTP POST — runs in a thread-pool executor."""
-        payload = json.dumps(
-            {
-                "model": self.model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": messages,
-            }
-        ).encode()
+        body: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": messages,
+        }
+        if temperature is not None:
+            body["temperature"] = temperature
+        payload = json.dumps(body).encode()
 
         req = urllib.request.Request(  # noqa: S310
             self.api_url,
@@ -105,8 +112,8 @@ class LLMAPIClient(BaseLLMClient):
         )
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310
-                body: dict[str, Any] = json.loads(resp.read())
-                return str(body["content"][0]["text"])
+                response: dict[str, Any] = json.loads(resp.read())
+                return str(response["content"][0]["text"])
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace")
             raise RuntimeError(f"LLM API error {exc.code}: {detail}") from exc

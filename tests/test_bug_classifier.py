@@ -146,7 +146,12 @@ class TestMultiTurnLoop:
     def test_follow_up_message_references_confidence(self) -> None:
         histories: list[list[dict[str, str]]] = []
 
-        async def spy(system: str, messages: list[dict[str, str]], max_tokens: int = 1000) -> str:
+        async def spy(
+            system: str,
+            messages: list[dict[str, str]],
+            max_tokens: int = 1000,
+            temperature: float | None = None,
+        ) -> str:
             histories.append(list(messages))
             return _LOW_CONFIDENCE_RESPONSE if len(histories) < 2 else _TB_RESPONSE
 

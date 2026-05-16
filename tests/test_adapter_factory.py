@@ -16,7 +16,10 @@ from dv_agentic.tools.adapters.xcelium import XceliumAdapter
 from dv_agentic.tools.interface import CoverageTool, SimulatorTool
 
 # cocotb.runner is Linux-only; skip GHDL adapter tests when unavailable.
-cocotb_runner_available = importlib.util.find_spec("cocotb.runner") is not None
+try:
+    cocotb_runner_available = importlib.util.find_spec("cocotb.runner") is not None
+except ModuleNotFoundError:
+    cocotb_runner_available = False
 skip_no_cocotb = pytest.mark.skipif(
     not cocotb_runner_available, reason="cocotb.runner not available"
 )

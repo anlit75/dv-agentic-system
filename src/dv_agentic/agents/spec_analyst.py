@@ -97,6 +97,7 @@ class SpecAnalystAgent(BaseAgent):
         self.project_config = project_config
         self.session = session
         self.prompts_dir = prompts_dir
+        self._temperature: float = 0.0
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -126,7 +127,9 @@ class SpecAnalystAgent(BaseAgent):
         last_yaml = ""
 
         while await self.step():
-            response = await self.llm.complete(system_prompt, history, max_tokens=4000)
+            response = await self.llm.complete(
+                system_prompt, history, max_tokens=4000, temperature=self._temperature
+            )
             history.append({"role": "assistant", "content": response})
 
             yaml_block = self._extract_yaml(response)
@@ -172,9 +175,11 @@ class SpecAnalystAgent(BaseAgent):
                 project_config=self.project_config,
                 session=self.session,
             )
+            self._temperature = loader.load_temperature("spec_analyst")
             return loader.load("spec_analyst")
         except (FileNotFoundError, RuntimeError) as exc:
             logger.warning("PromptLoader unavailable (%s); using fallback.", exc)
+            self._temperature = 0.0
             return (
                 "You are a hardware verification specification analyst. "
                 "Given a specification document, extract all features and generate "
