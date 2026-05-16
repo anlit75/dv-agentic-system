@@ -34,6 +34,17 @@ repos:
 
   - repo: local
     hooks:
+      - id: no-cjk-in-source-and-docs
+        name: disallow CJK in source and docs
+        description: >-
+          Block Han/Hangul-related scripts in code, prompts, and docs (English only;
+          see AGENTS.md). Does not scan lockfiles or sample/ trees.
+        language: pygrep
+        # UTF-8 bytes for CJK Unified (U+4E00–U+9FFF); pygrep matches binary lines.
+        entry: '[\xe4-\xe9][\x80-\xbf][\x80-\xbf]'
+        types_or: [python, shell, ts, markdown, yaml, toml]
+        files: ^(src/|tests/|tools/|scripts/|agents/|skills/|docs/|\.github/|README\.md|CHANGELOG\.md|ROADMAP\.md|AGENTS\.md|mkdocs\.yml|pyproject\.toml)
+        exclude: ^(sample/|_build/|\.venv/)
       - id: mypy
         name: mypy
         entry: uv run mypy

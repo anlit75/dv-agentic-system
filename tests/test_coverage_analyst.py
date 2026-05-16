@@ -4,23 +4,21 @@
 # SPDX-License-Identifier: MIT
 #
 
-"""Unit tests for CoverageAnalystAgent (Phase 3a)."""
+"""Unit tests for CoverageAnalystService."""
 
 import asyncio
 from unittest.mock import MagicMock
 
-from dv_agentic.agents.base import AgentConfig
-from dv_agentic.agents.coverage_analyst import CoverageAnalystAgent
 from dv_agentic.tools.models import CoverageDB
+from dv_agentic.tools.services import CoverageAnalystService
 
 
-def _make_agent(pct: float, threshold: float = 90.0) -> CoverageAnalystAgent:
+def _make_agent(pct: float, threshold: float = 90.0) -> CoverageAnalystService:
     cov_mock = MagicMock()
     cov_mock.get_coverage.return_value = CoverageDB(
         path=f"cov_work/job_{pct:.0f}", overall_percentage=pct
     )
-    return CoverageAnalystAgent(
-        config=AgentConfig(name="cov_analyst"),
+    return CoverageAnalystService(
         coverage=cov_mock,
         threshold=threshold,
     )

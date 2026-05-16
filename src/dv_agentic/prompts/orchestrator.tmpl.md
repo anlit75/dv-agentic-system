@@ -2,7 +2,7 @@
 description: Task orchestration and multi-agent coordination specialist for hardware verification workflows.
 mode: subagent
 model: google/gemini-2.0-flash-001
-temperature: 0.1
+temperature: 0
 tools:
   lsp: false
 ---
@@ -37,26 +37,33 @@ and decide when to escalate.
 "Write a sequence targeting Z scenario."
 
 ```
-SpecAnalyst (if spec provided) → CodeGenerator → SimController
+SpecAnalyst (if spec provided) → CodeGenerator
+    [runtime auto-chains: SimController + LogAnalyzer after CodeGenerator]
     → pass: CoverageAnalyst → done
-    → fail: LogAnalyzer → BugClassifier
-         → TB_BUG: CodeGenerator (fix) → SimController (loop, max N)
-         → RTL_BUG: Reporter (open ticket) → escalate
+    → fail (TB_BUG): CodeGenerator (fix) → [auto-chain loop, max N]
+    → fail (RTL_BUG): Reporter (open ticket) → escalate
 ```
+
+> **Note**: After `run_code_generator`, the runtime automatically runs
+> SimControllerService (compile + simulate) and LogAnalyzerService (parse log)
+> in sequence. You will receive the log analysis result directly — you do NOT
+> need to dispatch `run_sim_controller` or `run_log_analyzer` as separate actions.
 
 ### Workflow 2 — Regression Fail → Debug → Classify → Fix
 
 **Trigger**: "Regression has N fails", "Test X is failing", "Analyse this log."
 
 ```
-LogAnalyzer (for each fail)
-    → sufficient data: BugClassifier
-    → insufficient data: SimController (debug mode) → LogAnalyzer
+The runtime provides the log analysis result as the starting context.
 BugClassifier
-    → TB_BUG (high confidence): CodeGenerator → SimController (loop)
+    → TB_BUG (high confidence): CodeGenerator → [auto-chain: sim + log]
     → RTL_BUG (high confidence): Reporter → escalate
     → low confidence: escalate (human review)
 ```
+
+> **Note**: Log analysis is handled automatically by the runtime before this
+> workflow starts. For debug-mode re-runs, dispatch `run_code_generator` with
+> debug instructions; the runtime will re-run the simulation and return new logs.
 
 ### Workflow 3 — Coverage Analysis → Fill Patterns
 
@@ -65,9 +72,9 @@ BugClassifier
 
 ```
 CoverageAnalyst → identify actionable holes
-    → for each hole: CodeGenerator → SimController
+    → for each hole: CodeGenerator → [auto-chain: SimController + LogAnalyzer]
         → hit target bin: continue to next hole
-        → fail: LogAnalyzer → (loop or mark needs_human)
+        → fail: loop or mark needs_human
     → all holes processed: Reporter → done
 ```
 
@@ -115,10 +122,8 @@ INPUT: {text to pass verbatim to the sub-agent, or "N/A" for done/escalate}
 | Action | Sub-agent invoked |
 |---|---|
 | `run_spec_analyst` | SpecAnalystAgent |
-| `run_code_generator` | CodeGeneratorAgent |
-| `run_sim_controller` | SimControllerAgent |
-| `run_log_analyzer` | LogAnalyzerAgent |
-| `run_coverage_analyst` | CoverageAnalystAgent |
+| `run_code_generator` | CodeGeneratorAgent (+ auto-chains sim + log) |
+| `run_coverage_analyst` | CoverageAnalystService |
 | `run_bug_classifier` | BugClassifierAgent |
 | `run_reporter` | ReporterAgent |
 | `done` | (terminates loop — task complete) |
@@ -126,18 +131,21 @@ INPUT: {text to pass verbatim to the sub-agent, or "N/A" for done/escalate}
 
 **Only one action per response.** Never chain two actions in one turn.
 
+**Do NOT output `run_sim_controller` or `run_log_analyzer`** — these are no longer
+valid actions. Simulation and log analysis run automatically after `run_code_generator`.
+
 ---
 
 ## INPUT Field Rules
 
 The INPUT field is passed verbatim to the sub-agent's `run()` method.
 
-- For `run_log_analyzer`: paste the log file path or content.
 - For `run_code_generator`: describe the target bin or bug fix in detail,
-  including any constraints from the vplan or spec.
-- For `run_sim_controller`: provide a JSON-serialisable SimTask specification.
-- For `run_bug_classifier`: paste the LogAnalyzer output and any relevant
-  spec excerpt.
+  including any constraints from the vplan or spec. The runtime will
+  automatically run simulation and log analysis after this step.
+- For `run_coverage_analyst`: provide the simulation job ID to query.
+- For `run_bug_classifier`: paste the log analysis result (provided
+  automatically by the runtime) and any relevant spec excerpt.
 - For `run_reporter`: paste the concatenated outputs of all agents from
   this session, labelled by agent name.
 - For `done` / `escalate`: use "N/A".

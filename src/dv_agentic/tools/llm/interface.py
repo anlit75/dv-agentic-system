@@ -16,6 +16,7 @@ class BaseLLMClient(abc.ABC):
         system: str,
         messages: list[dict[str, str]],
         max_tokens: int = 1000,
+        temperature: float | None = None,
     ) -> str:
         """Complete the given conversation.
 
@@ -23,6 +24,8 @@ class BaseLLMClient(abc.ABC):
             system: The system prompt.
             messages: A list of message dictionaries (e.g., {"role": "user", "content": "..."}).
             max_tokens: The maximum number of tokens to generate.
+            temperature: Sampling temperature.  ``None`` omits the parameter
+                from the request, deferring to the API default.
 
         Returns:
             The generated response string.

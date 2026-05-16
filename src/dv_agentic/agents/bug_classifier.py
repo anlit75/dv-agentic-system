@@ -111,6 +111,7 @@ class BugClassifierAgent(BaseAgent):
         self.session = session
         self.prompts_dir = prompts_dir
         self.wiki_config = wiki_config
+        self._temperature: float = 0.0
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -145,7 +146,9 @@ class BugClassifierAgent(BaseAgent):
         last: ClassificationResult | None = None
 
         while await self.step():
-            response = await self.llm.complete(system_prompt, history, max_tokens=2000)
+            response = await self.llm.complete(
+                system_prompt, history, max_tokens=2000, temperature=self._temperature
+            )
             history.append({"role": "assistant", "content": response})
 
             last = self._parse_response(response, self.iteration)
@@ -259,9 +262,11 @@ class BugClassifierAgent(BaseAgent):
                 project_config=self.project_config,
                 session=self.session,
             )
+            self._temperature = loader.load_temperature("bug_classifier")
             return loader.load("bug_classifier")
         except (FileNotFoundError, RuntimeError) as exc:
             logger.warning("PromptLoader unavailable (%s); using fallback.", exc)
+            self._temperature = 0.0
             return (
                 "You are a hardware verification bug classification specialist. "
                 "Given a simulation failure summary, classify the root cause as "

@@ -4,6 +4,14 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @deprecated (dv-agentic v2+)
+ * CoverageAnalystService now handles threshold comparison directly inside
+ * OrchestratorAgent.  LLM-powered hole analysis (Workflow 3) still routes
+ * through `run_coverage_analyst` in the Orchestrator.
+ * Prefer calling `run_orchestrator` instead of invoking this tool directly.
+ * This wrapper is retained for backward compatibility with existing installations.
+ */
 import { tool } from "@opencode-ai/plugin"
 import path from "path"
 

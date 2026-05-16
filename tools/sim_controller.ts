@@ -4,6 +4,13 @@
  * SPDX-License-Identifier: MIT
  */
 
+/**
+ * @deprecated (dv-agentic v2+)
+ * SimControllerService is now called automatically by OrchestratorAgent
+ * immediately after `run_code_generator` as part of the built-in auto-chain.
+ * Prefer calling `run_orchestrator` instead of invoking this tool directly.
+ * This wrapper is retained for backward compatibility with existing installations.
+ */
 import { tool } from "@opencode-ai/plugin"
 import path from "path"
 

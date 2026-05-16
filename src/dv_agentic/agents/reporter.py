@@ -81,6 +81,7 @@ class ReporterAgent(BaseAgent):
         self.session = session
         self.prompts_dir = prompts_dir
         self.wiki_cfg = wiki_config
+        self._temperature: float = 0.0
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -112,6 +113,7 @@ class ReporterAgent(BaseAgent):
             system_prompt,
             [{"role": "user", "content": task_input}],
             max_tokens=3000,
+            temperature=self._temperature,
         )
 
         written_path = self._write_report(response, task_id)
@@ -158,9 +160,11 @@ class ReporterAgent(BaseAgent):
                 project_config=self.project_config,
                 session=self.session,
             )
+            self._temperature = loader.load_temperature("reporter")
             return loader.load("reporter")
         except (FileNotFoundError, RuntimeError) as exc:
             logger.warning("PromptLoader unavailable (%s); using fallback.", exc)
+            self._temperature = 0.0
             return (
                 "You are a verification session reporter. "
                 "Given the results from multiple agents in a session, produce a concise "

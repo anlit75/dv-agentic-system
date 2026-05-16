@@ -218,6 +218,7 @@ class CodeGeneratorAgent(BaseAgent):
         self.allowed_dirs: frozenset[str] | None = (
             frozenset(allowed_dirs) if allowed_dirs is not None else None
         )
+        self._temperature: float = 0.0
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -251,7 +252,9 @@ class CodeGeneratorAgent(BaseAgent):
 
         while await self.step():
             logger.info("CodeGenerator iter=%d task_id=%s", self.iteration, task.task_id)
-            response = await self.llm.complete(system_prompt, history, max_tokens=4000)
+            response = await self.llm.complete(
+                system_prompt, history, max_tokens=4000, temperature=self._temperature
+            )
             history.append({"role": "assistant", "content": response})
 
             last_parsed = self._parse_response(response)
@@ -310,9 +313,11 @@ class CodeGeneratorAgent(BaseAgent):
                 project_config=self.project_config,
                 session=self.session,
             )
+            self._temperature = loader.load_temperature("code_generator")
             return loader.load("code_generator")
         except (FileNotFoundError, RuntimeError) as exc:
             logger.warning("PromptLoader unavailable (%s); using minimal fallback prompt.", exc)
+            self._temperature = 0.0
             return (
                 "You are a SystemVerilog / UVM testbench code generation specialist. "
                 "Generate correct, simulation-ready SV/UVM testbench code. "

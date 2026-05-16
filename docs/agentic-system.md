@@ -24,7 +24,7 @@ This layering ensures your agent prompts, orchestration logic, and memory schema
 
 ## 2. Multi-Agent Responsibility Breakdown
 
-Based on cognitive tasks analyzed from three workflows, they are split into 8 agents:
+Based on cognitive tasks analyzed from three workflows, they are split into 5 LLM-powered agents and 3 internal services:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -42,17 +42,16 @@ Based on cognitive tasks analyzed from three workflows, they are split into 8 ag
 
 ### Agent Overview
 
-| Agent | Responsibility | Input | Output |
-|---|---|---|---|
-| **Orchestrator** | Task routing, budget control, handoff | Task description | Subtask instructions |
-| **SPEC Analyst** | Parse spec, generate vplan | PDF/Text spec | structured vplan |
-| **Code Generator** | Write SV/pyuvm code | vplan + constraints | code diff |
-| **Sim Controller** | Call simulator, manage jobs | compile/run cmds | job status + paths |
-| **Log Analyzer** | Parse log, find failure point | log file | failure summary |
-| **Wave Analyzer** | Interpret waveform patterns | Signal list + time | signal analysis |
-| **Coverage Analyst** | Analyze coverage DB, find holes | ucdb/coverage report | hole list + priority |
-| **Bug Classifier** | Differentiate TB bug vs RTL bug | spec + log + code | classification + evidence |
-| **Reporter** | Output bug report / summary | analysis results | structured report |
+| Agent | Type | Responsibility | Input | Output |
+|---|---|---|---|---|
+| **Orchestrator** | LLM agent | Task routing, budget control, handoff | Task description | Subtask instructions |
+| **SPEC Analyst** | LLM agent | Parse spec, generate vplan | PDF/Text spec | structured vplan |
+| **Code Generator** | LLM agent | Write SV/pyuvm code | vplan + constraints | code diff |
+| **Bug Classifier** | LLM agent | Differentiate TB bug vs RTL bug | spec + log + code | classification + evidence |
+| **Reporter** | LLM agent | Output bug report / summary | analysis results | structured report |
+| **Sim Controller** | internal service (non-LLM) | Call simulator, manage jobs; auto-invoked after Code Generator | compile/run cmds | job status + paths |
+| **Log Analyzer** | internal service (non-LLM) | Parse log, find failure point; auto-invoked after Sim Controller | log content | failure summary |
+| **Coverage Analyst** | internal service (non-LLM) | Threshold comparison, invoke for Workflow 3 coverage hole analysis | ucdb/coverage report | hole list + priority |
 
 ## 3. Three Workflow Agent Collaboration Diagrams
 
@@ -73,13 +72,13 @@ USER: "Develop verification for XXX feature based on this spec"
          │                   generate_sequence(), validate_sv_syntax()
          │ SV code
          ▼
-  [Sim Controller] ── tools: compile_check(), run_simulation()
+  [Sim Controller Service]¹ ── compile_check(), run_simulation()
          │
     ┌────┴────┐
   PASS      FAIL
     │          │
     ▼          ▼
-[Coverage   [Log Analyzer] ── tools: parse_log(), extract_error_context()
+[Coverage   [Log Analyzer Service]¹ ── parse_log(), extract_error_context()
  Analyst]        │
 (→ WF3)        ▼
            [Bug Classifier]
@@ -117,10 +116,10 @@ USER: "Regression has 5 fails, please analyze"
   ├── Is this fail worth spending time to run in debug mode?
   │   (Based on: fail severity, past patterns, budget)
   │
-  ├── YES → [Sim Controller]
+  ├── YES → [Sim Controller Service]¹
   │           run_simulation(debug_mode=True, full_log=True)
   │                 │
-  │           [Wave Analyzer] + [Log Analyzer]
+  │           [Log Analyzer Service]¹
   │
   └── NO  → [Bug Classifier] Make best guess using existing info
                                Mark confidence level
@@ -161,9 +160,9 @@ USER: "Coverage is only 73%, find what needs to be filled"
   ├── tools: generate_targeted_sequence(), constrain_by_protocol_rules()
   │
   ▼
-  [Sim Controller] compile + run
+  [Sim Controller Service]¹ compile + run
          │
-  [Log Analyzer] + [Coverage Analyst]
+  [Log Analyzer Service]¹ + [Coverage Analyst]
   ├── Did this pattern hit the target bin?
   ├── Were any new fails introduced?
   │
@@ -172,6 +171,11 @@ USER: "Coverage is only 73%, find what needs to be filled"
          │
   All completed → [Reporter] Output coverage delta report
 ```
+
+> **¹ Internal service (non-LLM):** Sim Controller Service and Log Analyzer
+> Service are invoked automatically by the OrchestratorAgent immediately after
+> every `run_code_generator` step — no separate LLM routing call is required.
+> They are not dispatched as independent agents.
 
 ## 4. Shared Tool Interface Design
 

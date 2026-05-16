@@ -19,22 +19,28 @@ Each turn:
   4. Sub-agent result is appended to history as a new user message.
   5. Repeat until ACTION is ``done`` / ``escalate``, or budget is exhausted.
 
+Auto-chain
+----------
+After ``run_code_generator`` completes, the Orchestrator automatically
+invokes :class:`~dv_agentic.tools.services.SimControllerService` and then
+:class:`~dv_agentic.tools.services.LogAnalyzerService` in sequence without
+an additional LLM routing call.  The log-analysis result is fed back to the
+LLM as the effective output of the code-generator step.
+
 Dynamic escalation
------------------------------------
-When the Orchestrator dispatches ``run_log_analyzer`` it also tracks the
-``failure_subtype`` field in the returned :class:`~dv_agentic.agents.log_analyzer.FailureSummary`.
-If the subtype *shifts* between consecutive log-analyzer calls (e.g.
-``missing_timescale`` → ``unmatched_block``) the Orchestrator escalates
-immediately instead of iterating further.  A shifting error space indicates
-that each fix is revealing a new root-cause rather than converging, which
-means additional iterations are unlikely to produce a passing simulation and
-token budget is better spent on human diagnosis.
+------------------
+During the auto-chain, the Orchestrator tracks the ``failure_subtype`` field
+in each :class:`~dv_agentic.tools.services.FailureSummary`.  If the subtype
+*shifts* between consecutive iterations (e.g. ``missing_timescale`` →
+``unmatched_block``) the Orchestrator escalates immediately.  A shifting
+error space indicates that each fix is revealing a new root-cause rather than
+converging, so additional iterations are unlikely to produce a passing
+simulation and token budget is better spent on human diagnosis.
 
 Valid actions
 -------------
-``run_code_generator``, ``run_sim_controller``, ``run_log_analyzer``,
-``run_coverage_analyst``, ``run_bug_classifier``, ``run_spec_analyst``,
-``run_reporter``, ``done``, ``escalate``
+``run_code_generator``, ``run_coverage_analyst``, ``run_bug_classifier``,
+``run_spec_analyst``, ``run_reporter``, ``done``, ``escalate``
 
 Expected LLM response format::
 
@@ -47,11 +53,12 @@ Expected LLM response format::
     NO
 """
 
+import json
 import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from ..wiki.manager import WikiConfig
@@ -59,6 +66,12 @@ if TYPE_CHECKING:
 from ..prompts.context import ProjectContext, SessionState
 from ..prompts.prompt_loader import PromptLoader
 from ..tools.llm.interface import BaseLLMClient
+from ..tools.models import SimTask
+from ..tools.services import (
+    CoverageAnalystService,
+    LogAnalyzerService,
+    SimControllerService,
+)
 from .base import AgentConfig, BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -125,23 +138,34 @@ class OrchestratorAgent(BaseAgent):
 
     Each budget unit corresponds to one LLM routing call + one sub-agent
     dispatch.  Sub-agents consume their own budgets independently.
+    After ``run_code_generator``, :class:`~dv_agentic.tools.services.SimControllerService`
+    and :class:`~dv_agentic.tools.services.LogAnalyzerService` are invoked
+    automatically (no extra LLM routing call required).
 
     Args:
         config: Agent configuration.  ``budget`` caps orchestration cycles.
         llm: LLM client used for routing decisions.
-        sub_agents: Mapping from agent key to agent instance, e.g.
-            ``{"code_generator": CodeGeneratorAgent(...), ...}``.
-            Missing keys are handled gracefully.
+        sub_agents: Mapping from agent key to agent instance.  Expected keys:
+            ``code_generator``, ``coverage_analyst``, ``bug_classifier``,
+            ``spec_analyst``, ``reporter``.  Missing keys are handled gracefully.
         project_config: Optional context for PromptLoader enrichment.
         session: Optional session state.
         prompts_dir: Directory containing ``orchestrator.md``.
+        wiki_config: Optional wiki configuration.
+        simulator: Optional :class:`~dv_agentic.tools.interface.SimulatorTool`
+            adapter.  When provided, enables the auto-chain after
+            ``run_code_generator``.
+        coverage: Optional :class:`~dv_agentic.tools.interface.CoverageTool`
+            adapter.  When provided, enables
+            :class:`~dv_agentic.tools.services.CoverageAnalystService`.
+        coverage_threshold: Minimum acceptable coverage percentage (default 90.0).
+        sim_max_runs: Maximum sim iterations per auto-chain call.  Falls back
+            to ``config.budget`` when ``None``.
     """
 
     VALID_ACTIONS: frozenset[str] = frozenset(
         {
             "run_code_generator",
-            "run_sim_controller",
-            "run_log_analyzer",
             "run_coverage_analyst",
             "run_bug_classifier",
             "run_spec_analyst",
@@ -153,13 +177,12 @@ class OrchestratorAgent(BaseAgent):
 
     _AGENT_KEY: ClassVar[dict[str, str]] = {
         "run_code_generator": "code_generator",
-        "run_sim_controller": "sim_controller",
-        "run_log_analyzer": "log_analyzer",
-        "run_coverage_analyst": "coverage_analyst",
         "run_bug_classifier": "bug_classifier",
         "run_spec_analyst": "spec_analyst",
         "run_reporter": "reporter",
     }
+
+    _SIMTASK_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*\n(\{.*?\})\s*```", re.DOTALL)
 
     _WORKFLOW_RE = re.compile(r"WORKFLOW\s*[:\-]?\s*([123])", re.IGNORECASE)
     _ACTION_RE = re.compile(r"ACTION\s*:\s*(" + "|".join(VALID_ACTIONS) + r")", re.IGNORECASE)
@@ -179,6 +202,10 @@ class OrchestratorAgent(BaseAgent):
         session: SessionState | None = None,
         prompts_dir: str | Path | None = None,
         wiki_config: "WikiConfig | None" = None,
+        simulator: object | None = None,
+        coverage: object | None = None,
+        coverage_threshold: float = 90.0,
+        sim_max_runs: int | None = None,
     ) -> None:
         super().__init__(config)
         self.llm = llm
@@ -187,6 +214,20 @@ class OrchestratorAgent(BaseAgent):
         self.session = session
         self.prompts_dir = prompts_dir
         self.wiki_config = wiki_config
+
+        from ..tools.interface import CoverageTool, SimulatorTool
+
+        self._sim_svc = (
+            SimControllerService(simulator) if isinstance(simulator, SimulatorTool) else None
+        )
+        self._log_svc = LogAnalyzerService(wiki_config=wiki_config)
+        self._cov_svc = (
+            CoverageAnalystService(coverage, threshold=coverage_threshold, wiki_config=wiki_config)
+            if isinstance(coverage, CoverageTool)
+            else None
+        )
+        self._sim_max_runs = sim_max_runs
+        self._temperature: float = 0.0  # loaded from frontmatter in _load_system_prompt()
 
     # ------------------------------------------------------------------
     # BaseAgent ABC
@@ -227,13 +268,15 @@ class OrchestratorAgent(BaseAgent):
 
         workflow = "unknown"
         steps: list[str] = []
-        # Dynamic escalation: track failure_subtype from consecutive log-analyzer calls.
-        # Populated only when action == "run_log_analyzer"; not reset between iterations
-        # so we can compare the current subtype with the previous one.
+        # Dynamic escalation: track failure_subtype across consecutive auto-chain runs.
+        # Populated by the auto-chain after each code_generator → sim → log_analyzer pass.
+        # Not reset between iterations so we can detect shifts in failure kind.
         _failure_subtype_history: list[str] = []
 
         while await self.step():
-            response = await self.llm.complete(system_prompt, history, max_tokens=1000)
+            response = await self.llm.complete(
+                system_prompt, history, max_tokens=1000, temperature=self._temperature
+            )
             history.append({"role": "assistant", "content": response})
 
             decision = self._parse_decision(response)
@@ -280,14 +323,25 @@ class OrchestratorAgent(BaseAgent):
             sub_result = await self._dispatch(decision.action, decision.input_text)
 
             # ----------------------------------------------------------------
-            # Dynamic escalation: detect shifting failure subtypes.
-            # When run_log_analyzer returns a different failure_subtype than the
-            # previous call we know each fix is revealing a new root-cause rather
-            # than converging.  Continuing to iterate would burn token budget
-            # without making progress — escalate immediately.
+            # Auto-chain: code_generator → sim → log_analyzer
+            # These two steps are deterministic after code generation; routing
+            # them through the LLM would waste a routing call on a known sequence.
             # ----------------------------------------------------------------
-            if decision.action == "run_log_analyzer":
-                current_subtype = self._extract_failure_subtype(sub_result)
+            if decision.action == "run_code_generator" and self._sim_svc is not None:
+                max_runs = self._sim_max_runs or self.config.budget
+                sim_task = self._build_sim_task(decision.input_text, task_id)
+                try:
+                    sim_result = await self._sim_svc.run(sim_task, max_runs=max_runs)
+                except Exception as exc:
+                    logger.exception("SimControllerService failed during auto-chain")
+                    sim_result = f"SimControllerService failed: {exc}"
+                steps.append(f"run_sim_controller[auto]: {sim_result[:120].strip()}")
+
+                log_result = await self._log_svc.run(sim_result)
+                steps.append(f"run_log_analyzer[auto]: {log_result[:120].strip()}")
+
+                # Dynamic escalation: detect shifting failure subtypes across iterations.
+                current_subtype = self._extract_failure_subtype(log_result)
                 if _failure_subtype_history and _failure_subtype_history[-1] != current_subtype:
                     prev = _failure_subtype_history[-1]
                     reason = (
@@ -301,7 +355,6 @@ class OrchestratorAgent(BaseAgent):
                         current_subtype,
                         self.iteration,
                     )
-                    steps.append(f"run_log_analyzer: {sub_result[:120].strip()}")
                     return OrchestratorResult(
                         task_id=task_id,
                         workflow=workflow,
@@ -311,6 +364,9 @@ class OrchestratorAgent(BaseAgent):
                         human_review_reason=reason,
                     ).to_str()
                 _failure_subtype_history.append(current_subtype)
+
+                # Feed log analysis result to LLM for the next routing decision.
+                sub_result = log_result
 
             step_label = f"{decision.action}: {sub_result[:120].strip()}"
             steps.append(step_label)
@@ -344,6 +400,12 @@ class OrchestratorAgent(BaseAgent):
 
         Args:
             action: One of ``VALID_ACTIONS`` (excluding ``done``/``escalate``).
+                Valid dispatchable actions: ``run_code_generator``,
+                ``run_coverage_analyst``, ``run_bug_classifier``,
+                ``run_spec_analyst``, ``run_reporter``.
+                Note: ``run_sim_controller`` and ``run_log_analyzer`` are no
+                longer valid actions — they are invoked automatically via the
+                auto-chain after ``run_code_generator``.
             input_text: Input forwarded to the sub-agent's ``run()`` method.
 
         Returns:
@@ -357,6 +419,16 @@ class OrchestratorAgent(BaseAgent):
 
         if action not in self.VALID_ACTIONS:
             raise ValueError(f"Action '{action}' is not valid")
+
+        if action == "run_coverage_analyst":
+            if self._cov_svc is None:
+                return "CoverageAnalystService is not configured (no coverage adapter). Skipping."
+            logger.info("Orchestrator dispatching to CoverageAnalystService")
+            try:
+                return await self._cov_svc.run(input_text)
+            except Exception as exc:
+                logger.exception("CoverageAnalystService raised an exception")
+                return f"CoverageAnalystService failed: {exc}"
 
         key = self._AGENT_KEY.get(action)
         if not key:
@@ -418,11 +490,60 @@ class OrchestratorAgent(BaseAgent):
         assert decision.action in self.VALID_ACTIONS
         return decision
 
+    def _build_sim_task(self, input_text: str, task_id: str) -> SimTask:
+        """Build a :class:`SimTask` from the orchestrator INPUT for ``run_code_generator``.
+
+        The code generator's output is not used here — only the routing INPUT,
+        which may be plain text, inline JSON, or a fenced JSON block.
+
+        Args:
+            input_text: ``INPUT`` field from the LLM decision (passed to code generator).
+            task_id: Task identifier for branch naming and reporting.
+
+        Returns:
+            A :class:`SimTask` with parsed or default field values.
+        """
+
+        def _from_dict(data: dict[str, Any]) -> SimTask:
+            return SimTask(
+                task_id=str(data.get("task_id", task_id)),
+                test=str(data.get("test", "uvm_test")),
+                seed=int(data.get("seed", 1)),
+                file_list=list(data.get("file_list", [])),
+                top=str(data.get("top", "top")),
+                debug=bool(data.get("debug", False)),
+            )
+
+        text = input_text.strip()
+        if text.startswith("{"):
+            try:
+                return _from_dict(json.loads(text))
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.debug("Inline SimTask JSON parse failed: %s", exc)
+
+        block = self._SIMTASK_JSON_BLOCK_RE.search(text)
+        if block:
+            try:
+                return _from_dict(json.loads(block.group(1)))
+            except (json.JSONDecodeError, TypeError, ValueError) as exc:
+                logger.debug("Fenced SimTask JSON parse failed: %s", exc)
+
+        test_m = re.search(r"(?:test|UVM_TESTNAME)\s*[=:]\s*(\S+)", text, re.IGNORECASE)
+        seed_m = re.search(r"seed\s*[=:]\s*(\d+)", text, re.IGNORECASE)
+        return SimTask(
+            task_id=task_id,
+            test=test_m.group(1) if test_m else "uvm_test",
+            seed=int(seed_m.group(1)) if seed_m else 1,
+            file_list=[],
+            top="top",
+            debug=False,
+        )
+
     def _extract_failure_subtype(self, log_analyzer_output: str) -> str:
         """Parse the ``failure_subtype`` field from a :class:`FailureSummary` string.
 
         Args:
-            log_analyzer_output: The string returned by ``LogAnalyzerAgent.run()``.
+            log_analyzer_output: The string returned by ``LogAnalyzerService.run()``.
 
         Returns:
             The subtype token (e.g. ``"missing_timescale"``), or ``"unknown"``
@@ -438,9 +559,11 @@ class OrchestratorAgent(BaseAgent):
                 project_config=self.project_config,
                 session=self.session,
             )
+            self._temperature = loader.load_temperature("orchestrator")
             return loader.load("orchestrator")
         except (FileNotFoundError, RuntimeError) as exc:
             logger.warning("PromptLoader unavailable (%s); using fallback.", exc)
+            self._temperature = 0.0
             return (
                 "You are an orchestration agent for hardware verification. "
                 "Given a task, determine the workflow (1, 2, or 3) and the next action.\n"

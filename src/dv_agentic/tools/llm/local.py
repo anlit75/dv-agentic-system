@@ -64,6 +64,7 @@ class LocalLLMClient(BaseLLMClient):
         system: str,
         messages: list[dict[str, str]],
         max_tokens: int = 1000,
+        temperature: float | None = None,
     ) -> str:
         """Send a chat-completion request to the local LLM endpoint.
 
@@ -71,6 +72,8 @@ class LocalLLMClient(BaseLLMClient):
             system: System prompt string (prepended as a ``"system"`` role message).
             messages: Conversation turns in ``[{"role": ..., "content": ...}]`` form.
             max_tokens: Maximum tokens to generate.
+            temperature: Sampling temperature.  ``None`` omits the field from
+                the request body, deferring to the endpoint default.
 
         Returns:
             The assistant's reply text.
@@ -79,7 +82,9 @@ class LocalLLMClient(BaseLLMClient):
             RuntimeError: On non-2xx HTTP response or connection failure.
         """
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self._post, system, messages, max_tokens)
+        return await loop.run_in_executor(
+            None, self._post, system, messages, max_tokens, temperature
+        )
 
     # ------------------------------------------------------------------
     # Private
@@ -90,16 +95,18 @@ class LocalLLMClient(BaseLLMClient):
         system: str,
         messages: list[dict[str, str]],
         max_tokens: int,
+        temperature: float | None = None,
     ) -> str:
         """Blocking HTTP POST — runs in a thread-pool executor."""
         all_messages = [{"role": "system", "content": system}, *messages]
-        payload = json.dumps(
-            {
-                "model": self.model,
-                "max_tokens": max_tokens,
-                "messages": all_messages,
-            }
-        ).encode()
+        body: dict[str, Any] = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "messages": all_messages,
+        }
+        if temperature is not None:
+            body["temperature"] = temperature
+        payload = json.dumps(body).encode()
 
         headers: dict[str, str] = {"Content-Type": "application/json"}
         if self.api_key:
@@ -113,8 +120,8 @@ class LocalLLMClient(BaseLLMClient):
         )
         try:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310
-                body: dict[str, Any] = json.loads(resp.read())
-                return str(body["choices"][0]["message"]["content"])
+                response: dict[str, Any] = json.loads(resp.read())
+                return str(response["choices"][0]["message"]["content"])
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace")
             raise RuntimeError(f"Local LLM API error {exc.code}: {detail}") from exc

@@ -83,12 +83,14 @@
 
 **Objective**: Implementation of specialized Agents that do not require LLM access, enabling parallel development with Phase 2.
 
+> **See also [Phase 10](#phase-10--single-orchestrator-architecture--internal-services--completed-v080)** (v0.8.0): Canonical logic now lives under `src/dv_agentic/tools/services/` (`SimControllerService`, `LogAnalyzerService`, `CoverageAnalystService`). The `agents/*.py` modules listed below are **compatibility shims** that delegate to those services; the Orchestrator invokes services directly (auto-chain after Code Generator). Standalone CLIs and import paths are unchanged.
+
 | Agent | Status | Description |
 |-------|------|------|
-| `src/dv_agentic/agents/sim_controller.py` | ✅ | Call adapters, branch management, feedback loop |
-| `src/dv_agentic/agents/log_analyzer.py` | ✅ | Parse sim logs, classify errors, regex-based parsing |
-| `src/dv_agentic/agents/coverage_analyst.py` | ✅ | Analyze coverage DB, suggest test scenarios based on stats |
-| Base prompt templates (`prompts/*.tmpl.md`) | ✅ | Minimal prompts for non-LLM logic if needed |
+| `src/dv_agentic/agents/sim_controller.py` | ✅ | Shim → [`tools/services/sim_controller.py`](src/dv_agentic/tools/services/sim_controller.py) (Phase 10); originally: adapters, branch management, feedback loop |
+| `src/dv_agentic/agents/log_analyzer.py` | ✅ | Shim → [`tools/services/log_analyzer.py`](src/dv_agentic/tools/services/log_analyzer.py) (Phase 10); originally: sim log parse, failure subtypes |
+| `src/dv_agentic/agents/coverage_analyst.py` | ✅ | Shim → [`tools/services/coverage_analyst.py`](src/dv_agentic/tools/services/coverage_analyst.py) (Phase 10); originally: coverage DB analysis, hole suggestions |
+| Base prompt templates (`prompts/*.tmpl.md`) | ✅ | Minimal prompts for non-LLM logic; standalone CLI notes added in Phase 10 |
 
 ## Phase 3b — LLM-Powered Agent Implementation ✅ (Completed)
 
@@ -98,7 +100,7 @@
 |-------|------|------|
 | `src/dv_agentic/agents/spec_analyst.py` | ✅ | Parse spec docs, generate `vplan.yaml` + `prompts/spec_analyst.tmpl.md` |
 | `src/dv_agentic/agents/bug_classifier.py` | ✅ | Classify DUT vs. TB bugs + `prompts/bug_classifier.tmpl.md` |
-| `src/dv_agentic/agents/orchestrator.py` | ✅ | Task routing, handoff coordination + `prompts/orchestrator.tmpl.md` |
+| `src/dv_agentic/agents/orchestrator.py` | ✅ | Task routing, handoff coordination + `prompts/orchestrator.tmpl.md` (routing and auto-chain refined in [Phase 10](#phase-10--single-orchestrator-architecture--internal-services--completed-v080)) |
 | `src/dv_agentic/agents/reporter.py` | ✅ | Aggregate session results + `prompts/reporter.tmpl.md` |
 | `src/dv_agentic/agents/code_generator.py` | ✅ | Generate / modify code + `prompts/code_generator.tmpl.md` |
 
@@ -236,6 +238,58 @@ Introduced a specialized, rigorous **SystemVerilog Testbench checklist** into th
 
 **Optional dependency**: `pip install "dv-agentic-system[wiki]"` (adds `bm25s[core]>=0.2.0`; no impact when `wiki.enabled: false`).
 
+## Phase 10 — Single-Orchestrator Architecture & Internal Services ✅ (Completed, v0.8.0)
+
+**Objective**: Align the runtime with `AGENTS.md` single-orchestrator guidance — keep one LLM decision-maker (`OrchestratorAgent`), move deterministic sim / log / coverage workflows into callable **internal services**, and remove redundant LLM routing turns for steps that do not require reasoning.
+
+> **Supersedes [Phase 3a](#phase-3a--non-llm-agent-implementation--completed)** agent layout: implementations originally delivered as `agents/sim_controller.py`, `agents/log_analyzer.py`, and `agents/coverage_analyst.py` are extracted to `tools/services/`; those agent modules remain as backward-compatible shims. Orchestrator routing from [Phase 3b](#phase-3b--llm-powered-agent-implementation--completed) is tightened here (7 actions, post–code-generator auto-chain).
+>
+> **Architecture shift**: 8 standalone agents → **5 LLM agents** + **3 internal services**. `LogAnalyzer`, `CoverageAnalyst`, and `SimController` remain available via compatibility shims and standalone CLIs; the Orchestrator invokes services directly (or auto-chains them).
+
+### Phase 10A — Internal Services Extraction ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `src/dv_agentic/tools/services/log_analyzer.py` | ✅ | `LogAnalyzerService` — regex-backed `FailureSummary`, wiki pattern ingest hooks |
+| `src/dv_agentic/tools/services/coverage_analyst.py` | ✅ | `CoverageAnalystService` — threshold checks, wiki `{{COVERAGE_HOLE_HISTORY}}` context |
+| `src/dv_agentic/tools/services/sim_controller.py` | ✅ | `SimControllerService` — `run(task, max_runs=10)`, compile/run loop, `SimReport` output |
+| `agents/*` compatibility shims | ✅ | `LogAnalyzerAgent`, `CoverageAnalystAgent`, `SimControllerAgent` delegate to services; preserve import paths and standalone CLIs |
+| `docs/agentic-system.md` + `agentic-system-structure.md` | ✅ | Responsibility matrix and directory layout updated for 5 + 3 model |
+
+### Phase 10B — Orchestrator Routing & Auto-Chain ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `VALID_ACTIONS` reduced to 7 | ✅ | `run_code_generator`, `run_coverage_analyst`, `run_bug_classifier`, `run_spec_analyst`, `run_reporter`, `done`, `escalate` — removed `run_sim_controller` / `run_log_analyzer` |
+| Post–code-generator auto-chain | ✅ | Orchestrator invokes `SimControllerService` then `LogAnalyzerService` without an extra LLM turn; log result fed back as the effective code-generator step output |
+| `_build_sim_task()` | ✅ | Parse inline JSON, fenced JSON, or heuristic `test=` / `seed:` from decision `INPUT` into `SimTask` (Code Generator markdown is never passed to the simulator) |
+| `run_coverage_analyst` via `_cov_svc` | ✅ | Coverage adapter injected on `OrchestratorAgent`; no `sub_agents["coverage_analyst"]` required |
+| `cli/orchestrator.py` wiring | ✅ | Four LLM sub-agents only; `simulator` and `coverage` adapters passed to `OrchestratorAgent` constructor |
+| Dynamic escalation during auto-chain | ✅ | Shifting `failure_subtype` between iterations still triggers immediate escalate (Phase 8 behavior preserved) |
+
+### Phase 10C — Prompt & LLM Parameter Fidelity ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `PromptLoader.load_temperature()` | ✅ | Parse `temperature` from YAML frontmatter; default `0.0` when missing or invalid |
+| LLM client `temperature` passthrough | ✅ | `BaseLLMClient.complete(..., temperature=None)`; `LLMAPIClient` / `LocalLLMClient` send value when set |
+| All LLM agents load frontmatter temperature | ✅ | `orchestrator`, `code_generator`, `bug_classifier`, `spec_analyst`, `reporter` |
+| `orchestrator.tmpl.md` aligned with implementation | ✅ | Workflow diagram, valid actions, `temperature: 0`; explicit note not to emit removed sim/log actions |
+| `bug_classifier.tmpl.md` `temperature: 0` | ✅ | Deterministic classification routing |
+| Service prompt templates — standalone notes | ✅ | `log_analyzer`, `coverage_analyst`, `sim_controller` document CLI-only use outside Orchestrator |
+
+### Phase 10D — Quality Gates & Tests ✅
+
+| Item | Status | Description |
+|------|------|------|
+| `tests/test_prompts.py` — `TestLoadTemperature` | ✅ | 9 cases for frontmatter parsing and package templates |
+| `tests/test_orchestrator.py` — auto-chain & `_cov_svc` | ✅ | `TestBuildSimTask`, coverage dispatch without sub-agent, `SimTask` wiring |
+| `tests/test_cli.py` — orchestrator adapter wiring | ✅ | Verifies CLI passes `simulator` / `coverage` into `OrchestratorAgent`, not `sub_agents` |
+| `.pre-commit-config.yaml` — `no-cjk-in-source-and-docs` | ✅ | Enforces English-only source, prompts, and docs per `AGENTS.md` |
+| OpenCode TS wrappers (`tools/*.ts`) | ✅ | CLI flag alignment with service entry points |
+
+**Acceptance Criteria Met**: Full CI (`pre-commit`, `mypy`, `pytest --cov`, `bun test`) and docs build (`uv run dv-docs`) pass; Orchestrator session completes code-gen → sim → log without LLM routing sim/log actions.
+
 ---
 
 ## Long-term / Optional
@@ -253,8 +307,9 @@ Introduced a specialized, rigorous **SystemVerilog Testbench checklist** into th
 ```
 Layer 1 (Shared Package)
   src/dv_agentic/tools/         ██████████  100%  Interfaces + All Adapters completed
-  src/dv_agentic/agents/        ██████████  100%  All 8 agents completed + Phase 8 CVDP optimizations + Phase 9 wiki-awareness
-  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + Levels 0-2 context injection + wiki context injection
+  src/dv_agentic/tools/services/ ██████████  100%  Phase 10 — log, coverage, sim internal services
+  src/dv_agentic/agents/        ██████████  100%  5 LLM agents + 3 service shims; Phase 8 CVDP + Phase 9 wiki + Phase 10 orchestration
+  src/dv_agentic/prompts/       ██████████  100%  PromptLoader + context injection + wiki + frontmatter temperature
   src/dv_agentic/cli/           ██████████  100%  All CLI entrypoints (+ wiki_search, wiki_lint, wiki_build) fully tested
   src/dv_agentic/profiles/      ██████████  100%  _template/ directory and all schemas completed
   src/dv_agentic/wiki/          ██████████  100%  Phase 9A-9D completed (ingest, query, search, lint, manager)

@@ -2,7 +2,7 @@
 description: Hardware verification bug classification specialist for UVM and cocotb/pyuvm environments.
 mode: subagent
 model: google/gemini-2.0-flash-001
-temperature: 0.1
+temperature: 0
 tools:
   write: false
   edit: false

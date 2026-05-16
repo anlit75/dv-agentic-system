@@ -67,6 +67,39 @@ class PromptLoader:
         self.session = session
         self.wiki_config = wiki_config
 
+    def load_temperature(self, agent_name: str) -> float:
+        """Return the temperature declared in the agent's frontmatter.
+
+        Parses the YAML front matter (between ``---`` delimiters) for a
+        ``temperature`` key.  Returns ``0.0`` if the file is missing,
+        the key is absent, or the value cannot be parsed.
+
+        Args:
+            agent_name: Name of the agent (e.g., "orchestrator").
+
+        Returns:
+            The temperature as a float, defaulting to ``0.0``.
+        """
+        prompt_path = self.prompts_dir / f"{agent_name}.tmpl.md"
+        if not prompt_path.exists():
+            return 0.0
+        try:
+            with prompt_path.open(encoding="utf-8") as f:
+                content = f.read()
+        except OSError:
+            return 0.0
+
+        m = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
+        if not m:
+            return 0.0
+        for line in m.group(1).splitlines():
+            if line.startswith("temperature:"):
+                try:
+                    return float(line.split(":", 1)[1].strip())
+                except ValueError:
+                    return 0.0
+        return 0.0
+
     def load(self, agent_name: str) -> str:
         """Return the final system prompt string for the given agent.
 

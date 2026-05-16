@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-"""Unit tests for SimControllerAgent (Phase 3a)."""
+"""Unit tests for SimControllerService."""
 
 import asyncio
 import json
@@ -13,10 +13,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dv_agentic.agents.base import AgentConfig
-from dv_agentic.agents.sim_controller import SimControllerAgent
 from dv_agentic.tools.interface import SimulatorTool
 from dv_agentic.tools.models import CompileResult, SimResult, SimTask
+from dv_agentic.tools.services import SimControllerService
 
 # ---------------------------------------------------------------------------
 # Stub adapters
@@ -51,7 +50,7 @@ def task() -> SimTask:
 @pytest.fixture()
 def _no_git() -> Generator[MagicMock, None, None]:
     """Patch _git so tests don't require a real git repo."""
-    with patch.object(SimControllerAgent, "_git") as m:
+    with patch.object(SimControllerService, "_git") as m:
         yield m
 
 
@@ -62,11 +61,8 @@ def _no_git() -> Generator[MagicMock, None, None]:
 
 class TestCompileFail:
     def test_returns_compile_fail_status(self, task: SimTask, _no_git: MagicMock) -> None:
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=5),
-            simulator=_StubSim(compile_status="fail"),
-        )
-        result = asyncio.run(agent.run(task))
+        svc = SimControllerService(simulator=_StubSim(compile_status="fail"))
+        result = asyncio.run(svc.run(task, max_runs=5))
         assert "compile_fail" in result
 
     def test_does_not_run_simulation_after_compile_fail(
@@ -74,41 +70,31 @@ class TestCompileFail:
     ) -> None:
         sim = _StubSim(compile_status="fail")
         sim.run = MagicMock()  # type: ignore[method-assign]
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=5),
-            simulator=sim,
-        )
-        asyncio.run(agent.run(task))
+        svc = SimControllerService(simulator=sim)
+        asyncio.run(svc.run(task, max_runs=5))
         sim.run.assert_not_called()
 
 
 class TestSimPass:
     def test_pass_on_first_run(self, task: SimTask, _no_git: MagicMock) -> None:
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=5),
-            simulator=_StubSim(run_statuses=["pass"]),
-        )
-        result = asyncio.run(agent.run(task))
+        svc = SimControllerService(simulator=_StubSim(run_statuses=["pass"]))
+        result = asyncio.run(svc.run(task, max_runs=5))
         assert "pass" in result
         assert "ready_for_pr : yes" in result
 
     def test_pass_after_two_fails(self, task: SimTask, _no_git: MagicMock) -> None:
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=5),
-            simulator=_StubSim(run_statuses=["fail", "fail", "pass"]),
-        )
-        result = asyncio.run(agent.run(task))
+        svc = SimControllerService(simulator=_StubSim(run_statuses=["fail", "fail", "pass"]))
+        result = asyncio.run(svc.run(task, max_runs=5))
         assert "pass" in result
         assert "runs_total   : 3" in result
 
 
 class TestBudgetExhaustion:
     def test_escalated_when_budget_runs_out(self, task: SimTask, _no_git: MagicMock) -> None:
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=3),
-            simulator=_StubSim(run_statuses=["fail", "fail", "fail", "fail"]),
+        svc = SimControllerService(
+            simulator=_StubSim(run_statuses=["fail", "fail", "fail", "fail"])
         )
-        result = asyncio.run(agent.run(task))
+        result = asyncio.run(svc.run(task, max_runs=3))
         assert "escalated" in result
         assert "ready_for_pr : no" in result
 
@@ -116,34 +102,25 @@ class TestBudgetExhaustion:
         sim = _StubSim(run_statuses=["fail"] * 10)
         run_mock = MagicMock(side_effect=sim.run)
         sim.run = run_mock  # type: ignore[method-assign]
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=3),
-            simulator=sim,
-        )
-        asyncio.run(agent.run(task))
+        svc = SimControllerService(simulator=sim)
+        asyncio.run(svc.run(task, max_runs=3))
         assert run_mock.call_count == 3
 
 
 class TestGitCalls:
     def test_branch_created_with_task_id(self, task: SimTask) -> None:
-        with patch.object(SimControllerAgent, "_git") as git_mock:
-            agent = SimControllerAgent(
-                config=AgentConfig(name="sim_ctrl", budget=1),
-                simulator=_StubSim(run_statuses=["pass"]),
-            )
-            asyncio.run(agent.run(task))
+        with patch.object(SimControllerService, "_git") as git_mock:
+            svc = SimControllerService(simulator=_StubSim(run_statuses=["pass"]))
+            asyncio.run(svc.run(task, max_runs=1))
 
         # checkout -b ai-task/{task_id} must appear somewhere in the calls
         all_calls = [c.args for c in git_mock.call_args_list]
         assert any(args == ("checkout", "-B", f"ai-task/{task.task_id}") for args in all_calls)
 
     def test_commit_called_after_run(self, task: SimTask) -> None:
-        with patch.object(SimControllerAgent, "_git") as git_mock:
-            agent = SimControllerAgent(
-                config=AgentConfig(name="sim_ctrl", budget=1),
-                simulator=_StubSim(run_statuses=["pass"]),
-            )
-            asyncio.run(agent.run(task))
+        with patch.object(SimControllerService, "_git") as git_mock:
+            svc = SimControllerService(simulator=_StubSim(run_statuses=["pass"]))
+            asyncio.run(svc.run(task, max_runs=1))
 
         all_args = [c.args for c in git_mock.call_args_list]
         commit_calls = [a for a in all_args if a[0] == "commit"]
@@ -154,18 +131,12 @@ class TestGitCalls:
 class TestTaskParsing:
     def test_accepts_simtask_directly(self, _no_git: MagicMock) -> None:
         task = SimTask(task_id="t1", test="foo", seed=1)
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=1),
-            simulator=_StubSim(run_statuses=["pass"]),
-        )
-        result = asyncio.run(agent.run(task))
+        svc = SimControllerService(simulator=_StubSim(run_statuses=["pass"]))
+        result = asyncio.run(svc.run(task, max_runs=1))
         assert "t1" in result
 
     def test_accepts_json_string(self, _no_git: MagicMock) -> None:
         task_json = json.dumps({"task_id": "t2", "test": "bar", "seed": 7})
-        agent = SimControllerAgent(
-            config=AgentConfig(name="sim_ctrl", budget=1),
-            simulator=_StubSim(run_statuses=["pass"]),
-        )
-        result = asyncio.run(agent.run(task_json))
+        svc = SimControllerService(simulator=_StubSim(run_statuses=["pass"]))
+        result = asyncio.run(svc.run(task_json, max_runs=1))
         assert "t2" in result

@@ -19,15 +19,14 @@ dv-agentic-system/
 │
 ├── src/
 │   └── dv_agentic/
-│       ├── agents/                        # Core logic for 8 Agents
+│       ├── agents/                        # LLM-powered agents (5 agents)
 │       │   ├── base.py                    # run loop, budget, handoff base
 │       │   ├── orchestrator.py
 │       │   ├── spec_analyst.py
 │       │   ├── code_generator.py
-│       │   ├── sim_controller.py
-│       │   ├── log_analyzer.py
-│       │   ├── wave_analyzer.py
-│       │   ├── coverage_analyst.py
+│       │   ├── sim_controller.py          # compatibility shim → tools/services/
+│       │   ├── log_analyzer.py            # compatibility shim → tools/services/
+│       │   ├── coverage_analyst.py        # compatibility shim → tools/services/
 │       │   ├── bug_classifier.py
 │       │   └── reporter.py
 │       │
@@ -40,6 +39,11 @@ dv-agentic-system/
 │       │   │   ├── imc.py                 # IMC 24.06 + Verisium 25.12 coverage (Internal)
 │       │   │   ├── icarus.py              # Icarus Verilog (External CI, Planned)
 │       │   │   └── verilator.py           # Verilator (External CI, Planned)
+│       │   ├── services/                  # Deterministic (non-LLM) internal services
+│       │   │   ├── __init__.py
+│       │   │   ├── sim_controller.py      # SimControllerService — compile+sim loop
+│       │   │   ├── log_analyzer.py        # LogAnalyzerService — regex failure classifier
+│       │   │   └── coverage_analyst.py    # CoverageAnalystService — threshold comparison
 │       │   └── llm/
 │       │       ├── local.py               # Internal/Local LLM client
 │       │       └── api.py                 # External API client (Claude / GPT)
