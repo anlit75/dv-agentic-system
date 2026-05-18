@@ -20,6 +20,7 @@ TAR_FILE="dv-agentic-system.tar.gz"
 # Parse optional arguments
 WITH_DEV=false
 WITH_COCOTB=false
+WITH_WIKI=false
 
 for arg in "$@"; do
     case $arg in
@@ -28,6 +29,9 @@ for arg in "$@"; do
             ;;
         --with-cocotb)
             WITH_COCOTB=true
+            ;;
+        --with-wiki)
+            WITH_WIKI=true
             ;;
     esac
 done
@@ -68,6 +72,9 @@ if command -v uv >/dev/null 2>&1; then
     COMPILE_FLAGS=""
     if [ "$WITH_COCOTB" = true ]; then
         COMPILE_FLAGS="$COMPILE_FLAGS --extra cocotb"
+    fi
+    if [ "$WITH_WIKI" = true ]; then
+        COMPILE_FLAGS="$COMPILE_FLAGS --extra wiki"
     fi
     if [ "$WITH_DEV" = true ]; then
         COMPILE_FLAGS="$COMPILE_FLAGS --all-groups"
@@ -118,6 +125,15 @@ else
             pyuvm
     fi
 
+    # Download open-source wiki search dependencies only if explicitly requested
+    if [ "$WITH_WIKI" = true ]; then
+        echo "1c. Downloading wiki (bm25s) dependencies..."
+        $PIP_CMD download \
+            --only-binary=:all: \
+            -d "$WHEELS_DIR" \
+            "bm25s[core]>=0.2.0"
+    fi
+
     # Download documentation and static analysis dependencies only if explicitly requested
     if [ "$WITH_DEV" = true ]; then
         echo "2. Downloading development & doc dependencies..."
@@ -151,8 +167,15 @@ if command -v tar >/dev/null 2>&1; then
     cp -r src "$TEMP_BUNDLE_DIR/"
     cp -r scripts "$TEMP_BUNDLE_DIR/"
 
-    # Standard asset directories (Standardized Discovery Paths)
-    for dir in agents tools skills; do
+    # Copy additional configuration and guidance files if present
+    for file in .env.example AGENTS.md .gitignore .gitattributes uv.lock .python-version; do
+        if [ -f "$file" ]; then
+            cp "$file" "$TEMP_BUNDLE_DIR/"
+        fi
+    done
+
+    # Standard asset directories (Standardized Discovery Paths) and references
+    for dir in agents tools skills commands sample; do
         if [ -d "$dir" ]; then
             cp -r "$dir" "$TEMP_BUNDLE_DIR/"
         fi
