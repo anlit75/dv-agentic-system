@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-05-18
+
+### Added
+
+- **Offline dependency bundling & environments**:
+  - Added parallel matrix builds supporting both Python 3.11 and 3.12 packages for release tagging in `.github/workflows/offline-bundle.yml`.
+  - Restructured workflow into sequential jobs (`prep` -> `build-bundle` matrix -> `release`) to prevent parallel GitHub API race conditions when generating a release.
+  - Integrated `dv-agentic-system[wiki]` dependencies (via `--with-wiki` flag) in `scripts/offline-download.sh` so the BM25 offline wiki search RAG feature is fully functional and bundled by default in tag releases.
+  - Automatically bundled essential files and directories into the offline tarball: `.env.example`, `AGENTS.md`, `.gitignore`, `.gitattributes`, `uv.lock`, `.python-version`, and reference `sample/` and `commands/` directories to facilitate robust local setup and deployment.
+
 ## [0.8.0] - 2026-05-16
 
 ### Added
@@ -303,7 +313,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ROADMAP.md` — phased implementation plan (Phase 0 – 7)
 - `AGENTS.md` — agent development guidelines and coding conventions
 
-[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/anlit75/dv-agentic-system/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/anlit75/dv-agentic-system/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/anlit75/dv-agentic-system/compare/v0.6.1...v0.6.2

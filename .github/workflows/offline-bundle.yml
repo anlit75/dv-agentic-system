@@ -11,6 +11,10 @@ on:
         description: 'Include cocotb & pyuvm verification dependencies (--with-cocotb)'
         type: boolean
         default: false
+      with_wiki:
+        description: 'Include BM25 offline wiki search dependencies (--with-wiki)'
+        type: boolean
+        default: true
       python_version:
         description: 'Target Python Version for RH8'
         type: choice
@@ -23,11 +27,27 @@ on:
       - 'v*'
 
 jobs:
-  build-bundle:
-    name: Build Offline Tarball
+  prep:
+    name: Prepare Matrix
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    outputs:
+      python_versions: ${{ steps.set-matrix.outputs.python_versions }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "python_versions=[\"${{ github.event.inputs.python_version }}\"]" >> "$GITHUB_OUTPUT"
+          else
+            echo "python_versions=[\"3.11\", \"3.12\"]" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-bundle:
+    name: Build Offline Tarball (Python ${{ matrix.python-version }})
+    needs: prep
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(needs.prep.outputs.python_versions) }}
 
     steps:
       - name: Checkout repository
@@ -36,7 +56,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ github.event.inputs.python_version || '3.11' }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v2
@@ -57,25 +77,49 @@ jobs:
             ARGS="$ARGS --with-cocotb"
           fi
 
+          # Default to true on tag push, or follow inputs
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event.inputs.with_wiki }}" = "true" ]; then
+            ARGS="$ARGS --with-wiki"
+          fi
+
           ./scripts/offline-download.sh $ARGS
 
-          # If triggered by a tag push, duplicate the bundle with a version-tagged filename for the release asset
+          # Always prepare the python-version specific filename to make downloading and merging clean
+          PYTHON_VER="${{ matrix.python-version }}"
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG_NAME="${GITHUB_REF#refs/tags/}"
-            PYTHON_VER="${{ github.event.inputs.python_version || '3.11' }}"
+            # For releases: dv-agentic-system-v1.0.0-offline-py3.11.tar.gz
             cp dv-agentic-system.tar.gz "dv-agentic-system-${TAG_NAME}-offline-py${PYTHON_VER}.tar.gz"
+          else
+            # For manual/non-tag builds: dv-agentic-system-offline-py3.11.tar.gz
+            cp dv-agentic-system.tar.gz "dv-agentic-system-offline-py${PYTHON_VER}.tar.gz"
           fi
 
       - name: Upload Offline Bundle Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dv-agentic-system-offline-py${{ github.event.inputs.python_version || '3.11' }}
-          path: dv-agentic-system.tar.gz
+          name: dv-agentic-system-offline-py${{ matrix.python-version }}
+          path: |
+            dv-agentic-system.tar.gz
+            dv-agentic-system-*-offline-py*.tar.gz
           if-no-files-found: error
           retention-days: 7
 
+  release:
+    name: Create GitHub Release
+    needs: build-bundle
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all offline bundles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dv-agentic-system-offline-py*
+          merge-multiple: true
+
       - name: Create GitHub Release and Upload Asset
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
